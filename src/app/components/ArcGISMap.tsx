@@ -68,7 +68,7 @@ export default function ArcGISMap() {
               source: [imgLowRes],
             });
 
-            map.addMany([finalizedLayer, editingLayer, mediaLayer]);
+            map.addMany([mediaLayer, finalizedLayer, editingLayer]);
 
             // store refs
             editingLayerRef.current = editingLayer;
