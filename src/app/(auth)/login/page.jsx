@@ -16,10 +16,15 @@ export default function LoginPage() {
     const res = await signIn("credentials", {
       email,
       password,
-      redirect: false,
+      redirect: false, // stay on this page
+      callbackUrl: "/dashboard", // tell auth what we’ll push to
     });
-    if (res?.error) setError("Invalid credentials");
-    else router.push(res.url || "/dashboard");
+
+    if (res?.error) {
+      setError("Invalid credentials");
+    } else if (res?.ok) {
+      router.push(res.url); // res.url === "/dashboard"
+    }
   }
 
   return (
