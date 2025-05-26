@@ -35,6 +35,9 @@ export default function Button() {
     };
 
     const polygonGraphic = new GraphicRef.current({
+      attributes: {
+        title: "my polygon",
+      },
       geometry: polygon,
       symbol: polygonSymbol,
       popupTemplate: popupTemplate,

@@ -1,11 +1,9 @@
+// /app/layout.jsx
 import "./globals.css";
 import { ReactNode } from "react";
+import { SessionProvider } from "next-auth/react";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
@@ -15,7 +13,9 @@ export default function RootLayout({
         />
         <script src="https://js.arcgis.com/4.29/"></script>
       </head>
-      <body>{children}</body>
+      <body>
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }
