@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const params = useSearchParams();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -18,7 +17,6 @@ export default function LoginPage() {
       email,
       password,
       redirect: false,
-      callbackUrl: params.get("callbackUrl") ?? "/dashboard",
     });
     if (res?.error) setError("Invalid credentials");
     else router.push(res.url || "/dashboard");
