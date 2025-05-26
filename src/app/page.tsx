@@ -22,7 +22,6 @@ export default async function HomePage() {
   const session = await auth();
 
   if (!session) {
-    alert("no session");
     return <AuthForm />;
   }
 
