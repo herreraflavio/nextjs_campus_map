@@ -1,19 +1,3 @@
-// import ArcGISWrapper from "./components/ArcGISWrapper";
-// import Button from "@/app/components/button/Button";
-// import SaveMap from "@/app/components/button/SaveMap";
-// import SketchTool from "./components/SketchTool";
-// export default function HomePage() {
-//   return (
-//     <>
-//       <Button />
-//       <SaveMap />
-//       <SketchTool />
-//       <ArcGISWrapper />
-//     </>
-//   );
-// }
-
-// /app/page.jsx
 import { auth } from "@/lib/auth";
 import LoggedInDashboard from "./components/LoggedInDashboard";
 import AuthForm from "./components/AuthForm"; // login + register
