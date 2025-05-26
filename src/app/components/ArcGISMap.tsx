@@ -83,5 +83,5 @@ export default function ArcGISMap() {
     return () => clearInterval(intv);
   }, []);
 
-  return <div ref={mapDiv} style={{ width: "100%", height: "100vh" }} />;
+  return <div ref={mapDiv} style={{ width: "100%", height: "100%" }} />;
 }

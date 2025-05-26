@@ -97,7 +97,6 @@ export default function ToggleSketchTool() {
     <button
       onClick={toggleSketch}
       style={{
-        position: "absolute",
         top: 10,
         left: 10,
         zIndex: 999,
