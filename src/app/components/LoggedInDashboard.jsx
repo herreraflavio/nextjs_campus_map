@@ -1,6 +1,10 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import ArcGISWrapper from "@/app/components/ArcGISWrapper";
+import Button from "@/app/components/button/Button";
+import SaveMap from "@/app/components/button/SaveMap";
+import SketchTool from "@/app/components/SketchTool";
 
 export default function LoggedInDashboard({ user }) {
   return (
@@ -12,6 +16,10 @@ export default function LoggedInDashboard({ user }) {
       >
         Logout
       </button>
+      <Button />
+      <SaveMap />
+      <SketchTool />
+      <ArcGISWrapper />
     </div>
   );
 }
