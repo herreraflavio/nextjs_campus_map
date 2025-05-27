@@ -5,6 +5,7 @@ import ArcGISWrapper from "@/app/components/ArcGISWrapper";
 import Button from "@/app/components/button/Button";
 import SaveMap from "@/app/components/button/SaveMap";
 import SketchTool from "@/app/components/SketchTool";
+import Sidebar from "./map/Sidebar";
 
 export default function LoggedInDashboard({ user }) {
   return (
@@ -25,7 +26,20 @@ export default function LoggedInDashboard({ user }) {
         <SketchTool />
       </div>
       <div style={{ flexGrow: "1" }}>
-        <ArcGISWrapper />
+        <div
+          style={{
+            display: "flex",
+            height: "100%",
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          <div>
+            side navbar goes here
+            <Sidebar />
+          </div>
+          <ArcGISWrapper />
+        </div>
       </div>
     </div>
   );

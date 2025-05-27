@@ -2,10 +2,14 @@
 import { useEffect, useRef } from "react";
 import {
   editingLayerRef,
-  finalizedLayerRef,
+  // finalizedLayerRef,
   MapViewRef,
   GraphicRef,
 } from "./map/arcgisRefs";
+
+import { setFinalizedLayer } from "./map/arcgisRefs";
+
+import Sidebar from "@/app/components/map/Sidebar";
 
 export default function ArcGISMap() {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -72,7 +76,8 @@ export default function ArcGISMap() {
 
             // store refs
             editingLayerRef.current = editingLayer;
-            finalizedLayerRef.current = finalizedLayer;
+            // finalizedLayerRef.current = finalizedLayer;
+            setFinalizedLayer(finalizedLayer);
             GraphicRef.current = Graphic;
             MapViewRef.current = view;
           }
