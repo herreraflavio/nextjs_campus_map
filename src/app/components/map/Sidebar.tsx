@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { finalizedLayerRef, MapViewRef } from "./arcgisRefs";
+import { labelsLayerRef, finalizedLayerRef, MapViewRef } from "./arcgisRefs";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
+import Point from "@arcgis/core/geometry/Point";
+import { getPolygonCentroid } from "./centroid"; // wherever you keep it
 
 export default function Sidebar() {
   const [polygonList, setPolygonList] = useState<any[]>([]);
@@ -59,23 +61,85 @@ export default function Sidebar() {
     setEditAlpha(typeof a === "number" ? a : 0.6); // NEW
   };
 
+  // const applyEdits = () => {
+  //   if (!editingId) return;
+  //   const layer = finalizedLayerRef.current!;
+  //   const g = layer.graphics.find((gr: any) => gr.attributes.id === editingId);
+  //   if (!g) return;
+
+  //   g.attributes.name = editName;
+
+  //   const h = editColor.slice(1);
+  //   const r = parseInt(h.substr(0, 2), 16);
+  //   const g2 = parseInt(h.substr(2, 2), 16);
+  //   const b = parseInt(h.substr(4, 2), 16);
+
+  //   const newSym = (g.symbol as any).clone();
+  //   newSym.color = [r, g2, b, parseFloat(editAlpha.toFixed(2))];
+
+  //   g.symbol = newSym;
+
+  //   // 2) update its label
+  //   const labelsLayer = labelsLayerRef.current!;
+  //   const label = labelsLayer.graphics.find(
+  //     (l: any) => l.attributes.parentId === editingId
+  //   );
+  //   if (label) {
+  //     // a) update the text
+  //     (label.symbol as any).text = editName;
+
+  //     // b) reposition at new centroid
+  //     const [cx, cy] = getPolygonCentroid(g.geometry.rings[0]);
+
+  //     // pass a JSON SR, not the AMD instance
+  //     const srJson = (g.geometry.spatialReference as any).toJSON();
+  //     label.geometry = new Point({
+  //       x: cx,
+  //       y: cy,
+  //       spatialReference: srJson,
+  //     });
+  //   }
+
+  //   finalizedLayerRef.events!.dispatchEvent(new Event("change"));
+  //   setEditingId(null);
+  // };
+
   const applyEdits = () => {
     if (!editingId) return;
     const layer = finalizedLayerRef.current!;
     const g = layer.graphics.find((gr: any) => gr.attributes.id === editingId);
     if (!g) return;
 
+    // 1) update polygon name & symbol…
     g.attributes.name = editName;
-
     const h = editColor.slice(1);
     const r = parseInt(h.substr(0, 2), 16);
     const g2 = parseInt(h.substr(2, 2), 16);
     const b = parseInt(h.substr(4, 2), 16);
-
     const newSym = (g.symbol as any).clone();
     newSym.color = [r, g2, b, parseFloat(editAlpha.toFixed(2))];
-
     g.symbol = newSym;
+
+    // 2) update its label
+    const labelsLayer = labelsLayerRef.current!;
+    const label = labelsLayer.graphics.find(
+      (l: any) => l.attributes.parentId === editingId
+    );
+    if (label) {
+      // a) update the text
+      (label.symbol as any).text = editName;
+
+      // b) reposition at new centroid using a plain object
+      const [cx, cy] = getPolygonCentroid(g.geometry.rings[0]);
+      label.geometry = {
+        type: "point",
+        x: cx,
+        y: cy,
+        spatialReference: g.geometry.spatialReference.toJSON(),
+      };
+    }
+
+    // 3) notify and close the form
     finalizedLayerRef.events!.dispatchEvent(new Event("change"));
     setEditingId(null);
   };

@@ -2,14 +2,16 @@
 import { useEffect, useRef } from "react";
 import {
   editingLayerRef,
-  // finalizedLayerRef,
   MapViewRef,
+  finalizedLayerRef,
   GraphicRef,
 } from "./map/arcgisRefs";
 
-import { setFinalizedLayer } from "./map/arcgisRefs";
+import { setFinalizedLayer, setLabelsLayer } from "./map/arcgisRefs";
 
-import Sidebar from "@/app/components/map/Sidebar";
+import { getPolygonCentroid } from "./map/centroid";
+
+import Point from "@arcgis/core/geometry/Point";
 
 export default function ArcGISMap() {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -29,6 +31,7 @@ export default function ArcGISMap() {
             "esri/layers/support/ImageElement",
             "esri/layers/support/ExtentAndRotationGeoreference",
             "esri/geometry/Extent",
+            "esri/geometry/Point",
           ],
           (
             Map: any,
@@ -38,7 +41,8 @@ export default function ArcGISMap() {
             MediaLayer: any,
             ImageElement: any,
             ExtentAndRotationGeoreference: any,
-            Extent: any
+            Extent: any,
+            Point: any
           ) => {
             const map = new Map({ basemap: "streets-navigation-vector" });
             const view = new MapView({
@@ -52,6 +56,7 @@ export default function ArcGISMap() {
             const editingLayer = new GraphicsLayer({ id: "editing" });
             // 2) Create a finalized layer (static graphics)
             const finalizedLayer = new GraphicsLayer({ id: "finalized" });
+            const labelsLayer = new GraphicsLayer({ id: "labels" });
 
             const imgLowRes = new ImageElement({
               image: "https://campusmap.flavioherrera.com/testing/map4.png",
@@ -72,12 +77,35 @@ export default function ArcGISMap() {
               source: [imgLowRes],
             });
 
-            map.addMany([mediaLayer, finalizedLayer, editingLayer]);
+            map.addMany([
+              mediaLayer,
+              finalizedLayer,
+              editingLayer,
+              labelsLayer,
+            ]);
 
             // store refs
             editingLayerRef.current = editingLayer;
-            // finalizedLayerRef.current = finalizedLayer;
             setFinalizedLayer(finalizedLayer);
+            setLabelsLayer(labelsLayer);
+
+            finalizedLayerRef.events.addEventListener("change", () => {
+              const polys = finalizedLayer.graphics.items; // all polygons
+              const labels = labelsLayer.graphics.items; // all labels
+              labels.forEach((label: any) => {
+                const pid = label.attributes.parentId;
+                const poly = polys.find((p: any) => p.attributes.id === pid);
+                if (!poly) return;
+                // compute new centroid
+                const [cx, cy] = getPolygonCentroid(poly.geometry.rings[0]);
+                // reposition label (use real Point class)
+                label.geometry = new Point({
+                  x: cx,
+                  y: cy,
+                  spatialReference: poly.geometry.spatialReference,
+                });
+              });
+            });
             GraphicRef.current = Graphic;
             MapViewRef.current = view;
           }
