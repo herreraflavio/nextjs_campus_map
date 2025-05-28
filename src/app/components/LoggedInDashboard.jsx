@@ -34,8 +34,7 @@ export default function LoggedInDashboard({ user }) {
             position: "relative",
           }}
         >
-          <div>
-            side navbar goes here
+          <div style={{ width: "250px" }}>
             <Sidebar />
           </div>
           <ArcGISWrapper />
