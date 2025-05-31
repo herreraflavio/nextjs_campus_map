@@ -12,8 +12,8 @@ export function rebuildBuckets(labelsLayer: any) {
   labelBuckets.length = 0;
 
   labelsLayer.graphics.items.forEach((lbl: any) => {
-    const minZ = lbl.attributes.showAtZoom ?? 15;
-    const maxZ = lbl.attributes.hideAtZoom ?? 18;
+    const minZ = lbl.attributes.showAtZoom ?? -1;
+    const maxZ = lbl.attributes.hideAtZoom ?? Infinity;
 
     let b = labelBuckets.find((x) => x.minZoom === minZ && x.maxZoom === maxZ);
     if (!b) {

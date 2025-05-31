@@ -243,17 +243,6 @@ export default function ArcGISMap() {
 
           map.addMany([mediaLayer, finalizedLayer, editingLayer, labelsLayer]);
 
-          // 2) on every zoom change, toggle each bucket’s visibility
-          // view.watch("zoom", (z: number) => {
-          //   labelBuckets.forEach((b) => {
-          //     console.log("attemping to hide");
-          //     console.log("z: " + z);
-          //     console.log("b.minZoom: " + b.minZoom);
-          //     console.log("b.maxZoom: " + b.maxZoom);
-          //     const show = z >= b.minZoom && z <= b.maxZoom;
-          //     b.labels.forEach((lbl) => (lbl.visible = show));
-          //   });
-          // });
           // Watch for zoom and control visibility
           view.watch("zoom", (z: number) => {
             labelBuckets.forEach((b) => {
