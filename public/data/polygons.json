@@ -1,0 +1,71 @@
+{
+  "polygons": [
+    {
+      "attributes": {
+        "id": "poly1",
+        "name": "Engineering Quad",
+        "description": "Building footprint for Engineering Quad",
+        "showAtZoom": 14,
+        "hideAtZoom": 18
+      },
+      "geometry": {
+        "type": "polygon",
+        "rings": [
+          [
+            [-120.423, 37.366],
+            [-120.422, 37.366],
+            [-120.422, 37.365],
+            [-120.423, 37.365],
+            [-120.423, 37.366]
+          ]
+        ],
+        "spatialReference": { "wkid": 4326 }
+      },
+      "symbol": {
+        "type": "simple-fill",
+        "color": [255, 0, 0, 0.4],
+        "outline": {
+          "color": [0, 0, 0, 1],
+          "width": 1
+        }
+      }
+    },
+    {
+      "attributes": {
+        "id": "poly2",
+        "name": "Student Union Complex",
+        "description": "Multipolygon: Student Union Building + Adjacent Plaza",
+        "showAtZoom": 15,
+        "hideAtZoom": 19
+      },
+      "geometry": {
+        "type": "polygon",
+        "rings": [
+          [
+            [-120.4215, 37.3665],
+            [-120.4205, 37.3665],
+            [-120.4205, 37.3655],
+            [-120.4215, 37.3655],
+            [-120.4215, 37.3665]
+          ],
+          [
+            [-120.4202, 37.3662],
+            [-120.4196, 37.3662],
+            [-120.4196, 37.3658],
+            [-120.4202, 37.3658],
+            [-120.4202, 37.3662]
+          ]
+        ],
+        "spatialReference": { "wkid": 4326 }
+      },
+      "symbol": {
+        "type": "simple-fill",
+        "color": [0, 128, 255, 0.4],
+        "outline": {
+          "color": [0, 0, 0, 1],
+          "width": 1
+        }
+      }
+    }
+  ]
+}
