@@ -1,0 +1,46 @@
+// lib/mapModel.js
+import clientPromise from "./mongodb";
+import { ObjectId } from "mongodb";
+
+/**
+ * mapData: {
+ *   ownerId: string,            // user._id as a string
+ *   polygons: Array<{
+ *     attributes: { id: string; name: string; description: string; showAtZoom?: number; hideAtZoom?: number },
+ *     geometry: { type: "polygon"; rings: number[][][]; spatialReference: { wkid: number } },
+ *     symbol: { type: "simple-fill"; color: number[]; outline: { color: number[]; width: number } }
+ *   }>
+ * }
+ */
+
+export async function createMap(mapData: {
+  ownerId: string;
+  polygons: any[];
+  title?: string;
+  description?: string;
+}) {
+  const db = (await clientPromise).db();
+  const newMapDoc = {
+    ownerId: new ObjectId(mapData.ownerId),
+    title: mapData.title || null,
+    description: mapData.description || null,
+    polygons: mapData.polygons,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const res = await db.collection("maps").insertOne(newMapDoc);
+  return res.insertedId.toString();
+}
+
+export async function getMapById(mapId: string) {
+  const db = (await clientPromise).db();
+  return db.collection("maps").findOne({ _id: new ObjectId(mapId) });
+}
+
+export async function getMapsByUser(userId: string) {
+  const db = (await clientPromise).db();
+  return db
+    .collection("maps")
+    .find({ ownerId: new ObjectId(userId) })
+    .toArray();
+}

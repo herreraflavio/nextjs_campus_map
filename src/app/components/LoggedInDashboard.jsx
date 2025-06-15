@@ -2,9 +2,15 @@
 
 import React, { useState } from "react";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
 import Button from "@/app/components/button/Button";
+import ExportMap from "@/app/components/button/ExportMap";
+import NewMap from "@/app/components/button/NewMap";
+import OpenMap from "@/app/components/button/OpenMap";
 import SaveMap from "@/app/components/button/SaveMap";
+import ShareMap from "@/app/components/button/ShareMap";
+
 import SketchTool from "@/app/components/SketchTool";
 import Sidebar from "./map/Sidebar";
 import {
@@ -42,12 +48,27 @@ export default function LoggedInDashboard({ user }) {
         }}
       >
         <Toolbar>
+          <Link href="/">
+            <button style={{ fontSize: "28px", cursor: "pointer" }}>
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/1865/1865269.png"
+                alt=""
+                style={{ width: "30px" }}
+              />
+              Home
+            </button>
+          </Link>
+
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             <Box
               sx={{ p: 2, display: "flex", justifyContent: "center", gap: 2 }}
             >
-              <Button />
+              {/* <Button /> */}
+              <ExportMap />
+              <NewMap />
+              <OpenMap />
               <SaveMap />
+              <ShareMap />
               <SketchTool />
             </Box>
           </Typography>

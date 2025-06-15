@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import LoggedInDashboard from "./components/LoggedInDashboard";
 import AuthForm from "./components/AuthForm"; // login + register
-
+import Home from "@/app/components/Home";
 export default async function HomePage() {
   const session = await auth();
 
@@ -21,5 +21,6 @@ export default async function HomePage() {
     );
   }
 
-  return <LoggedInDashboard user={session.user} />;
+  //  return <LoggedInDashboard user={session.user} />;
+  return <Home user={session.user} />;
 }
