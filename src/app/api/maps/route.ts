@@ -151,12 +151,20 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  if (!user._id) {
+    return new Response(JSON.stringify({ error: "User id not found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   // 4) create the map using the user's _id
   const mapId = await createMap({
     ownerId: user._id.toString(),
     polygons: [], // empty for now
     title,
     description: undefined,
+    isPrivate: false,
   });
 
   // 5) push mapId into their `maps` array

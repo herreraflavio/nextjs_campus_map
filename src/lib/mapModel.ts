@@ -18,6 +18,7 @@ export async function createMap(mapData: {
   polygons: any[];
   title?: string;
   description?: string;
+  isPrivate: boolean;
 }) {
   const db = (await clientPromise).db();
   const newMapDoc = {
@@ -27,6 +28,7 @@ export async function createMap(mapData: {
     polygons: mapData.polygons,
     createdAt: new Date(),
     updatedAt: new Date(),
+    isPrivate: mapData.isPrivate,
   };
   const res = await db.collection("maps").insertOne(newMapDoc);
   return res.insertedId.toString();

@@ -95,7 +95,8 @@ export default function Home({ user }) {
     });
     if (res.ok) {
       const newMap = await res.json();
-      setMaps((prev) => prev.map((m) => (m.id === id ? newMap : m)));
+      console.log(newMap);
+      setMaps((prev) => prev.map((m) => (m.mapId === id ? newMap : m)));
     }
   };
 
