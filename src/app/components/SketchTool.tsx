@@ -7,6 +7,10 @@ import {
   MapViewRef,
   GraphicRef,
 } from "./map/arcgisRefs";
+import { useSession } from "next-auth/react";
+
+import { useMapId } from "@/app/context/MapContext";
+import { saveMapToServer } from "@/app/helper/saveMap";
 
 export default function ToggleSketchTool() {
   const sketchRef = useRef<any>(null);
@@ -16,6 +20,9 @@ export default function ToggleSketchTool() {
     new Map()
   );
   const lastCentroidTime = useRef<Map<string, number>>(new Map());
+  const { data: session, status } = useSession();
+  const userEmail = session?.user?.email;
+  const mapId = useMapId();
 
   /** random [r,g,b,a] with 0.4–0.8 alpha */
   const makeRandomColor = (): number[] => {
@@ -295,6 +302,9 @@ export default function ToggleSketchTool() {
     editLayer.removeAll();
     labelMap.current.clear();
     finalizedLayerRef.events?.dispatchEvent(new Event("change"));
+    if (userEmail) {
+      saveMapToServer(mapId, userEmail);
+    }
 
     if (sketchRef.current) {
       sketchRef.current.cancel();

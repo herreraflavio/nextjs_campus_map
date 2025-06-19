@@ -17,13 +17,18 @@ export async function createMap(mapData: {
   ownerId: string;
   polygons: any[];
   title?: string;
+  url?: string;
   description?: string;
   isPrivate: boolean;
 }) {
   const db = (await clientPromise).db();
+  const generatedId = new ObjectId();
+  const mapURL = `/maps/${generatedId}`;
   const newMapDoc = {
+    _id: generatedId,
     ownerId: new ObjectId(mapData.ownerId),
     title: mapData.title || null,
+    url: mapURL || null,
     description: mapData.description || null,
     polygons: mapData.polygons,
     createdAt: new Date(),
@@ -31,7 +36,9 @@ export async function createMap(mapData: {
     isPrivate: mapData.isPrivate,
   };
   const res = await db.collection("maps").insertOne(newMapDoc);
-  return res.insertedId.toString();
+  console.log(newMapDoc);
+
+  return newMapDoc;
 }
 
 export async function getMapById(mapId: string) {
@@ -45,4 +52,18 @@ export async function getMapsByUser(userId: string) {
     .collection("maps")
     .find({ ownerId: new ObjectId(userId) })
     .toArray();
+}
+
+export async function getMapsByOwnerId(ownerId: string) {
+  const client = await clientPromise;
+  const db = client.db();
+  const maps = await db
+    .collection("maps")
+    .find({ ownerId: new ObjectId(ownerId) })
+    .toArray();
+
+  return maps.map(({ _id, ...rest }) => ({
+    _id: _id.toString(),
+    ...rest,
+  }));
 }

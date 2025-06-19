@@ -5,6 +5,9 @@ import { labelsLayerRef, finalizedLayerRef, MapViewRef } from "./arcgisRefs";
 import { getPolygonCentroid } from "./centroid";
 import Point from "@arcgis/core/geometry/Point";
 import { rebuildBuckets } from "./bucketManager";
+import { useSession } from "next-auth/react";
+import { useMapId } from "@/app/context/MapContext";
+import { saveMapToServer } from "@/app/helper/saveMap";
 import {
   TextField,
   Slider,
@@ -28,6 +31,13 @@ export default function Sidebar() {
   const [maxZoomEnabled, setMaxZoomEnabled] = useState(false);
   const [minZoomLevel, setMinZoomLevel] = useState<string>("14");
   const [maxZoomLevel, setMaxZoomLevel] = useState<string>("18");
+  const { data: session, status } = useSession();
+  const userEmail = session?.user?.email;
+  const mapId = useMapId();
+
+  // console.log("mapId: " + mapId + "owner: " + userEmail);
+
+  // alert(useMapId());
 
   const view = MapViewRef.current;
 
@@ -124,6 +134,9 @@ export default function Sidebar() {
       });
 
       rebuildBuckets(labelsLayer);
+    }
+    if (userEmail) {
+      saveMapToServer(mapId, userEmail);
     }
 
     finalizedLayerRef.events.dispatchEvent(new Event("change"));

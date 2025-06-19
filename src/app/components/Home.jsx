@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function Home({ user }) {
   const [maps, setMaps] = useState([]);
@@ -21,31 +22,6 @@ export default function Home({ user }) {
     setNewMapName("");
   };
 
-  // Submit handler for creating a new map
-  // const handleCreateSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (!newMapName.trim()) return;
-
-  //   const newMap = {
-  //     name: newMapName.trim(),
-  //     thumbnailUrl: "",
-  //     url: "",
-  //     isPrivate: true,
-  //   };
-
-  //   const res = await fetch("/api/maps", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(newMap),
-  //   });
-
-  //   if (res.ok) {
-  //     const created = await res.json();
-  //     setMaps((prev) => [...prev, created]);
-  //     setShowNewForm(false);
-  //     setNewMapName("");
-  //   }
-  // };
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const trimmed = newMapName.trim();
@@ -58,7 +34,7 @@ export default function Home({ user }) {
     });
 
     if (res.ok) {
-      const created = await res.json(); // { mapId, name }
+      const created = await res.json();
       setMaps((prev) => [...prev, created]);
       setShowNewForm(false);
       setNewMapName("");
@@ -81,7 +57,7 @@ export default function Home({ user }) {
       method: "DELETE",
     });
     if (res.status === 204) {
-      setMaps((prev) => prev.filter((m) => m.id !== id));
+      setMaps((prev) => prev.filter((m) => m._id !== id));
     }
   };
 
@@ -96,7 +72,7 @@ export default function Home({ user }) {
     if (res.ok) {
       const newMap = await res.json();
       console.log(newMap);
-      setMaps((prev) => prev.map((m) => (m.mapId === id ? newMap : m)));
+      setMaps((prev) => prev.map((m) => (m._id === id ? newMap : m)));
     }
   };
 
@@ -235,7 +211,7 @@ export default function Home({ user }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {maps.map((map) => (
             <div
-              key={map.id}
+              key={map._id}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -273,7 +249,7 @@ export default function Home({ user }) {
               </div>
 
               <div style={{ flexGrow: 1 }}>
-                <h2 style={{ margin: "0 0 0.5rem 0" }}>{map.name}</h2>
+                <h2 style={{ margin: "0 0 0.5rem 0" }}>{map.title}</h2>
                 <p style={{ margin: "0.25rem 0" }}>
                   <strong>URL:</strong>{" "}
                   {map.url ? (
@@ -296,7 +272,7 @@ export default function Home({ user }) {
                     color: "#555",
                   }}
                 >
-                  Created: {new Date(map.dateCreated).toLocaleString()}
+                  Created: {new Date(map.createdAt).toLocaleString()}
                 </p>
                 <p
                   style={{
@@ -305,7 +281,7 @@ export default function Home({ user }) {
                     color: "#555",
                   }}
                 >
-                  Last Edited: {new Date(map.dateLastEdited).toLocaleString()}
+                  Last Edited: {new Date(map.updatedAt).toLocaleString()}
                 </p>
                 <p
                   style={{
@@ -330,8 +306,25 @@ export default function Home({ user }) {
                   gap: "0.5rem",
                 }}
               >
+                <Link
+                  // onClick={() => openMap(map._id)}
+                  href={`/maps/${map._id}`}
+                  style={{
+                    padding: "0.4rem 0.6rem",
+                    background: "green",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    textDecoration: "none",
+                    textAlign: "center",
+                  }}
+                >
+                  Open Map
+                </Link>
                 <button
-                  onClick={() => deleteMap(map.id)}
+                  onClick={() => deleteMap(map._id)}
                   style={{
                     padding: "0.4rem 0.6rem",
                     background: "#e00",
@@ -345,7 +338,7 @@ export default function Home({ user }) {
                   Delete
                 </button>
                 <button
-                  onClick={() => toggleVisibility(map.mapId, map.isPrivate)}
+                  onClick={() => toggleVisibility(map._id, map.isPrivate)}
                   style={{
                     padding: "0.4rem 0.6rem",
                     background: "#555",
@@ -358,7 +351,7 @@ export default function Home({ user }) {
                 >
                   {map.isPrivate ? "Make Public" : "Make Private"}
                 </button>
-                <button
+                {/* <button
                   onClick={() => shareMap(map.id)}
                   style={{
                     padding: "0.4rem 0.6rem",
@@ -371,8 +364,8 @@ export default function Home({ user }) {
                   }}
                 >
                   Share
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => downloadMap(map.id)}
                   style={{
                     padding: "0.4rem 0.6rem",
@@ -385,8 +378,8 @@ export default function Home({ user }) {
                   }}
                 >
                   Download
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => duplicateMap(map.id)}
                   style={{
                     padding: "0.4rem 0.6rem",
@@ -399,8 +392,8 @@ export default function Home({ user }) {
                   }}
                 >
                   Duplicate
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => renameMap(map.id, map.name)}
                   style={{
                     padding: "0.4rem 0.6rem",
@@ -413,7 +406,7 @@ export default function Home({ user }) {
                   }}
                 >
                   Rename
-                </button>
+                </button> */}
               </div>
             </div>
           ))}

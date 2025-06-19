@@ -6,5 +6,6 @@ export default function SaveMap() {
     console.log(finalizedLayerRef.current.graphics.items[0].attributes.title);
   };
 
-  return <button onClick={() => saveMap()}>Save Map</button>;
+  // return <button onClick={() => saveMap()}>Save Map</button>;
+  return <button>Auto Save On</button>;
 }

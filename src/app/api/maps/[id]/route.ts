@@ -1,141 +1,3 @@
-// import { ObjectId } from "mongodb";
-// import { NextRequest, NextResponse } from "next/server";
-// import { auth } from "@/lib/auth";
-// import clientPromise from "@/lib/mongodb";
-// import { findUserByEmail } from "@/lib/userModel";
-// import type { NextApiRequest, NextApiResponse } from "next";
-
-// export async function PATCH(
-//   req: NextApiRequest,
-//   res: NextApiResponse,
-//   { params }: { params: { id: string } }
-// ) {
-//   const { isPrivate } = req.body;
-//   // 1) Auth check
-//   //   const session = await auth();
-//   //   if (!session?.user?.email) {
-//   //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//   //   }
-
-//   //   // 2) Validate ObjectId
-//   //   let mapObjectId: ObjectId;
-//   //   try {
-//   //     mapObjectId = new ObjectId(params.id);
-//   //   } catch {
-//   //     return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
-//   //   }
-
-//   //   // 3) Find user
-//   //   const user = await findUserByEmail(session.user.email);
-//   //   if (!user) {
-//   //     return NextResponse.json({ error: "User not found" }, { status: 404 });
-//   //   }
-
-//   //   // 4) Check if user owns this map
-//   //   const ownsMap = user.maps.some((entry: any) => {
-//   //     const idToCheck = entry?.id ?? entry; // entry might be an ObjectId or { id, url }
-//   //     return new ObjectId(idToCheck).equals(mapObjectId);
-//   //   });
-
-//   //   if (!ownsMap) {
-//   //     return NextResponse.json(
-//   //       { error: "Forbidden: You do not own this map" },
-//   //       { status: 403 }
-//   //     );
-//   //   }
-
-//   //   // 5) Parse the update data (e.g. { isPrivate: false })
-//   //   const updateData = await request.json();
-
-//   //   // 6) Perform the update in the `maps` collection
-//   //   const db = (await clientPromise).db();
-//   //   const result = await db.collection("maps").findOneAndUpdate(
-//   //     { _id: mapObjectId },
-//   //     { $set: updateData },
-//   //     { returnDocument: "after" } // returns the updated doc
-//   //   );
-//   //   if (result) {
-//   //     if (!result.value) {
-//   //       return NextResponse.json({ error: "Map not found" }, { status: 404 });
-//   //     }
-
-//   //     return NextResponse.json(result.value);
-//   //   } else {
-//   //     return NextResponse.json("error");
-
-//   //  }
-//   console.log(isPrivate);
-//   console.log(params.id);
-// }
-
-// import { ObjectId } from "mongodb";
-// import { NextRequest, NextResponse } from "next/server";
-// import { auth } from "@/lib/auth";
-// import clientPromise from "@/lib/mongodb";
-// import { findUserByEmail } from "@/lib/userModel";
-
-// export async function PATCH(
-//   request: NextRequest,
-//   { params }: { params: { id: string } }
-// ) {
-//   const { isPrivate } = await request.json();
-//   console.log("paramsID:", params.id);
-
-//   // 1) Auth check
-//   const session = await auth();
-//   if (!session?.user?.email) {
-//     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//   }
-
-//   // 2) Validate ObjectId
-//   let mapObjectId: ObjectId;
-//   try {
-//     mapObjectId = new ObjectId(params.id);
-//   } catch {
-//     return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
-//   }
-
-//   // 3) Find user
-//   const user = await findUserByEmail(session.user.email);
-//   if (!user) {
-//     return NextResponse.json({ error: "User not found" }, { status: 404 });
-//   }
-
-//   // 4) Check if user owns this map
-//   const ownsMap = user.maps.some((entry: any) => {
-//     const idToCheck = entry?.id ?? entry;
-//     return new ObjectId(idToCheck).equals(mapObjectId);
-//   });
-
-//   if (!ownsMap) {
-//     return NextResponse.json(
-//       { error: "Forbidden: You do not own this map" },
-//       { status: 403 }
-//     );
-//   }
-
-//   // 5) Update map
-//   const db = (await clientPromise).db();
-//   const result = await db
-//     .collection("maps")
-//     .findOneAndUpdate(
-//       { _id: mapObjectId },
-//       { $set: { isPrivate } },
-//       { returnDocument: "after" }
-//     );
-//   if (result) {
-//     if (!result.value) {
-//       return NextResponse.json({ error: "Map not found" }, { status: 404 });
-//     }
-
-//     return NextResponse.json(result.value);
-//   }
-// }
-// app/api/maps/[id]/route.ts
-// -----------------------------------------------------------------------------
-// PATCH  /api/maps/[id]   —   Driver: mongodb 6.x
-// -----------------------------------------------------------------------------
-
 import { ObjectId, MongoClient, Document, WithId } from "mongodb";
 import type { Session } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -148,6 +10,7 @@ export interface MapDoc extends Document {
   _id: ObjectId;
   ownerId: ObjectId;
   title: string;
+  url: string;
   description: string | null;
   polygons: unknown[];
   createdAt: Date;
@@ -267,80 +130,200 @@ export async function PATCH(
   return NextResponse.json(result, { status: 200 });
 }
 
-// import { ObjectId, WithId, Document } from "mongodb";
-// import { NextRequest, NextResponse } from "next/server";
-// import { auth } from "@/lib/auth";
-// import clientPromise from "@/lib/mongodb";
-// import { findUserByEmail } from "@/lib/userModel";
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const t0 = Date.now();
 
-// // 1) Define your Map schema for TS
-// interface MapDoc extends Document {
-//   _id: ObjectId;
-//   ownerId: string;
-//   title: string;
-//   description: string | null;
-//   polygons: any[]; // you can replace `any` with a better Polygon type if you have one
-//   createdAt: Date;
-//   updatedAt: Date;
-//   isPrivate: boolean;
-// }
+  // 1️⃣ Route param
+  const { id: rawId } = await context.params;
+  if (!rawId) {
+    return NextResponse.json({ error: "Missing map ID" }, { status: 400 });
+  }
 
-// export async function PATCH(
-//   request: NextRequest,
-//   context: { params: Promise<{ id: string }> }
-// ) {
-//   // await your dynamic params
-//   const { id } = await context.params;
-//   console.log("id:", id);
+  // 2️⃣ Convert to ObjectId
+  let mapObjectId: ObjectId;
+  try {
+    mapObjectId = new ObjectId(rawId);
+  } catch {
+    return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
+  }
 
-//   // parse the body
-//   const { isPrivate } = await request.json();
-//   console.log("isPrivate:", isPrivate);
-//   // auth guard
-//   const session = await auth();
-//   if (!session?.user?.email) {
-//     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//   }
+  // 3️⃣ Auth
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const email = session.user.email;
 
-//   // validate the ID
-//   let mapObjectId: ObjectId;
-//   try {
-//     mapObjectId = new ObjectId("684e2fcaef150dfcd9289473");
-//   } catch {
-//     return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
-//   }
+  // 4️⃣ Lookup user
+  const user: User | null = await findUserByEmail(email).catch((err) => {
+    console.error(`[DELETE ${rawId}] 🚫 findUserByEmail error:`, err);
+    return null;
+  });
+  if (!user?._id) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
 
-//   // confirm they own it
-//   const user = await findUserByEmail(session.user.email);
-//   if (!user) {
-//     return NextResponse.json({ error: "User not found" }, { status: 404 });
-//   }
-//   const ownsMap = user.maps.some((entry: any) => {
-//     const idToCheck = entry?.id ?? entry;
-//     return new ObjectId(idToCheck).equals(mapObjectId);
-//   });
-//   if (!ownsMap) {
-//     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-//   } else {
-//     console.log("proceeding...");
-//   }
+  // 5️⃣ DB handles
+  const mongo: MongoClient = await clientPromise;
+  const db = mongo.db("campusmap");
+  const maps = db.collection<MapDoc>("maps");
 
-//   // 2) Type your collection and result
-//   const db = (await clientPromise).db();
-//   const updateResult = await db
-//     .collection<MapDoc>("maps")
-//     .findOneAndUpdate(
-//       { _id: mapObjectId },
-//       { $set: { isPrivate } },
-//       { returnDocument: "after" }
-//     );
+  // 6️⃣ Ownership check
+  const existing = await maps.findOne({ _id: mapObjectId });
+  if (!existing) {
+    return NextResponse.json({ error: "Map not found" }, { status: 404 });
+  }
+  if (!existing.ownerId.equals(user._id)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-//   // 3) Null‐check both updateResult and updateResult.value
-//   if (!updateResult || !updateResult.value) {
-//     return NextResponse.json({ error: "Map not found" }, { status: 404 });
-//   }
+  // 7️⃣ Delete
+  const result = await maps.deleteOne({ _id: mapObjectId });
+  if (result.deletedCount !== 1) {
+    return NextResponse.json({ error: "Deletion failed" }, { status: 500 });
+  }
 
-//   // TS now knows updateResult.value is a MapDoc
-//   const updatedMap: WithId<MapDoc> = updateResult.value;
-//   return NextResponse.json(updatedMap);
-// }
+  console.log(`[DELETE ${rawId}] ✅ deleted in ${Date.now() - t0} ms`);
+  return new Response(null, { status: 204 }); // No Content
+}
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id: rawId } = await context.params;
+
+  // Validate ObjectId
+  let mapObjectId: ObjectId;
+  try {
+    mapObjectId = new ObjectId(rawId);
+  } catch {
+    return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
+  }
+
+  // Connect to DB
+  const mongo: MongoClient = await clientPromise;
+  const db = mongo.db("campusmap");
+  const maps = db.collection<MapDoc>("maps");
+
+  // Find map
+  const map = await maps.findOne({ _id: mapObjectId });
+  if (!map) {
+    return NextResponse.json({ error: "Map not found" }, { status: 404 });
+  }
+
+  // Public access check (optional: adjust if you want auth-only)
+  if (map.isPrivate) {
+    const session = await auth();
+    const email = session?.user?.email;
+    const user = email ? await findUserByEmail(email) : null;
+    if (!user || !map.ownerId.equals(user._id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
+  // ✅ Return only the polygons
+  return NextResponse.json({ polygons: map.polygons }, { status: 200 });
+}
+
+// at the bottom of /api/maps/[id]/route.ts
+
+interface ExportBody {
+  userEmail: string;
+  polygons: unknown[];
+}
+function isExportBody(x: any): x is ExportBody {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    typeof x.userEmail === "string" &&
+    Array.isArray(x.polygons)
+  );
+}
+
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  // 1️⃣  Route param
+  const { id: rawId } = await context.params;
+  if (!rawId) {
+    return NextResponse.json({ error: "Missing map ID" }, { status: 400 });
+  }
+
+  // 2️⃣  Parse & validate body
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  if (!isExportBody(body)) {
+    return NextResponse.json(
+      { error: "Request must include userEmail (string) and polygons (array)" },
+      { status: 400 }
+    );
+  }
+  const { userEmail, polygons } = body;
+
+  // 3️⃣  Validate mapId
+  let mapObjectId: ObjectId;
+  try {
+    mapObjectId = new ObjectId(rawId);
+  } catch {
+    return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
+  }
+
+  // 4️⃣  Lookup user by email
+  const user: User | null = await findUserByEmail(userEmail);
+  if (!user?._id) {
+    return NextResponse.json(
+      { error: `No user found for email "${userEmail}"` },
+      { status: 404 }
+    );
+  }
+
+  // 5️⃣  Connect to DB & fetch existing map
+  const mongo: MongoClient = await clientPromise;
+  const db = mongo.db("campusmap");
+  const maps = db.collection<MapDoc>("maps");
+
+  const existing = await maps.findOne({ _id: mapObjectId });
+  if (!existing) {
+    return NextResponse.json({ error: "Map not found" }, { status: 404 });
+  }
+
+  // 6️⃣  Authorize ownership
+  if (!existing.ownerId.equals(user._id)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // 7️⃣  Apply the update
+  const updateResult = await maps.updateOne(
+    { _id: mapObjectId },
+    { $set: { polygons, updatedAt: new Date() } }
+  );
+  if (updateResult.matchedCount !== 1) {
+    console.error("updateOne did not match any document:", updateResult);
+    return NextResponse.json(
+      { error: "Failed to update polygons" },
+      { status: 500 }
+    );
+  }
+
+  // 8️⃣  Fetch the freshly-updated document
+  const updatedMap = await maps.findOne({ _id: mapObjectId });
+  if (!updatedMap) {
+    console.error("findOne after update returned null—this should not happen.");
+    return NextResponse.json(
+      { error: "Failed to fetch updated map" },
+      { status: 500 }
+    );
+  }
+
+  // 9️⃣  Return the updated map
+  return NextResponse.json(updatedMap, { status: 200 });
+}
