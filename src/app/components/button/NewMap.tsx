@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
-export default function NewMap(): JSX.Element {
+export default function NewMap() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mapName, setMapName] = useState<string>("");
 
