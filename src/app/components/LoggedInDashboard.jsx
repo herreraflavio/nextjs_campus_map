@@ -64,9 +64,9 @@ export default function LoggedInDashboard({ user }) {
               sx={{ p: 2, display: "flex", justifyContent: "center", gap: 2 }}
             >
               {/* <Button /> */}
-              <ExportMap />
+              {/* <ExportMap />
               <NewMap />
-              <OpenMap />
+              <OpenMap /> */}
               <SaveMap />
               <ShareMap />
               <SketchTool />
