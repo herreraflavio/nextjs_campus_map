@@ -50,7 +50,9 @@ export default function ArcGISMap() {
           Point: typeof __esri.Point
         ) => {
           // ——— Basic map & view ———
-          const map = new Map({ basemap: "streets-navigation-vector" });
+          // const map = new Map({ basemap: "streets-navigation-vector" });
+          const map = new Map({ basemap: "satellite" });
+
           const view = new MapView({
             container: mapDiv.current,
             map,

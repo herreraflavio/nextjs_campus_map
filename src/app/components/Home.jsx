@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 
 export default function Home({ user }) {
   const [maps, setMaps] = useState([]);
@@ -132,7 +133,24 @@ export default function Home({ user }) {
 
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Welcome {user.email}</h1>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ flexGrow: "1" }}>
+          <h1>Welcome {user.email}</h1>
+        </div>
+        <div>
+          <button
+            onClick={() => signOut()}
+            sx={{
+              backgroundColor: "rgba(0, 0, 0, 0.08)", // stronger gray
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.15)", // slightly darker on hover
+              },
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
 
       {/* “Create New Map” button */}
       {!showNewForm && (
