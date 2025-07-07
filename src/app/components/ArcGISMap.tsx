@@ -247,8 +247,8 @@ export default function ArcGISMap() {
           const view = new MapView({
             container: mapDiv.current,
             map,
-            center: [-120.422045, 37.365169],
-            zoom: 16,
+            center: [-120.422045, 37.368169],
+            zoom: 15,
           });
 
           /* ─────────── Layers ─────────── */
