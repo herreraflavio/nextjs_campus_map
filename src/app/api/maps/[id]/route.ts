@@ -226,21 +226,38 @@ export async function GET(
   }
 
   // ✅ Return only the polygons
-  return NextResponse.json({ polygons: map.polygons }, { status: 200 });
+  return NextResponse.json(
+    { polygons: map.polygons, labels: (map as any).labels ?? [] },
+    { status: 200 }
+  );
 }
 
 // at the bottom of /api/maps/[id]/route.ts
 
+// interface ExportBody {
+//   userEmail: string;
+//   polygons: unknown[];
+// }
+// function isExportBody(x: any): x is ExportBody {
+//   return (
+//     typeof x === "object" &&
+//     x !== null &&
+//     typeof x.userEmail === "string" &&
+//     Array.isArray(x.polygons)
+//   );
+// }
 interface ExportBody {
   userEmail: string;
   polygons: unknown[];
+  labels: unknown[];
 }
 function isExportBody(x: any): x is ExportBody {
   return (
     typeof x === "object" &&
     x !== null &&
     typeof x.userEmail === "string" &&
-    Array.isArray(x.polygons)
+    Array.isArray(x.polygons) &&
+    Array.isArray(x.labels)
   );
 }
 
@@ -261,13 +278,23 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+  // if (!isExportBody(body)) {
+  //   return NextResponse.json(
+  //     { error: "Request must include userEmail (string) and polygons (array)" },
+  //     { status: 400 }
+  //   );
+  // }
+  // const { userEmail, polygons } = body;
   if (!isExportBody(body)) {
     return NextResponse.json(
-      { error: "Request must include userEmail (string) and polygons (array)" },
+      {
+        error:
+          "Request must include userEmail (string), polygons (array), labels (array)",
+      },
       { status: 400 }
     );
   }
-  const { userEmail, polygons } = body;
+  const { userEmail, polygons, labels } = body;
 
   // 3️⃣  Validate mapId
   let mapObjectId: ObjectId;
@@ -304,7 +331,7 @@ export async function POST(
   // 7️⃣  Apply the update
   const updateResult = await maps.updateOne(
     { _id: mapObjectId },
-    { $set: { polygons, updatedAt: new Date() } }
+    { $set: { polygons, labels, updatedAt: new Date() } }
   );
   if (updateResult.matchedCount !== 1) {
     console.error("updateOne did not match any document:", updateResult);

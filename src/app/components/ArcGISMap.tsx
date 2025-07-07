@@ -87,7 +87,7 @@ export default function ArcGISMap() {
           // fetch("/data/polygons.json")
           fetch(`/api/maps/${mapId}`)
             .then((res) => res.json())
-            .then((data: { polygons: any[] }) => {
+            .then((data: { polygons: any[]; labels: any[] }) => {
               data.polygons.forEach((p) => {
                 // 1) Add the polygon itself to finalizedLayer
                 const polyGraphic = new Graphic({
@@ -103,41 +103,70 @@ export default function ArcGISMap() {
 
                 // 2) Compute centroid of the first ring & add a text label
                 //    (we assume at least one ring exists).
-                const [cx, cy] = getPolygonCentroid(p.geometry.rings[0]);
+                // const [cx, cy] = getPolygonCentroid(p.geometry.rings[0]);
 
-                // Build label attributes, including showAtZoom/hideAtZoom if provided:
-                const labelAttrs: any = {
-                  id: `label-${p.attributes.id}`,
-                  parentId: p.attributes.id,
-                  name: p.attributes.name,
-                };
-                if (p.attributes.showAtZoom != null) {
-                  labelAttrs.showAtZoom = p.attributes.showAtZoom;
-                }
-                if (p.attributes.hideAtZoom != null) {
-                  labelAttrs.hideAtZoom = p.attributes.hideAtZoom;
-                }
+                // // Build label attributes, including showAtZoom/hideAtZoom if provided:
+                // const labelAttrs: any = {
+                //   id: `label-${p.attributes.id}`,
+                //   parentId: p.attributes.id,
+                //   name: p.attributes.name,
+                // };
+                // if (p.attributes.showAtZoom != null) {
+                //   labelAttrs.showAtZoom = p.attributes.showAtZoom;
+                // }
+                // if (p.attributes.hideAtZoom != null) {
+                //   labelAttrs.hideAtZoom = p.attributes.hideAtZoom;
+                // }
 
+                // const labelGraphic = new Graphic({
+                //   geometry: {
+                //     type: "point",
+                //     x: cx,
+                //     y: cy,
+                //     spatialReference: view.spatialReference,
+                //   },
+                //   symbol: {
+                //     type: "text",
+                //     text: p.attributes.name,
+                //     color: "black",
+                //     haloColor: "white",
+                //     haloSize: "2px",
+                //     font: {
+                //       size: 12,
+                //       family: "sans-serif",
+                //       weight: "bold",
+                //     },
+                //   },
+                //   attributes: labelAttrs,
+                // });
+                // labelsLayer.add(labelGraphic);
+              });
+              // 2) Recreate labels from saved data
+              data.labels.forEach((l: any) => {
                 const labelGraphic = new Graphic({
                   geometry: {
                     type: "point",
-                    x: cx,
-                    y: cy,
+                    x: l.geometry.x,
+                    y: l.geometry.y,
                     spatialReference: view.spatialReference,
                   },
                   symbol: {
                     type: "text",
-                    text: p.attributes.name,
-                    color: "black",
-                    haloColor: "white",
-                    haloSize: "2px",
+                    text: l.attributes.text,
+                    color: l.attributes.color,
+                    haloColor: l.attributes.haloColor,
+                    haloSize: l.attributes.haloSize,
                     font: {
-                      size: 12,
+                      size: l.attributes.fontSize,
                       family: "sans-serif",
                       weight: "bold",
                     },
                   },
-                  attributes: labelAttrs,
+                  attributes: {
+                    parentId: l.attributes.parentId,
+                    showAtZoom: l.attributes.showAtZoom,
+                    hideAtZoom: l.attributes.hideAtZoom,
+                  },
                 });
                 labelsLayer.add(labelGraphic);
               });

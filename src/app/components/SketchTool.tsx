@@ -166,7 +166,13 @@ export default function ToggleSketchTool() {
                 ? g.attributes.color
                 : makeRandomColor();
             // assign id, name, description
-            const id = crypto.randomUUID();
+            // const id = crypto.randomUUID();
+            // alert(finalizedLayerRef.current!.graphics.items.length);
+            console.log(editingLayerRef.current.graphics.items);
+            const id =
+              "polygon" +
+              (editingLayerRef.current.graphics.items.length + 1) / 2;
+            console.log(id);
             const name = g.attributes?.name ?? "New Polygon";
             g.attributes = {
               ...g.attributes,

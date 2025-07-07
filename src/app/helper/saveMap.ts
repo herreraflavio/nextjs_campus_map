@@ -89,13 +89,18 @@
 // }
 
 // exportMap.ts
-import { finalizedLayerRef } from "@/app/components/map/arcgisRefs";
+import {
+  finalizedLayerRef,
+  labelsLayerRef,
+} from "@/app/components/map/arcgisRefs";
 
 // serialize your map as before
-function generatePolygons() {
-  const layer = finalizedLayerRef.current;
-  if (!layer) return [];
-  return layer.graphics.items.map((g: any) => {
+// function generatePolygons() {
+function generateExport(): { polygons: any[]; labels: any[] } {
+  const polyLayer = finalizedLayerRef.current;
+  const labelLayer = labelsLayerRef.current;
+  // if (!polyLayer) return [];
+  const polygons = polyLayer.graphics.items.map((g: any) => {
     const attrs: any = {
       id: g.attributes.id,
       name: g.attributes.name,
@@ -136,6 +141,31 @@ function generatePolygons() {
       },
     };
   });
+
+  const labels = labelLayer.graphics.items.map((l: any) => {
+    const sym = l.symbol as any;
+    const attrs: any = {
+      parentId: l.attributes.parentId,
+      showAtZoom: l.attributes.showAtZoom ?? null,
+      hideAtZoom: l.attributes.hideAtZoom ?? null,
+      fontSize: sym.font.size,
+      color: sym.color,
+      haloColor: sym.haloColor,
+      haloSize: sym.haloSize,
+      text: sym.text,
+    };
+    const geom = {
+      type: l.geometry.type,
+      x: l.geometry.x,
+      y: l.geometry.y,
+      spatialReference: l.geometry.spatialReference.toJSON
+        ? l.geometry.spatialReference.toJSON()
+        : l.geometry.spatialReference,
+    };
+    return { attributes: attrs, geometry: geom };
+  });
+
+  return { polygons, labels };
 }
 
 /**
@@ -143,7 +173,8 @@ function generatePolygons() {
  * Non-blocking: fires off in the background.
  */
 export function saveMapToServer(mapId: string, userEmail: string): void {
-  const polygons = generatePolygons();
+  // const polygons = generatePolygons();
+  const { polygons, labels } = generateExport();
   if (polygons.length === 0) {
     console.warn("No polygons to save.");
     return;
@@ -155,6 +186,7 @@ export function saveMapToServer(mapId: string, userEmail: string): void {
     body: JSON.stringify({
       userEmail,
       polygons,
+      labels,
     }),
   })
     .then((res) => {
