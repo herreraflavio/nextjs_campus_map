@@ -101,6 +101,8 @@ export default function Sidebar() {
     // update polygon attributes
     g.attributes.name = editName;
     g.popupTemplate.content = editHTML;
+
+    g.attributes.description = editHTML;
     const hex = editColor.slice(1);
     const r = parseInt(hex.substr(0, 2), 16);
     const grn = parseInt(hex.substr(2, 2), 16);
