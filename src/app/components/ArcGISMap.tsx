@@ -203,6 +203,7 @@ import {
   setFinalizedLayer,
   setLabelsLayer,
 } from "./map/arcgisRefs";
+import "./ArcGISMap.css";
 import { useMapId } from "@/app/context/MapContext";
 
 import { getPolygonCentroid } from "./map/centroid";

@@ -1,0 +1,5 @@
+@media (max-width: 400px) {
+  .esri-popup__main-container {
+    max-height: 250px !important; /* Limit height on mobile */
+  }
+}
