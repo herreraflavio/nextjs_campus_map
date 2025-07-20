@@ -206,9 +206,134 @@ export default function ToggleSketchTool() {
             labelMap.current.set(id, label);
           });
 
-          sketch.on("update", (evt: any) => {
-            if (evt.state === "complete") return;
+          // sketch.on("update", (evt: any) => {
+          //   if (evt.state === "complete") return;
 
+          //   const now = performance.now();
+
+          //   evt.graphics.forEach((g: any) => {
+          //     const id = g.attributes?.id;
+          //     const label = labelMap.current.get(id);
+          //     if (!label || g.geometry?.type !== "polygon") return;
+
+          //     const [cx, cy] = getPolygonCentroid(g.geometry.rings[0]);
+          //     const prev = smoothedCentroids.current.get(id) ?? {
+          //       x: cx,
+          //       y: cy,
+          //     };
+          //     const prevTime = lastCentroidTime.current.get(id) ?? now;
+
+          //     // Compute velocity (pixels/ms)
+          //     const dt = now - prevTime;
+          //     const dx = cx - prev.x;
+          //     const dy = cy - prev.y;
+          //     const distance = Math.sqrt(dx * dx + dy * dy);
+          //     const velocity = dt > 0 ? distance / dt : 0; // pixels/ms
+
+          //     lastCentroidTime.current.set(id, now);
+
+          //     // Convert velocity to alpha (higher speed = less smoothing)
+          //     // Tune these as needed
+          //     const minAlpha = 0.1; // max smoothing
+          //     const maxAlpha = 0.6; // less smoothing
+          //     const velocityThreshold = 0.5; // pixels/ms
+
+          //     const alpha = Math.min(
+          //       maxAlpha,
+          //       Math.max(minAlpha, velocity / velocityThreshold)
+          //     );
+
+          //     const newX = alpha * cx + (1 - alpha) * prev.x;
+          //     const newY = alpha * cy + (1 - alpha) * prev.y;
+
+          //     smoothedCentroids.current.set(id, { x: newX, y: newY });
+
+          //     label.geometry = new Point({
+          //       x: newX,
+          //       y: newY,
+          //       spatialReference: view.spatialReference,
+          //     });
+          //   });
+          // });
+          sketch.on("update", (evt: any) => {
+            if (evt.state === "complete") {
+              // Handle completion - check for duplicated polygons that need new IDs
+              const processedIds = new Set();
+
+              evt.graphics.forEach((g: any) => {
+                if (g.geometry?.type !== "polygon") return;
+
+                const existingId = g.attributes?.id;
+
+                // Skip if we already processed this ID or if it doesn't have an ID yet
+                if (!existingId || processedIds.has(existingId)) return;
+
+                // Find all polygons with the same ID
+                const duplicates = editLayer.graphics.items.filter(
+                  (graphic: any) =>
+                    graphic.attributes?.id === existingId &&
+                    graphic.geometry?.type === "polygon" &&
+                    graphic !== g // exclude the current graphic
+                );
+
+                // If we found duplicates, only process them (keep the original)
+                duplicates.forEach((duplicate: any) => {
+                  // Generate new unique ID for the duplicate
+                  const newId =
+                    "polygon" + Date.now() + Math.floor(Math.random() * 1000);
+                  const originalName =
+                    duplicate.attributes?.name ?? "New Polygon";
+                  const copyName = originalName.includes("(Copy)")
+                    ? originalName
+                    : `${originalName} (Copy)`;
+
+                  // Update the duplicate's attributes
+                  duplicate.attributes = {
+                    ...duplicate.attributes,
+                    id: newId,
+                    name: copyName,
+                    description:
+                      duplicate.attributes?.description ??
+                      `Duplicated at ${new Date().toLocaleTimeString()}`,
+                  };
+
+                  // Update popup template to fix the content error
+                  duplicate.popupTemplate = {
+                    title: "{name}",
+                    content: `<p><b>Description:</b> {description}</p><p><i>ID:</i> {id}</p>`,
+                  };
+
+                  // Remove old label if it exists
+                  const oldLabel = labelMap.current.get(existingId);
+                  if (oldLabel) {
+                    // Don't remove the original label, just create a new one for duplicate
+                  }
+
+                  // Create a new label for the duplicate
+                  const newLabel = createLabelGraphic(
+                    duplicate.geometry.rings[0],
+                    copyName,
+                    newId,
+                    view,
+                    Graphic
+                  );
+                  editLayer.add(newLabel);
+                  labelMap.current.set(newId, newLabel);
+
+                  // Initialize smoothed centroid for the new polygon
+                  const [cx, cy] = getPolygonCentroid(
+                    duplicate.geometry.rings[0]
+                  );
+                  smoothedCentroids.current.set(newId, { x: cx, y: cy });
+                  lastCentroidTime.current.set(newId, performance.now());
+                });
+
+                processedIds.add(existingId);
+              });
+              return;
+            }
+
+            // Handle ongoing updates (your existing smoothing logic)
             const now = performance.now();
 
             evt.graphics.forEach((g: any) => {
@@ -233,7 +358,6 @@ export default function ToggleSketchTool() {
               lastCentroidTime.current.set(id, now);
 
               // Convert velocity to alpha (higher speed = less smoothing)
-              // Tune these as needed
               const minAlpha = 0.1; // max smoothing
               const maxAlpha = 0.6; // less smoothing
               const velocityThreshold = 0.5; // pixels/ms
@@ -248,11 +372,14 @@ export default function ToggleSketchTool() {
 
               smoothedCentroids.current.set(id, { x: newX, y: newY });
 
-              label.geometry = new Point({
-                x: newX,
-                y: newY,
-                spatialReference: view.spatialReference,
-              });
+              // Ensure we have valid coordinates before creating Point
+              if (isFinite(newX) && isFinite(newY)) {
+                label.geometry = new Point({
+                  x: newX,
+                  y: newY,
+                  spatialReference: view.spatialReference,
+                });
+              }
             });
           });
 
