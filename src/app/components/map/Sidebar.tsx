@@ -148,7 +148,14 @@ export default function Sidebar() {
   const cancelEdits = () => setEditingId(null);
 
   return (
-    <div>
+    <Box
+      sx={{
+        height: "100%", // fill the height of the parent flex item
+        overflowY: "auto", // enable vertical scrolling
+
+        p: 2, // optional padding
+      }}
+    >
       <h2 style={{ margin: "20px 0 0 20px" }}>Polygons:</h2>
       <ul>
         {polygonList.map((poly) => (
@@ -290,6 +297,6 @@ export default function Sidebar() {
           </div>
         </div>
       )}
-    </div>
+    </Box>
   );
 }
