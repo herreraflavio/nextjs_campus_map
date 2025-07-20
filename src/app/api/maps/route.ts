@@ -502,8 +502,6 @@ const sampleMap = [
   },
 ];
 
-export default sampleMap;
-
 export async function POST(request: NextRequest) {
   // 1) ensure they're logged in
   const session = await auth();
