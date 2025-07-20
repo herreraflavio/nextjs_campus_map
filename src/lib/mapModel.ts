@@ -32,6 +32,7 @@ export async function createMap(mapData: {
     url: mapURL || null,
     description: mapData.description || null,
     polygons: mapData.polygons,
+    labels: mapData.labels,
     createdAt: new Date(),
     updatedAt: new Date(),
     isPrivate: mapData.isPrivate,
