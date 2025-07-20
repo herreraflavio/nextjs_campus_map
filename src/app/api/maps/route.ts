@@ -537,6 +537,7 @@ export async function POST(request: NextRequest) {
   const newMap = await createMap({
     ownerId: user._id.toString(),
     polygons: sampleMap[0].polygons, // empty for now
+    labels: sampleMap[0].labels,
     title,
     url: undefined,
     description: undefined,

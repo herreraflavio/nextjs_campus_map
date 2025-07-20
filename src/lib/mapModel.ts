@@ -16,6 +16,7 @@ import { ObjectId } from "mongodb";
 export async function createMap(mapData: {
   ownerId: string;
   polygons: any[];
+  labels: any[];
   title?: string;
   url?: string;
   description?: string;
