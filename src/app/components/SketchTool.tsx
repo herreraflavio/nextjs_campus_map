@@ -6,6 +6,7 @@ import {
   labelsLayerRef,
   MapViewRef,
   GraphicRef,
+  settingsRef,
 } from "./map/arcgisRefs";
 import { useSession } from "next-auth/react";
 
@@ -436,7 +437,7 @@ export default function ToggleSketchTool() {
     labelMap.current.clear();
     finalizedLayerRef.events?.dispatchEvent(new Event("change"));
     if (userEmail) {
-      saveMapToServer(mapId, userEmail);
+      saveMapToServer(mapId, userEmail, settingsRef.current);
     }
 
     if (sketchRef.current) {

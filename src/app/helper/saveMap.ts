@@ -2,6 +2,7 @@
 import {
   finalizedLayerRef,
   labelsLayerRef,
+  settingsRef,
 } from "@/app/components/map/arcgisRefs";
 
 // serialize your map as before
@@ -82,7 +83,20 @@ function generateExport(): { polygons: any[]; labels: any[] } {
  * Synchronously POSTs the current map’s polygons to your `/api/maps/[id]` endpoint.
  * Non-blocking: fires off in the background.
  */
-export function saveMapToServer(mapId: string, userEmail: string): void {
+export function saveMapToServer(
+  mapId: string,
+  userEmail: string,
+  settings: {
+    zoom: number;
+    center: [number, number];
+    constraints: null | {
+      xmin: number;
+      ymin: number;
+      xmax: number;
+      ymax: number;
+    };
+  }
+): void {
   // const polygons = generatePolygons();
   const { polygons, labels } = generateExport();
   if (polygons.length === 0) {
@@ -97,6 +111,7 @@ export function saveMapToServer(mapId: string, userEmail: string): void {
       userEmail,
       polygons,
       labels,
+      settings,
     }),
   })
     .then((res) => {

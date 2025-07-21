@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { labelsLayerRef, finalizedLayerRef, MapViewRef } from "./arcgisRefs";
+import {
+  labelsLayerRef,
+  finalizedLayerRef,
+  MapViewRef,
+  settingsRef,
+  settingsEvents,
+} from "./arcgisRefs";
 import { getPolygonCentroid } from "./centroid";
 import Point from "@arcgis/core/geometry/Point";
 import { rebuildBuckets } from "./bucketManager";
+import Extent from "@arcgis/core/geometry/Extent";
 import { useSession } from "next-auth/react";
 import { useMapId } from "@/app/context/MapContext";
 import { saveMapToServer } from "@/app/helper/saveMap";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {
   TextField,
   Slider,
@@ -17,6 +25,7 @@ import {
   Checkbox,
   FormControlLabel,
   Box,
+  IconButton,
 } from "@mui/material";
 
 import MapControls, { Constraints } from "./MapControls";
@@ -37,6 +46,8 @@ export default function Sidebar() {
   const userEmail = session?.user?.email;
   const mapId = useMapId();
 
+  // Map Settings state
+  const [openSettings, setOpenSettings] = useState(false);
   // Map center
   const [center, setCenter] = useState({ x: "", y: "" });
   // Zoom level
@@ -49,6 +60,32 @@ export default function Sidebar() {
     ymax: "",
   });
 
+  const view = MapViewRef.current;
+
+  // when user toggles settings open, snapshot current view
+  const toggleSettings = () => {
+    if (!openSettings && view) {
+      // snapshot center
+      const c = view.center as { x: number; y: number };
+      setCenter({ x: String(c.x), y: String(c.y) });
+      // snapshot zoom
+      setZoom(view.zoom);
+      // snapshot constraints (if any)
+      const geom = view.constraints.geometry as Extent | null;
+      if (geom) {
+        setConstraints({
+          xmin: String(geom.xmin),
+          ymin: String(geom.ymin),
+          xmax: String(geom.xmax),
+          ymax: String(geom.ymax),
+        });
+      } else {
+        setConstraints({ xmin: "", ymin: "", xmax: "", ymax: "" });
+      }
+    }
+    setOpenSettings((o) => !o);
+  };
+
   const handleCenterChange = (field: "x" | "y", value: string) =>
     setCenter((prev) => ({ ...prev, [field]: value }));
 
@@ -57,11 +94,64 @@ export default function Sidebar() {
   const handleConstraintChange = (field: keyof Constraints, value: string) =>
     setConstraints((prev) => ({ ...prev, [field]: value }));
 
+  // const applySettings = () => {
+  //   // apply center
+  //   if (center.x !== "" && center.y !== "") {
+  //     view.center = [Number(center.x), Number(center.y)];
+  //   }
+  //   // apply zoom
+  //   view.zoom = zoom;
+  //   // apply constraints only if all four are set
+  //   const { xmin, ymin, xmax, ymax } = constraints;
+  //   if (xmin && ymin && xmax && ymax) {
+  //     view.constraints.geometry = new Extent({
+  //       xmin: Number(xmin),
+  //       ymin: Number(ymin),
+  //       xmax: Number(xmax),
+  //       ymax: Number(ymax),
+  //       spatialReference: view.spatialReference,
+  //     });
+  //   }
+  //   setOpenSettings(false);
+  // };
+  const applySettings = () => {
+    /* ───── 1. apply to the live view ───── */
+    if (center.x && center.y) view.center = [+center.x, +center.y];
+    view.zoom = zoom;
+
+    const { xmin, ymin, xmax, ymax } = constraints;
+    if (xmin && ymin && xmax && ymax) {
+      view.constraints.geometry = new Extent({
+        xmin: +xmin,
+        ymin: +ymin,
+        xmax: +xmax,
+        ymax: +ymax,
+        spatialReference: view.spatialReference,
+      });
+    }
+
+    /* ───── 2. persist in our refs and broadcast ───── */
+    settingsRef.current = {
+      zoom,
+      center: [+center.x, +center.y] as [number, number],
+      constraints:
+        xmin && ymin && xmax && ymax
+          ? { xmin: +xmin, ymin: +ymin, xmax: +xmax, ymax: +ymax }
+          : null,
+    };
+    settingsEvents.dispatchEvent(new Event("change"));
+
+    /* ───── 3. save to server together with polygons/labels ───── */
+    if (userEmail) {
+      saveMapToServer(mapId, userEmail, settingsRef.current);
+    }
+
+    setOpenSettings(false);
+  };
+
   // console.log("mapId: " + mapId + "owner: " + userEmail);
 
   // alert(useMapId());
-
-  const view = MapViewRef.current;
 
   useEffect(() => {
     const handler = () => {
@@ -104,6 +194,25 @@ export default function Sidebar() {
     return () =>
       finalizedLayerRef.events.removeEventListener("change", handler);
   }, [editingId]);
+
+  useEffect(() => {
+    const sync = () => {
+      const s = settingsRef.current;
+      setCenter({ x: String(s.center[0]), y: String(s.center[1]) });
+      setZoom(s.zoom);
+      if (s.constraints) {
+        setConstraints({
+          xmin: String(s.constraints.xmin),
+          ymin: String(s.constraints.ymin),
+          xmax: String(s.constraints.xmax),
+          ymax: String(s.constraints.ymax),
+        });
+      }
+    };
+    settingsEvents.addEventListener("change", sync);
+    sync();
+    return () => settingsEvents.removeEventListener("change", sync);
+  }, []);
 
   const goTo = (graphic: any) => {
     const target = graphic.geometry.extent?.center || graphic.geometry;
@@ -160,7 +269,7 @@ export default function Sidebar() {
       rebuildBuckets(labelsLayer);
     }
     if (userEmail) {
-      saveMapToServer(mapId, userEmail);
+      saveMapToServer(mapId, userEmail, settingsRef.current);
     }
 
     finalizedLayerRef.events.dispatchEvent(new Event("change"));
@@ -178,7 +287,17 @@ export default function Sidebar() {
         p: 2, // optional padding
       }}
     >
-      <div>
+      {/* <div
+        style={{
+          position: "absolute",
+          left: "260px",
+          zIndex: "9999",
+          backgroundColor: "white",
+          padding: "5px",
+          border: "solid",
+          bottom: "25px",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -202,8 +321,70 @@ export default function Sidebar() {
             onConstraintChange={handleConstraintChange}
           />
         </Box>
-      </div>
+      </div> */}
+      {/* Gear icon */}
+      <IconButton
+        onClick={toggleSettings}
+        sx={{
+          position: "absolute",
+          bottom: 25,
+          left: 260,
+          width: 50,
+          height: 50,
+          bgcolor: "background.paper",
+          border: 1,
+          zIndex: 9999,
+        }}
+      >
+        <SettingsIcon fontSize="large" />
+      </IconButton>
 
+      {/* Settings panel */}
+      {openSettings && (
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 25,
+            left: 260 + 60,
+            zIndex: 9999,
+            bgcolor: "background.paper",
+            border: 1,
+            p: 1,
+            width: 300,
+          }}
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <div>╔═</div>
+            <Typography variant="h6" component="div" sx={{ m: 0 }}>
+              Map Settings
+            </Typography>
+            <div>═╗</div>
+          </Box>
+
+          <Box width="100%" mt={1}>
+            <MapControls
+              centerX={center.x}
+              centerY={center.y}
+              onCenterChange={handleCenterChange}
+              zoom={zoom}
+              onZoomChange={handleZoomChange}
+              constraints={constraints}
+              onConstraintChange={handleConstraintChange}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button onClick={toggleSettings}>Cancel</Button>
+            <Button variant="contained" onClick={applySettings} sx={{ ml: 1 }}>
+              Apply All Edits
+            </Button>
+          </Box>
+        </Box>
+      )}
       <div
         style={{
           display: "flex",

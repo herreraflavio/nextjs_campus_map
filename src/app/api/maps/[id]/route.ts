@@ -6,6 +6,7 @@ import clientPromise from "@/lib/mongodb";
 import { findUserByEmail, User } from "@/lib/userModel";
 
 // ─────────── Schema ───────────
+// ─────────── Schema ───────────
 export interface MapDoc extends Document {
   _id: ObjectId;
   ownerId: ObjectId;
@@ -13,6 +14,17 @@ export interface MapDoc extends Document {
   url: string;
   description: string | null;
   polygons: unknown[];
+  labels?: unknown[];
+  settings?: {
+    zoom: number;
+    center: [number, number];
+    constraints: null | {
+      xmin: number;
+      ymin: number;
+      xmax: number;
+      ymax: number;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
   isPrivate: boolean;
@@ -250,20 +262,53 @@ export async function GET(
 //     Array.isArray(x.polygons)
 //   );
 // }
+
+// interface ExportBody { … }
 interface ExportBody {
   userEmail: string;
   polygons: unknown[];
   labels: unknown[];
+  settings: {
+    zoom: number;
+    center: [number, number];
+    constraints: null | {
+      xmin: number;
+      ymin: number;
+      xmax: number;
+      ymax: number;
+    };
+  };
 }
+
 function isExportBody(x: any): x is ExportBody {
   return (
     typeof x === "object" &&
     x !== null &&
     typeof x.userEmail === "string" &&
     Array.isArray(x.polygons) &&
-    Array.isArray(x.labels)
+    Array.isArray(x.labels) &&
+    typeof x.settings === "object" &&
+    x.settings !== null &&
+    typeof x.settings.zoom === "number" &&
+    Array.isArray(x.settings.center) &&
+    x.settings.center.length === 2
   );
 }
+
+// interface ExportBody {
+//   userEmail: string;
+//   polygons: unknown[];
+//   labels: unknown[];
+// }
+// function isExportBody(x: any): x is ExportBody {
+//   return (
+//     typeof x === "object" &&
+//     x !== null &&
+//     typeof x.userEmail === "string" &&
+//     Array.isArray(x.polygons) &&
+//     Array.isArray(x.labels)
+//   );
+// }
 
 export async function POST(
   request: NextRequest,
@@ -298,7 +343,7 @@ export async function POST(
       { status: 400 }
     );
   }
-  const { userEmail, polygons, labels } = body;
+  const { userEmail, polygons, labels, settings } = body;
 
   // 3️⃣  Validate mapId
   let mapObjectId: ObjectId;
@@ -335,7 +380,7 @@ export async function POST(
   // 7️⃣  Apply the update
   const updateResult = await maps.updateOne(
     { _id: mapObjectId },
-    { $set: { polygons, labels, updatedAt: new Date() } }
+    { $set: { polygons, labels, settings, updatedAt: new Date() } }
   );
   if (updateResult.matchedCount !== 1) {
     console.error("updateOne did not match any document:", updateResult);
