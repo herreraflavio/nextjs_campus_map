@@ -19,6 +19,8 @@ import {
   Box,
 } from "@mui/material";
 
+import MapControls, { Constraints } from "./MapControls";
+
 export default function Sidebar() {
   const [polygonList, setPolygonList] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,6 +36,26 @@ export default function Sidebar() {
   const { data: session, status } = useSession();
   const userEmail = session?.user?.email;
   const mapId = useMapId();
+
+  // Map center
+  const [center, setCenter] = useState({ x: "", y: "" });
+  // Zoom level
+  const [zoom, setZoom] = useState(10);
+  // Extent constraints
+  const [constraints, setConstraints] = useState<Constraints>({
+    xmin: "",
+    ymin: "",
+    xmax: "",
+    ymax: "",
+  });
+
+  const handleCenterChange = (field: "x" | "y", value: string) =>
+    setCenter((prev) => ({ ...prev, [field]: value }));
+
+  const handleZoomChange = (value: number) => setZoom(value);
+
+  const handleConstraintChange = (field: keyof Constraints, value: string) =>
+    setConstraints((prev) => ({ ...prev, [field]: value }));
 
   // console.log("mapId: " + mapId + "owner: " + userEmail);
 
@@ -156,8 +178,44 @@ export default function Sidebar() {
         p: 2, // optional padding
       }}
     >
-      <h2 style={{ margin: "20px 0 0 20px" }}>Polygons:</h2>
-      <ul>
+      <div>
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>╔═</div>
+          <h3 style={{ margin: "0px 5px 0 5px" }}> Map Settings </h3>
+          <div>═╗</div>
+        </div>
+
+        <Box width="100%">
+          <MapControls
+            centerX={center.x}
+            centerY={center.y}
+            onCenterChange={handleCenterChange}
+            zoom={zoom}
+            onZoomChange={handleZoomChange}
+            constraints={constraints}
+            onConstraintChange={handleConstraintChange}
+          />
+        </Box>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>╔═</div>
+        <h3 style={{ margin: "0px 5px 0 5px" }}> Polygons </h3>
+        <div>═╗</div>
+      </div>
+      <ul style={{ paddingLeft: "20px" }}>
         {polygonList.map((poly) => (
           <li key={poly.attributes.id} style={{ margin: "8px 0" }}>
             {poly.attributes.name}

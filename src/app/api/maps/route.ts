@@ -499,6 +499,31 @@ const sampleMap = [
         },
       },
     ],
+    settings: [
+      {
+        key: "zoom",
+        value: 15,
+        type: "number",
+        description: "Default map zoom level",
+      },
+      {
+        key: "center",
+        value: [-120.422045, 37.368169],
+        type: "lnglat",
+        description: "Initial map center [longitude, latitude]",
+      },
+      {
+        key: "constraints",
+        value: {
+          xmin: -13406000,
+          ymin: 4489300,
+          xmax: -13404000,
+          ymax: 4491700,
+        },
+        type: "extent",
+        description: "Map view bounds (Web Mercator)",
+      },
+    ],
   },
 ];
 
@@ -538,6 +563,7 @@ export async function POST(request: NextRequest) {
     ownerId: user._id.toString(),
     polygons: sampleMap[0].polygons, // empty for now
     labels: sampleMap[0].labels,
+    settings: sampleMap[0].settings,
     title,
     url: undefined,
     description: undefined,

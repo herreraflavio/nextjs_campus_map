@@ -17,6 +17,7 @@ export async function createMap(mapData: {
   ownerId: string;
   polygons: any[];
   labels: any[];
+  settings: any[];
   title?: string;
   url?: string;
   description?: string;
@@ -33,6 +34,7 @@ export async function createMap(mapData: {
     description: mapData.description || null,
     polygons: mapData.polygons,
     labels: mapData.labels,
+    settings: mapData.settings,
     createdAt: new Date(),
     updatedAt: new Date(),
     isPrivate: mapData.isPrivate,
