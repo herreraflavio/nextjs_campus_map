@@ -286,59 +286,61 @@ export default function ArcGISMap() {
           /* ─────────── Load polygons & labels ─────────── */
           fetch(`/api/maps/${mapId}`)
             .then((res) => res.json())
-            .then((data: { polygons: any[]; labels: any[] }) => {
-              // 1) polygons
-              data.polygons.forEach((p) => {
-                const polyGraphic = new Graphic({
-                  geometry: p.geometry,
-                  symbol: p.symbol,
-                  attributes: p.attributes,
-                  popupTemplate: {
-                    title: p.attributes.name,
-                    content: p.attributes.description,
-                  },
-                });
-                finalizedLayer.add(polyGraphic);
-              });
-
-              // 2) labels
-              data.labels.forEach((l: any) => {
-                const labelGraphic = new Graphic({
-                  geometry: {
-                    type: "point",
-                    x: l.geometry.x,
-                    y: l.geometry.y,
-                    spatialReference: view.spatialReference,
-                  },
-                  symbol: {
-                    type: "text",
-                    text: l.attributes.text,
-                    color: l.attributes.color,
-                    haloColor: l.attributes.haloColor,
-                    haloSize: l.attributes.haloSize,
-                    font: {
-                      size: l.attributes.fontSize,
-                      family: "sans-serif",
-                      weight: "bold",
+            .then(
+              (data: { polygons: any[]; labels: any[]; settings: any[] }) => {
+                // 1) polygons
+                data.polygons.forEach((p) => {
+                  const polyGraphic = new Graphic({
+                    geometry: p.geometry,
+                    symbol: p.symbol,
+                    attributes: p.attributes,
+                    popupTemplate: {
+                      title: p.attributes.name,
+                      content: p.attributes.description,
                     },
-                  },
-                  attributes: {
-                    parentId: l.attributes.parentId,
-                    showAtZoom: l.attributes.showAtZoom,
-                    hideAtZoom: l.attributes.hideAtZoom,
-                  },
+                  });
+                  finalizedLayer.add(polyGraphic);
                 });
-                labelsLayer.add(labelGraphic);
-              });
 
-              // Build buckets and immediately sync visibility
-              rebuildBuckets(labelsLayer);
+                // 2) labels
+                data.labels.forEach((l: any) => {
+                  const labelGraphic = new Graphic({
+                    geometry: {
+                      type: "point",
+                      x: l.geometry.x,
+                      y: l.geometry.y,
+                      spatialReference: view.spatialReference,
+                    },
+                    symbol: {
+                      type: "text",
+                      text: l.attributes.text,
+                      color: l.attributes.color,
+                      haloColor: l.attributes.haloColor,
+                      haloSize: l.attributes.haloSize,
+                      font: {
+                        size: l.attributes.fontSize,
+                        family: "sans-serif",
+                        weight: "bold",
+                      },
+                    },
+                    attributes: {
+                      parentId: l.attributes.parentId,
+                      showAtZoom: l.attributes.showAtZoom,
+                      hideAtZoom: l.attributes.hideAtZoom,
+                    },
+                  });
+                  labelsLayer.add(labelGraphic);
+                });
 
-              // Wait until the first render so view.zoom is correct
-              view.when(() => applyLabelVisibility(view.zoom));
+                // Build buckets and immediately sync visibility
+                rebuildBuckets(labelsLayer);
 
-              finalizedLayerRef.events.dispatchEvent(new Event("change"));
-            })
+                // Wait until the first render so view.zoom is correct
+                view.when(() => applyLabelVisibility(view.zoom));
+
+                finalizedLayerRef.events.dispatchEvent(new Event("change"));
+              }
+            )
             .catch((err) =>
               console.error("Error loading polygons/labels:", err)
             );

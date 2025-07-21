@@ -227,7 +227,11 @@ export async function GET(
 
   // ✅ Return only the polygons
   return NextResponse.json(
-    { polygons: map.polygons, labels: (map as any).labels ?? [] },
+    {
+      polygons: map.polygons,
+      labels: (map as any).labels ?? [],
+      settings: map.settings,
+    },
     { status: 200 }
   );
 }
