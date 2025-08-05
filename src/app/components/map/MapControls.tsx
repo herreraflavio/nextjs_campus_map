@@ -24,6 +24,8 @@ interface Props {
   centerY: string;
   onCenterChange: (field: CenterField, value: string) => void;
 
+  cordinates: [number, number];
+
   // zoom
   zoom: number;
   onZoomChange: (value: number) => void;
@@ -44,6 +46,7 @@ const constraintFields: Array<{ key: keyof Constraints; label: string }> = [
 export default function MapControls({
   centerX,
   centerY,
+  cordinates,
   onCenterChange,
   zoom,
   onZoomChange,
@@ -107,7 +110,7 @@ export default function MapControls({
               placeholder={placeholder}
               variant="outlined"
               size="small"
-              value={field === "x" ? centerX : centerY}
+              value={field === "x" ? cordinates[0] : cordinates[1]}
               onChange={(e) => onCenterChange(field, e.target.value)}
               sx={{
                 "& .MuiInputBase-input": {

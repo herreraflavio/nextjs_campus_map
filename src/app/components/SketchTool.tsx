@@ -437,7 +437,14 @@ export default function ToggleSketchTool() {
     labelMap.current.clear();
     finalizedLayerRef.events?.dispatchEvent(new Event("change"));
     if (userEmail) {
-      saveMapToServer(mapId, userEmail, settingsRef.current);
+      const s = settingsRef.current;
+
+      saveMapToServer(mapId, userEmail, {
+        zoom: s.zoom,
+        center: [s.center.x, s.center.y] as [number, number],
+        constraints: s.constraints,
+      });
+      // saveMapToServer(mapId, userEmail, settingsRef.current);
     }
 
     if (sketchRef.current) {
