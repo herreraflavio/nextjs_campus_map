@@ -111,7 +111,8 @@ export default function MapControls({
               variant="outlined"
               size="small"
               value={field === "x" ? cordinates[0] : cordinates[1]}
-              onChange={(e) => onCenterChange(field, e.target.value)}
+              // onChange={(e) => onCenterChange(field, e.target.value)}
+              onChange={(e) => e.target.value}
               sx={{
                 "& .MuiInputBase-input": {
                   padding: "4px 6px",
