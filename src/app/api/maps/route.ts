@@ -499,31 +499,16 @@ const sampleMap = [
         },
       },
     ],
-    settings: [
-      {
-        key: "zoom",
-        value: 15,
-        type: "number",
-        description: "Default map zoom level",
+    settings: {
+      zoom: 18,
+      center: [-13406195.137566043, 4490010.326915262] as [number, number],
+      constraints: {
+        xmin: -13408189.666272912,
+        ymin: 4488958.123447746,
+        xmax: -13404200.608859174,
+        ymax: 4491062.5303827785,
       },
-      {
-        key: "center",
-        value: [-120.422045, 37.368169],
-        type: "lnglat",
-        description: "Initial map center [longitude, latitude]",
-      },
-      {
-        key: "constraints",
-        value: {
-          xmin: -13406000,
-          ymin: 4489300,
-          xmax: -13404000,
-          ymax: 4491700,
-        },
-        type: "extent",
-        description: "Map view bounds (Web Mercator)",
-      },
-    ],
+    },
   },
 ];
 

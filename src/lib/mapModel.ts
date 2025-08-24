@@ -13,11 +13,22 @@ import { ObjectId } from "mongodb";
  * }
  */
 
+export type MapSettings = {
+  zoom: number;
+  center: [number, number]; // [x, y] in Web Mercator
+  constraints?: {
+    xmin: number;
+    ymin: number;
+    xmax: number;
+    ymax: number;
+  };
+};
+
 export async function createMap(mapData: {
   ownerId: string;
   polygons: any[];
   labels: any[];
-  settings: any[];
+  settings: MapSettings;
   title?: string;
   url?: string;
   description?: string;
