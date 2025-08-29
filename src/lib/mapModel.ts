@@ -28,7 +28,9 @@ export async function createMap(mapData: {
   ownerId: string;
   polygons: any[];
   labels: any[];
+  featureLayers: any[];
   settings: MapSettings;
+
   title?: string;
   url?: string;
   description?: string;
@@ -45,6 +47,7 @@ export async function createMap(mapData: {
     description: mapData.description || null,
     polygons: mapData.polygons,
     labels: mapData.labels,
+    featureLayers: mapData.featureLayers,
     settings: mapData.settings,
     createdAt: new Date(),
     updatedAt: new Date(),

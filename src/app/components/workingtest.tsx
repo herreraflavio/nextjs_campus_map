@@ -48,35 +48,10 @@ interface LabelDTO {
     spatialReference: SpatialReference;
   };
 }
-
-interface FieldInfo {
-  fieldName: string;
-  label: string;
-  visible: boolean;
-  format?: {
-    digitSeparator?: boolean;
-    places?: number;
-  };
-}
-
-interface FeatureLayerConfig {
-  url: string;
-  outFields: string[];
-  popupEnabled: boolean;
-  popupTemplate?: {
-    title: string;
-    content: Array<{
-      type: string;
-      fieldInfos?: FieldInfo[];
-    }>;
-  };
-}
-
 interface ExportBody {
   userEmail: string;
   polygons: PolygonDTO[];
   labels: LabelDTO[];
-  featureLayers: FeatureLayerConfig[];
   settings: {
     zoom: number;
     center: [x: number, y: number];
@@ -209,59 +184,17 @@ export default function ArcGISMap(mapData: ExportBody) {
               weight: "bold",
             },
           });
-          /* ─────────── Create Feature Layers Dynamically ─────────── */
-          const createFeatureLayers = () => {
-            const layers: any[] = [];
 
-            if (!mapData.featureLayers || mapData.featureLayers.length === 0) {
-              console.log("No feature layers configured");
-              return layers;
-            }
-
-            console.log(
-              `Creating ${mapData.featureLayers.length} feature layers...`
-            );
-
-            mapData.featureLayers.forEach((config, index) => {
-              try {
-                console.log(`Creating feature layer ${index}:`, {
-                  url: config.url,
-                  outFields: config.outFields,
-                  popupEnabled: config.popupEnabled,
-                  hasPopupTemplate: !!config.popupTemplate,
-                });
-
-                const featureLayer = new FeatureLayer({
-                  url: config.url,
-                  outFields: config.outFields || ["*"],
-                  popupEnabled: config.popupEnabled !== false,
-                  popupTemplate: config.popupTemplate || undefined,
-                });
-
-                layers.push(featureLayer);
-                console.log(`Feature layer ${index} created successfully`);
-              } catch (error) {
-                console.error(
-                  `Error creating feature layer ${index}:`,
-                  error,
-                  config
-                );
-              }
-            });
-
-            return layers;
-          };
-
-          // var featureLayer = new FeatureLayer({
-          //   url: "https://services2.arcgis.com/wx8u046p68e0iGuj/arcgis/rest/services/housing_hall_for_arcgis_XYTableToPoint/FeatureServer",
-          //   outFields: ["*"], // ensure fields are available to the popup
-          //   popupEnabled: true, // allow popups
-          // });
+          var featureLayer = new FeatureLayer({
+            url: "https://services2.arcgis.com/wx8u046p68e0iGuj/arcgis/rest/services/housing_hall_for_arcgis_XYTableToPoint/FeatureServer",
+            outFields: ["*"], // ensure fields are available to the popup
+            popupEnabled: true, // allow popups
+          });
 
           /* ─────────── Map & View ─────────── */
           const map = new EsriMap({
             basemap: "satellite",
-            // layers: [featureLayer],
+            layers: [featureLayer],
           });
 
           // Normalize center to 3857
@@ -296,8 +229,6 @@ export default function ArcGISMap(mapData: ExportBody) {
           const finalizedLayer = new GraphicsLayer({ id: "finalized" });
           const labelsLayer = new GraphicsLayer({ id: "labels" });
 
-          const featureLayers = createFeatureLayers();
-
           // (optional) background image already in 102100/3857 family
           const imgLowRes = new ImageElement({
             image: "https://campusmap.flavioherrera.com/testing/map4.png",
@@ -314,42 +245,13 @@ export default function ArcGISMap(mapData: ExportBody) {
           });
           const mediaLayer = new MediaLayer({ source: [imgLowRes] });
 
-          // map.addMany([
-          //   // featureLayer,
-          //   featureLayers[0], // Add all feature layers
-          //   mediaLayer,
-          //   finalizedLayer,
-          //   editingLayer,
-
-          //   featureLayers[1],
-          //   labelsLayer,
-          // ]);
-          // Give stable ids (do this when you create the layers)
-          const featureLayersOrder = [5, 45];
-          featureLayers.forEach((fl, i) => {
-            fl.id = `feature:${i}`;
-            (fl as any).z = featureLayersOrder[i];
-          });
-          mediaLayer.id = "media";
-          (mediaLayer as any).z = 10;
-          finalizedLayer.id = "finalized";
-          (finalizedLayer as any).z = 30;
-          editingLayer.id = "editing";
-          (editingLayer as any).z = 40;
-          labelsLayer.id = "labels";
-          (labelsLayer as any).z = 50; // keep labels on top
-
-          const allLayers = [
-            ...featureLayers,
+          map.addMany([
             mediaLayer,
             finalizedLayer,
             editingLayer,
+            featureLayer,
             labelsLayer,
-          ].filter(Boolean);
-
-          // Sort by your z-order and add
-          allLayers.sort((a: any, b: any) => (a.z ?? 0) - (b.z ?? 0));
-          map.addMany(allLayers);
+          ]);
 
           /* ─────────── Label visibility buckets ─────────── */
           const applyLabelVisibility = (zoom: number) => {

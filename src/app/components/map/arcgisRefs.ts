@@ -40,6 +40,10 @@ interface Label {
   };
 }
 
+interface URLS {
+  url: string;
+}
+
 interface ExportBody {
   userEmail: string;
   polygons: Polygon[];
@@ -57,6 +61,7 @@ interface ExportBody {
       xmax: number;
       ymax: number;
     } | null;
+    layers: URLS[];
   };
 }
 
@@ -84,7 +89,9 @@ export const settingsRef: { current: ExportBody["settings"] } = {
       x: -120.422045,
       y: 37.368169,
     },
+
     constraints: null,
+    layers: [{ url: "hello" }, { url: "world!!!" }],
   },
 };
 

@@ -26,7 +26,7 @@ import {
   Box,
   IconButton,
 } from "@mui/material";
-import MapControls, { Constraints } from "./MapControls";
+import MapControls, { Constraints, URLS } from "./MapControls";
 
 function mercatorToLonLat(x: string, y: string): [number, number] {
   const xFloat = parseFloat(x);
@@ -61,6 +61,7 @@ export default function Sidebar() {
   const [openSettings, setOpenSettings] = useState(false);
   const [center, setCenter] = useState({ x: "", y: "" });
   const [zoom, setZoom] = useState(10);
+  const [layers, setLayers] = useState<URLS[] | null>(null);
   const [constraints, setConstraints] = useState<Constraints>({
     xmin: "",
     ymin: "",
@@ -103,6 +104,7 @@ export default function Sidebar() {
   const handleZoomChange = (value: number) => setZoom(value);
   const handleConstraintChange = (field: keyof Constraints, value: string) =>
     setConstraints((prev) => ({ ...prev, [field]: value }));
+  const handleLayers = (value: []) => setLayers(value);
 
   // ─── Apply to live view, persist in refs, and save to server ─────────
   const applySettings = () => {
@@ -150,6 +152,7 @@ export default function Sidebar() {
           .slice()
           .sort((a: any, b: any) => a.attributes.order - b.attributes.order)
       );
+
       if (editingId) {
         const g = items.find((g: any) => g.attributes.id === editingId);
         if (g) {
@@ -290,6 +293,7 @@ export default function Sidebar() {
     const sync = () => {
       const s = settingsRef.current;
       setCenter({ x: String(s.center.x), y: String(s.center.y) });
+      setLayers([...s.layers]);
       setZoom(s.zoom);
       if (s.constraints) {
         setConstraints({
@@ -355,6 +359,8 @@ export default function Sidebar() {
               onZoomChange={handleZoomChange}
               constraints={constraints}
               onConstraintChange={handleConstraintChange}
+              layers={layers}
+              handlelayers={handleLayers}
             />
           </Box>
           <Box display="flex" justifyContent="flex-end" mt={2}>

@@ -499,6 +499,163 @@ const sampleMap = [
         },
       },
     ],
+    featureLayers: [
+      {
+        url: "https://services6.arcgis.com/rX5atNlsxFq7LIpv/arcgis/rest/services/County_of_Merced_Jurisdictional_Zoning_Designations/FeatureServer",
+        outFields: ["*"],
+        popupEnabled: true,
+        popupTemplate: {
+          title: "{ZONENAME}",
+          content: [
+            {
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "hall",
+                  label: "Hall Name",
+                  visible: true,
+                },
+                {
+                  fieldName: "beds",
+                  label: "Number of Beds",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 0,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        url: "https://services2.arcgis.com/wx8u046p68e0iGuj/arcgis/rest/services/housing_hall_for_arcgis_XYTableToPoint/FeatureServer",
+        outFields: ["*"],
+        popupEnabled: true,
+        popupTemplate: {
+          title: "{hall}",
+          content: [
+            {
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "hall",
+                  label: "Hall Name",
+                  visible: true,
+                },
+                {
+                  fieldName: "beds",
+                  label: "Number of Beds",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 0,
+                  },
+                },
+                {
+                  fieldName: "incidents",
+                  label: "Total Incidents",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 0,
+                  },
+                },
+                {
+                  fieldName: "seriousness_sum",
+                  label: "Seriousness Sum",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 1,
+                  },
+                },
+                {
+                  fieldName: "exposure_bedyears",
+                  label: "Exposure (Bed-Years)",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 1,
+                  },
+                },
+                {
+                  fieldName: "rate_per_1k_bedyears",
+                  label: "Rate per 1,000 Bed-Years",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 2,
+                  },
+                },
+                {
+                  fieldName: "eb_rate_per_1k_bedyears",
+                  label: "EB Rate per 1,000 Bed-Years",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 2,
+                  },
+                },
+                {
+                  fieldName: "cri",
+                  label: "CRI",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 3,
+                  },
+                },
+                {
+                  fieldName: "cri_w",
+                  label: "CRI (Weighted)",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 3,
+                  },
+                },
+                {
+                  fieldName: "idx_0_100",
+                  label: "Index (0-100)",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 1,
+                  },
+                },
+                {
+                  fieldName: "idx_w_0_100",
+                  label: "Index Weighted (0-100)",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 1,
+                  },
+                },
+                {
+                  fieldName: "lon",
+                  label: "Longitude",
+                  visible: true,
+                  format: {
+                    places: 6,
+                  },
+                },
+                {
+                  fieldName: "lat",
+                  label: "Latitude",
+                  visible: true,
+                  format: {
+                    places: 6,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
     settings: {
       zoom: 18,
       center: [-13406195.137566043, 4490010.326915262] as [number, number],
@@ -548,6 +705,7 @@ export async function POST(request: NextRequest) {
     ownerId: user._id.toString(),
     polygons: sampleMap[0].polygons, // empty for now
     labels: sampleMap[0].labels,
+    featureLayers: sampleMap[0].featureLayers,
     settings: sampleMap[0].settings,
     title,
     url: undefined,

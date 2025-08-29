@@ -1,5 +1,5 @@
 // MapControls.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, TextField, Slider } from "@mui/material";
 
 // 1. Define your center inputs as a 'const' so TS knows field is "x"|"y"
@@ -17,6 +17,9 @@ export interface Constraints {
   xmax: string;
   ymax: string;
 }
+export interface URLS {
+  url: string;
+}
 
 interface Props {
   // center
@@ -33,6 +36,10 @@ interface Props {
   // extent constraints
   constraints: Constraints;
   onConstraintChange: (field: keyof Constraints, value: string) => void;
+
+  layers: URLS[] | null;
+  // setLayerURL: (value: number) => void;
+  handlelayers: (value: []) => void;
 }
 
 // define your extent fields
@@ -52,6 +59,8 @@ export default function MapControls({
   onZoomChange,
   constraints,
   onConstraintChange,
+  layers,
+  handlelayers,
 }: Props) {
   const handleZoomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -65,6 +74,12 @@ export default function MapControls({
     const v = Array.isArray(val) ? val[0] : val;
     onZoomChange(v);
   };
+
+  const [layerURL, setLayerURL] = useState<string | null>(null);
+
+  function handleChange(e: any) {
+    setLayerURL(e.target.value);
+  }
 
   return (
     <Box width="100%">
@@ -240,6 +255,73 @@ export default function MapControls({
             />
           </Box>
         ))}
+      </Box>
+
+      {/* --- Map Layers  --- */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ my: 2 }}
+      >
+        <Typography variant="body1" fontFamily="monospace">
+          ╠═
+        </Typography>
+        <Typography variant="subtitle1" sx={{ mx: 1 }}>
+          Map Layers
+        </Typography>
+        <Typography variant="body1" fontFamily="monospace">
+          ═╣
+        </Typography>
+      </Box>
+      <Box
+        mx={1}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        gap={1.5}
+      >
+        {layers?.map(({ url }, index) => (
+          <Box
+            key={index}
+            width="100%"
+            maxWidth="400px"
+            display="flex"
+            gap={1}
+            alignItems="center"
+          >
+            <Typography variant="body2" fontSize="16px" minWidth="100px">
+              {url}
+            </Typography>
+          </Box>
+        ))}
+        <Box
+          width="100%"
+          maxWidth="400px"
+          display="flex"
+          gap={1}
+          alignItems="center"
+        >
+          <Typography variant="body2" fontSize="16px" minWidth="100px">
+            Add Layer:
+          </Typography>
+          <TextField
+            type="string"
+            variant="outlined"
+            size="small"
+            placeholder="Enter URL to Layer"
+            value={layerURL}
+            onChange={handleChange}
+            sx={{
+              flex: 1,
+              "& .MuiInputBase-input": {
+                padding: "4px 6px",
+                fontSize: "0.75rem",
+              },
+              "& fieldset": { border: "2px solid black" },
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );
