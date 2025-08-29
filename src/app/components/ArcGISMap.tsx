@@ -76,7 +76,7 @@ interface ExportBody {
   userEmail: string;
   polygons: PolygonDTO[];
   labels: LabelDTO[];
-  featureLayers: FeatureLayerConfig[];
+
   settings: {
     zoom: number;
     center: [x: number, y: number];
@@ -86,6 +86,7 @@ interface ExportBody {
       xmax: number;
       ymax: number;
     } | null;
+    featureLayers: FeatureLayerConfig[] | null; // Array of feature layer configs
   };
 }
 
@@ -213,16 +214,19 @@ export default function ArcGISMap(mapData: ExportBody) {
           const createFeatureLayers = () => {
             const layers: any[] = [];
 
-            if (!mapData.featureLayers || mapData.featureLayers.length === 0) {
+            if (
+              !mapData.settings.featureLayers ||
+              mapData.settings.featureLayers.length === 0
+            ) {
               console.log("No feature layers configured");
               return layers;
             }
 
             console.log(
-              `Creating ${mapData.featureLayers.length} feature layers...`
+              `Creating ${mapData.settings.featureLayers.length} feature layers...`
             );
 
-            mapData.featureLayers.forEach((config, index) => {
+            mapData.settings.featureLayers.forEach((config, index) => {
               try {
                 console.log(`Creating feature layer ${index}:`, {
                   url: config.url,

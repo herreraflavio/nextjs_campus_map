@@ -288,12 +288,15 @@ export default function Sidebar() {
       finalizedLayerRef.events.removeEventListener("change", handler);
   }, [editingId]);
 
+  function returnLayerURLS() {
+    return [];
+  }
   // ─── Sync UI form when settingsRef changes externally ───────────────
   useEffect(() => {
     const sync = () => {
       const s = settingsRef.current;
       setCenter({ x: String(s.center.x), y: String(s.center.y) });
-      setLayers([...s.layers]);
+      setLayers(returnLayerURLS);
       setZoom(s.zoom);
       if (s.constraints) {
         setConstraints({

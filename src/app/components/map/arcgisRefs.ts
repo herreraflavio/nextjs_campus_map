@@ -44,6 +44,29 @@ interface URLS {
   url: string;
 }
 
+interface FieldInfo {
+  fieldName: string;
+  label: string;
+  visible: boolean;
+  format?: {
+    digitSeparator?: boolean;
+    places?: number;
+  };
+}
+
+interface FeatureLayerConfig {
+  url: string;
+  outFields: string[];
+  popupEnabled: boolean;
+  popupTemplate?: {
+    title: string;
+    content: Array<{
+      type: string;
+      fieldInfos?: FieldInfo[];
+    }>;
+  };
+}
+
 interface ExportBody {
   userEmail: string;
   polygons: Polygon[];
@@ -61,7 +84,7 @@ interface ExportBody {
       xmax: number;
       ymax: number;
     } | null;
-    layers: URLS[];
+    featureLayers: FeatureLayerConfig[] | null;
   };
 }
 
@@ -91,7 +114,7 @@ export const settingsRef: { current: ExportBody["settings"] } = {
     },
 
     constraints: null,
-    layers: [{ url: "hello" }, { url: "world!!!" }],
+    featureLayers: null,
   },
 };
 

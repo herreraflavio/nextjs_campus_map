@@ -212,7 +212,7 @@ interface ExportBody {
   userEmail: string;
   polygons: Polygon[];
   labels: Label[];
-  featureLayers: FeatureLayerConfig[]; // Array of feature layer configs
+
   settings: {
     zoom: number;
     center: [number, number];
@@ -222,6 +222,7 @@ interface ExportBody {
       xmax: number;
       ymax: number;
     } | null;
+    featureLayers: FeatureLayerConfig[] | null; // Array of feature layer configs
   };
 }
 
@@ -234,38 +235,10 @@ const DEFAULT_CENTER: ExportBody["settings"]["center"] = [
 ];
 const DEFAULT_ZOOM = 15;
 const NO_CONSTRAINTS: ExportBody["settings"]["constraints"] = null;
+const NO_FEATURE_LAYERS: ExportBody["settings"]["featureLayers"] = null;
 
 // Default feature layer configuration (currently hardcoded, will come from API later)
 const DEFAULT_FEATURE_LAYERS: FeatureLayerConfig[] = [
-  {
-    url: "https://services6.arcgis.com/rX5atNlsxFq7LIpv/arcgis/rest/services/County_of_Merced_Jurisdictional_Zoning_Designations/FeatureServer",
-    outFields: ["*"],
-    popupEnabled: true,
-    popupTemplate: {
-      title: "{ZONENAME}",
-      content: [
-        {
-          type: "fields",
-          fieldInfos: [
-            {
-              fieldName: "hall",
-              label: "Hall Name",
-              visible: true,
-            },
-            {
-              fieldName: "beds",
-              label: "Number of Beds",
-              visible: true,
-              format: {
-                digitSeparator: true,
-                places: 0,
-              },
-            },
-          ],
-        },
-      ],
-    },
-  },
   {
     url: "https://services2.arcgis.com/wx8u046p68e0iGuj/arcgis/rest/services/housing_hall_for_arcgis_XYTableToPoint/FeatureServer",
     outFields: ["*"],
@@ -445,7 +418,7 @@ export default function ArcGISWrapper() {
           hasUserEmail: !!data.userEmail,
           polygonCount: data.polygons?.length || 0,
           labelCount: data.labels?.length || 0,
-          featureLayerCount: data.featureLayers?.length || 0,
+          featureLayerCount: data.settings?.featureLayers?.length || 0,
           hasSettings: !!data.settings,
           settingsKeys: data.settings ? Object.keys(data.settings) : [],
         });
@@ -457,8 +430,9 @@ export default function ArcGISWrapper() {
 
         // Use feature layers from API response, or fall back to default
         const featureLayers =
-          Array.isArray(data.featureLayers) && data.featureLayers.length > 0
-            ? data.featureLayers
+          Array.isArray(data.settings?.featureLayers) &&
+          data.settings?.featureLayers?.length > 0
+            ? data.settings.featureLayers
             : DEFAULT_FEATURE_LAYERS;
 
         console.log("🔍 Data validation:", {
@@ -572,6 +546,8 @@ export default function ArcGISWrapper() {
         }
 
         let processedConstraints = NO_CONSTRAINTS;
+        let processedFeatureLayers = NO_FEATURE_LAYERS;
+
         if (rawS.constraints && typeof rawS.constraints === "object") {
           const c = rawS.constraints;
           if (
@@ -589,7 +565,9 @@ export default function ArcGISWrapper() {
         const settings: ExportBody["settings"] = {
           zoom: processedZoom,
           center: processedCenter,
+
           constraints: processedConstraints,
+          featureLayers: rawS?.featureLayers || processedFeatureLayers,
         };
 
         console.log("⚙️ Processed settings:", settings);
@@ -602,6 +580,7 @@ export default function ArcGISWrapper() {
             y: settings.center[1],
           };
           settingsRef.current.zoom = settings.zoom;
+          settingsRef.current.featureLayers = settings.featureLayers;
           settingsRef.current.constraints = settings.constraints;
           console.log("✅ settingsRef updated successfully");
         } catch (e) {
@@ -612,7 +591,6 @@ export default function ArcGISWrapper() {
           userEmail,
           polygons,
           labels,
-          featureLayers,
           settings,
         };
 
@@ -620,7 +598,7 @@ export default function ArcGISWrapper() {
           userEmail: finalMapData.userEmail,
           polygonCount: finalMapData.polygons.length,
           labelCount: finalMapData.labels.length,
-          featureLayerCount: finalMapData.featureLayers.length,
+          featureLayerCount: finalMapData.settings?.featureLayers?.length,
           settings: finalMapData.settings,
         });
 

@@ -284,6 +284,7 @@ export async function GET(
     {
       polygons: map.polygons,
       labels: map.labels ?? [],
+
       settings: map.settings,
     },
     { status: 200 }
