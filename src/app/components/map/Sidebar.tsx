@@ -26,7 +26,7 @@ import {
   Box,
   IconButton,
 } from "@mui/material";
-import MapControls, { Constraints, URLS } from "./MapControls";
+import MapControls, { Constraints } from "./MapControls";
 
 function mercatorToLonLat(x: string, y: string): [number, number] {
   const xFloat = parseFloat(x);
@@ -36,6 +36,33 @@ function mercatorToLonLat(x: string, y: string): [number, number] {
   const lat =
     (2 * Math.atan(Math.exp(yFloat / R)) - Math.PI / 2) * (180 / Math.PI);
   return [lon, lat];
+}
+
+interface URLS {
+  url: string;
+}
+
+interface FieldInfo {
+  fieldName: string;
+  label: string;
+  visible: boolean;
+  format?: {
+    digitSeparator?: boolean;
+    places?: number;
+  };
+}
+
+interface FeatureLayerConfig {
+  url: string;
+  outFields: string[];
+  popupEnabled: boolean;
+  popupTemplate?: {
+    title: string;
+    content: Array<{
+      type: string;
+      fieldInfos?: FieldInfo[];
+    }>;
+  };
 }
 
 export default function Sidebar() {
@@ -61,7 +88,7 @@ export default function Sidebar() {
   const [openSettings, setOpenSettings] = useState(false);
   const [center, setCenter] = useState({ x: "", y: "" });
   const [zoom, setZoom] = useState(10);
-  const [layers, setLayers] = useState<URLS[] | null>(null);
+  const [layers, setLayers] = useState<string[] | null>(null);
   const [constraints, setConstraints] = useState<Constraints>({
     xmin: "",
     ymin: "",
@@ -95,6 +122,7 @@ export default function Sidebar() {
         ymax: String(currentExtent.ymax),
       });
     }
+    setLayers(returnLayerURLS(settingsRef.current.featureLayers));
     setOpenSettings((o) => !o);
   };
 
@@ -288,15 +316,21 @@ export default function Sidebar() {
       finalizedLayerRef.events.removeEventListener("change", handler);
   }, [editingId]);
 
-  function returnLayerURLS() {
-    return [];
+  function returnLayerURLS(s: FeatureLayerConfig[] | null) {
+    const urls: any = [];
+    s?.map((layer: URLS) => {
+      urls.push(layer.url);
+      console.log(layer.url);
+    });
+    return urls;
   }
   // ─── Sync UI form when settingsRef changes externally ───────────────
   useEffect(() => {
     const sync = () => {
       const s = settingsRef.current;
       setCenter({ x: String(s.center.x), y: String(s.center.y) });
-      setLayers(returnLayerURLS);
+
+      setLayers(returnLayerURLS(s.featureLayers));
       setZoom(s.zoom);
       if (s.constraints) {
         setConstraints({

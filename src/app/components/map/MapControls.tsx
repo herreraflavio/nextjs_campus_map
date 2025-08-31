@@ -1,5 +1,5 @@
 // MapControls.tsx
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { Box, Typography, TextField, Slider } from "@mui/material";
 
 // 1. Define your center inputs as a 'const' so TS knows field is "x"|"y"
@@ -37,7 +37,8 @@ interface Props {
   constraints: Constraints;
   onConstraintChange: (field: keyof Constraints, value: string) => void;
 
-  layers: URLS[] | null;
+  // layers: URLS[] | null;
+  layers: string[] | null;
   // setLayerURL: (value: number) => void;
   handlelayers: (value: []) => void;
 }
@@ -66,6 +67,8 @@ export default function MapControls({
     const val = Number(e.target.value);
     if (!isNaN(val)) onZoomChange(val);
   };
+
+  console.log(layers);
 
   const handleZoomSlider = (
     _: Event | React.SyntheticEvent,
@@ -281,20 +284,23 @@ export default function MapControls({
         alignItems="center"
         gap={1.5}
       >
-        {layers?.map(({ url }, index) => (
-          <Box
-            key={index}
-            width="100%"
-            maxWidth="400px"
-            display="flex"
-            gap={1}
-            alignItems="center"
-          >
-            <Typography variant="body2" fontSize="16px" minWidth="100px">
-              {url}
-            </Typography>
-          </Box>
-        ))}
+        {layers?.map((url, index) => {
+          console.log(url);
+          return (
+            <Box
+              key={index}
+              width="100%"
+              maxWidth="400px"
+              display="flex"
+              gap={1}
+              alignItems="center"
+            >
+              <Typography variant="body2" fontSize="16px" minWidth="100px">
+                <div style={{ wordWrap: "break-word" }}>{url}</div>
+              </Typography>
+            </Box>
+          );
+        })}
         <Box
           width="100%"
           maxWidth="400px"
