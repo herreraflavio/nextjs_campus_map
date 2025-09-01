@@ -1,5 +1,5 @@
 // MapControls.tsx
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Box, Typography, TextField, Slider } from "@mui/material";
 
 // 1. Define your center inputs as a 'const' so TS knows field is "x"|"y"
@@ -17,9 +17,42 @@ export interface Constraints {
   xmax: string;
   ymax: string;
 }
-export interface URLS {
-  url: string;
+
+interface FieldInfo {
+  fieldName: string;
+  label: string;
+  visible: boolean;
+  format?: {
+    digitSeparator?: boolean;
+    places?: number;
+  };
 }
+
+export interface FeatureLayerConfig {
+  id: string; // ✅ stable id
+  url: string;
+  index: number;
+  outFields: string[];
+  popupEnabled: boolean;
+  popupTemplate?: {
+    title: string;
+    content: Array<{
+      type: string;
+      fieldInfos?: FieldInfo[];
+    }>;
+  };
+}
+
+// types at top of file
+type PopupTemplate = NonNullable<FeatureLayerConfig["popupTemplate"]>;
+type PopupContentItem = PopupTemplate["content"][number];
+
+const ensureTemplate = (
+  tpl?: FeatureLayerConfig["popupTemplate"]
+): PopupTemplate => ({
+  title: tpl?.title ?? "",
+  content: (tpl?.content ?? []) as PopupContentItem[],
+});
 
 interface Props {
   // center
@@ -37,19 +70,16 @@ interface Props {
   constraints: Constraints;
   onConstraintChange: (field: keyof Constraints, value: string) => void;
 
-  // layers: URLS[] | null;
-  layers: string[] | null;
-  // setLayerURL: (value: number) => void;
-  handlelayers: (value: []) => void;
-}
+  // layers
+  layers: FeatureLayerConfig[];
+  setLayers: React.Dispatch<React.SetStateAction<FeatureLayerConfig[]>>;
 
-// define your extent fields
-const constraintFields: Array<{ key: keyof Constraints; label: string }> = [
-  { key: "xmin", label: "Min X (xmin)" },
-  { key: "ymin", label: "Min Y (ymin)" },
-  { key: "xmax", label: "Max X (xmax)" },
-  { key: "ymax", label: "Max Y (ymax)" },
-];
+  // per-layer temporary input for field name (keyed by layer.id)
+  fieldNameById: Record<string, string>;
+  setFieldNameById: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
+}
 
 export default function MapControls({
   centerX,
@@ -61,14 +91,14 @@ export default function MapControls({
   constraints,
   onConstraintChange,
   layers,
-  handlelayers,
+  setLayers,
+  fieldNameById,
+  setFieldNameById,
 }: Props) {
   const handleZoomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
     if (!isNaN(val)) onZoomChange(val);
   };
-
-  console.log(layers);
 
   const handleZoomSlider = (
     _: Event | React.SyntheticEvent,
@@ -78,11 +108,162 @@ export default function MapControls({
     onZoomChange(v);
   };
 
-  const [layerURL, setLayerURL] = useState<string | null>(null);
+  const [layerURL, setLayerURL] = useState<string>("");
+  const [layerTitle, setLayerTitle] = useState<string>("");
 
-  function handleChange(e: any) {
-    setLayerURL(e.target.value);
+  function sortByIndex(arr: FeatureLayerConfig[]) {
+    return [...arr].sort((a, b) => a.index - b.index);
   }
+
+  function handleLayerIndexChange(layerId: string, next: number) {
+    setLayers((prev) => {
+      const updated = prev.map((l) =>
+        l.id === layerId ? { ...l, index: next } : l
+      );
+      return sortByIndex(updated);
+    });
+  }
+
+  function handleAddingField(layerId: string) {
+    const name = (fieldNameById[layerId] ?? "").trim();
+    if (!name) return;
+
+    setLayers((prev) =>
+      prev.map((layer) => {
+        if (layer.id !== layerId) return layer;
+
+        const baseTemplate = ensureTemplate(layer.popupTemplate);
+        const content0: PopupContentItem = baseTemplate.content[0] ?? {
+          type: "fields",
+          fieldInfos: [],
+        };
+
+        const nextFieldInfos: FieldInfo[] = [
+          ...(content0.fieldInfos ?? []),
+          {
+            fieldName: name,
+            label: name,
+            visible: true,
+            format: { digitSeparator: true, places: 0 },
+          },
+        ];
+
+        const nextContent0: PopupContentItem = {
+          ...content0,
+          fieldInfos: nextFieldInfos,
+        };
+
+        const nextContent: PopupContentItem[] = baseTemplate.content.length
+          ? [nextContent0, ...baseTemplate.content.slice(1)]
+          : [nextContent0];
+
+        return {
+          ...layer,
+          popupTemplate: { ...baseTemplate, content: nextContent },
+        };
+      })
+    );
+
+    setFieldNameById((s) => {
+      const next = { ...s };
+      next[layerId] = "";
+      return next;
+    });
+  }
+
+  function handleRemoveField(layerId: string, removeName: string) {
+    setLayers((prev) =>
+      prev.map((layer) => {
+        if (layer.id !== layerId) return layer;
+
+        const baseTemplate = ensureTemplate(layer.popupTemplate);
+        const c0: PopupContentItem = baseTemplate.content[0] ?? {
+          type: "fields",
+          fieldInfos: [],
+        };
+
+        const pruned: PopupContentItem = {
+          ...c0,
+          fieldInfos: (c0.fieldInfos ?? []).filter(
+            (f) => f.fieldName !== removeName
+          ),
+        };
+
+        return {
+          ...layer,
+          popupTemplate: {
+            ...baseTemplate,
+            content: [pruned, ...baseTemplate.content.slice(1)],
+          },
+        };
+      })
+    );
+  }
+
+  function handleRemovingLayer(layerId: string) {
+    setLayers((prev) => prev.filter((l) => l.id !== layerId));
+    setFieldNameById(({ [layerId]: _, ...rest }) => rest);
+  }
+
+  function handleAddingLayer() {
+    if (!layerURL.trim()) return;
+    const nextIndex =
+      (layers.length ? Math.max(...layers.map((l) => l.index)) : -1) + 1;
+
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `layer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    setLayers((prev) =>
+      sortByIndex([
+        ...prev,
+        {
+          id,
+          url: layerURL.trim(),
+          index: nextIndex,
+          outFields: ["*"],
+          popupEnabled: true,
+          popupTemplate: {
+            title: layerTitle ?? "",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "hall",
+                    label: "Hall Name",
+                    visible: true,
+                  },
+                  {
+                    fieldName: "beds",
+                    label: "Number of Beds",
+                    visible: true,
+                    format: {
+                      digitSeparator: true,
+                      places: 0,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ])
+    );
+
+    // clear inputs (optional)
+    setLayerURL("");
+    setLayerTitle("");
+  }
+
+  //define your extent fields
+  const constraintFields: Array<{ key: keyof Constraints; label: string }> = [
+    { key: "xmin", label: "Min X (xmin)" },
+    { key: "ymin", label: "Min Y (ymin)" },
+    { key: "xmax", label: "Max X (xmax)" },
+    { key: "ymax", label: "Max Y (ymax)" },
+  ];
 
   return (
     <Box width="100%">
@@ -129,8 +310,7 @@ export default function MapControls({
               variant="outlined"
               size="small"
               value={field === "x" ? cordinates[0] : cordinates[1]}
-              // onChange={(e) => onCenterChange(field, e.target.value)}
-              onChange={(e) => e.target.value}
+              onChange={(e) => onCenterChange(field, e.target.value)}
               sx={{
                 "& .MuiInputBase-input": {
                   padding: "4px 6px",
@@ -284,40 +464,153 @@ export default function MapControls({
         alignItems="center"
         gap={1.5}
       >
-        {layers?.map((url, index) => {
-          console.log(url);
-          return (
-            <Box
-              key={index}
+        {layers.map((layer, idx) => (
+          <Box
+            key={layer.id} // ✅ stable key
+            width="100%"
+            maxWidth="400px"
+            display="flex"
+            gap={1}
+            alignItems="center"
+            flexDirection="column"
+            borderBottom="solid 4px black"
+          >
+            <Typography
+              variant="body2"
+              fontSize="16px"
+              minWidth="100px"
               width="100%"
-              maxWidth="400px"
-              display="flex"
-              gap={1}
-              alignItems="center"
             >
-              <Typography variant="body2" fontSize="16px" minWidth="100px">
-                <div style={{ wordWrap: "break-word" }}>{url}</div>
-              </Typography>
-            </Box>
-          );
-        })}
+              <div style={{ wordWrap: "break-word", width: "100%" }}>
+                {layer.url}
+              </div>
+            </Typography>
+
+            <Typography
+              variant="body2"
+              fontSize="16px"
+              minWidth="100px"
+              width="100%"
+            >
+              <div style={{ wordWrap: "break-word", width: "100%" }}>
+                layer index:&nbsp;
+                <input
+                  type="number"
+                  value={layer.index}
+                  onChange={(e) =>
+                    handleLayerIndexChange(layer.id, Number(e.target.value))
+                  }
+                  style={{ width: 80 }}
+                />
+              </div>
+            </Typography>
+
+            <Typography
+              variant="body2"
+              fontSize="16px"
+              minWidth="100px"
+              width="100%"
+            >
+              <div style={{ wordWrap: "break-word", width: "100%" }}>
+                <span>
+                  popup enabled: {layer.popupEnabled ? <>True</> : <>False</>}
+                </span>
+              </div>
+            </Typography>
+
+            <Typography
+              variant="body2"
+              fontSize="16px"
+              minWidth="100px"
+              width="100%"
+            >
+              <div>Popup Template</div>
+              <div style={{ marginLeft: "10px" }}>
+                <div>Title: {layer.popupTemplate?.title}</div>
+                <div style={{ marginLeft: "10px" }}>
+                  {(layer.popupTemplate?.content?.[0]?.fieldInfos ?? []).map(
+                    (field) => (
+                      <div
+                        key={field.fieldName}
+                        style={{ display: "flex", gap: 8 }}
+                      >
+                        <div>{field.fieldName}</div>
+                        <button
+                          style={{ color: "red" }}
+                          onClick={() =>
+                            handleRemoveField(layer.id, field.fieldName)
+                          }
+                        >
+                          remove
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </Typography>
+
+            <Typography>
+              <TextField
+                size="small"
+                placeholder="field name"
+                value={fieldNameById[layer.id] ?? ""}
+                onChange={(e) =>
+                  setFieldNameById((s) => ({
+                    ...s,
+                    [layer.id]: e.target.value,
+                  }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddingField(layer.id);
+                }}
+                sx={{
+                  mr: 1,
+                  "& .MuiInputBase-input": {
+                    padding: "4px 6px",
+                    fontSize: "0.75rem",
+                  },
+                  "& fieldset": { border: "2px solid black" },
+                }}
+              />
+              <button
+                style={{ color: "green" }}
+                onClick={() => handleAddingField(layer.id)}
+              >
+                add field
+              </button>
+            </Typography>
+            <Typography
+              variant="body2"
+              fontSize="16px"
+              minWidth="100px"
+              width="100%"
+            >
+              <button
+                style={{ color: "red" }}
+                onClick={() => handleRemovingLayer(layer.id)}
+              >
+                remove layer
+              </button>
+            </Typography>
+          </Box>
+        ))}
+
         <Box
           width="100%"
           maxWidth="400px"
           display="flex"
           gap={1}
-          alignItems="center"
+          alignItems="left"
+          flexDirection="column"
         >
-          <Typography variant="body2" fontSize="16px" minWidth="100px">
-            Add Layer:
-          </Typography>
           <TextField
             type="string"
             variant="outlined"
             size="small"
             placeholder="Enter URL to Layer"
             value={layerURL}
-            onChange={handleChange}
+            onChange={(e) => setLayerURL(e.target.value)}
             sx={{
               flex: 1,
               "& .MuiInputBase-input": {
@@ -327,6 +620,25 @@ export default function MapControls({
               "& fieldset": { border: "2px solid black" },
             }}
           />
+          <TextField
+            type="string"
+            variant="outlined"
+            size="small"
+            placeholder="Enter title to Layer"
+            value={layerTitle}
+            onChange={(e) => setLayerTitle(e.target.value)}
+            sx={{
+              flex: 1,
+              "& .MuiInputBase-input": {
+                padding: "4px 6px",
+                fontSize: "0.75rem",
+              },
+              "& fieldset": { border: "2px solid black" },
+            }}
+          />
+          <Typography variant="body2" fontSize="16px" minWidth="100px">
+            <button onClick={handleAddingLayer}>Add Layer</button>
+          </Typography>
         </Box>
       </Box>
     </Box>

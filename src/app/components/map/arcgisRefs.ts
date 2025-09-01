@@ -56,6 +56,7 @@ interface FieldInfo {
 
 interface FeatureLayerConfig {
   url: string;
+  index: number;
   outFields: string[];
   popupEnabled: boolean;
   popupTemplate?: {
@@ -84,7 +85,7 @@ interface ExportBody {
       xmax: number;
       ymax: number;
     } | null;
-    featureLayers: FeatureLayerConfig[] | null;
+    featureLayers: FeatureLayerConfig[];
   };
 }
 
@@ -114,7 +115,38 @@ export const settingsRef: { current: ExportBody["settings"] } = {
     },
 
     constraints: null,
-    featureLayers: null,
+    featureLayers: [
+      {
+        url: "https://services6.arcgis.com/rX5atNlsxFq7LIpv/arcgis/rest/services/County_of_Merced_Jurisdictional_Zoning_Designations/FeatureServer",
+        index: 5,
+        outFields: ["*"],
+        popupEnabled: true,
+        popupTemplate: {
+          title: "{ZONENAME}",
+          content: [
+            {
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "hall",
+                  label: "Hall Name",
+                  visible: true,
+                },
+                {
+                  fieldName: "beds",
+                  label: "Number of Beds",
+                  visible: true,
+                  format: {
+                    digitSeparator: true,
+                    places: 0,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
   },
 };
 

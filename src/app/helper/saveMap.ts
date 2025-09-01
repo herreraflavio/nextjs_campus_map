@@ -83,6 +83,31 @@ function generateExport(): { polygons: any[]; labels: any[] } {
  * Synchronously POSTs the current map’s polygons to your `/api/maps/[id]` endpoint.
  * Non-blocking: fires off in the background.
  */
+
+interface FieldInfo {
+  fieldName: string;
+  label: string;
+  visible: boolean;
+  format?: {
+    digitSeparator?: boolean;
+    places?: number;
+  };
+}
+
+interface FeatureLayerConfig {
+  url: string;
+  index: number;
+  outFields: string[];
+  popupEnabled: boolean;
+  popupTemplate?: {
+    title: string;
+    content: Array<{
+      type: string;
+      fieldInfos?: FieldInfo[];
+    }>;
+  };
+}
+
 export function saveMapToServer(
   mapId: string,
   userEmail: string,
@@ -95,6 +120,7 @@ export function saveMapToServer(
       xmax: number;
       ymax: number;
     };
+    featureLayers: FeatureLayerConfig[];
   }
 ): void {
   // const polygons = generatePolygons();

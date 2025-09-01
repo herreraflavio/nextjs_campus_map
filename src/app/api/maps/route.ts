@@ -512,6 +512,7 @@ const sampleMap = [
       featureLayers: [
         {
           url: "https://services6.arcgis.com/rX5atNlsxFq7LIpv/arcgis/rest/services/County_of_Merced_Jurisdictional_Zoning_Designations/FeatureServer",
+          index: 5,
           outFields: ["*"],
           popupEnabled: true,
           popupTemplate: {
@@ -541,6 +542,7 @@ const sampleMap = [
         },
         {
           url: "https://services2.arcgis.com/wx8u046p68e0iGuj/arcgis/rest/services/housing_hall_for_arcgis_XYTableToPoint/FeatureServer",
+          index: 45,
           outFields: ["*"],
           popupEnabled: true,
           popupTemplate: {

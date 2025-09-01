@@ -8,7 +8,6 @@ import {
   settingsRef,
   settingsEvents,
 } from "./arcgisRefs";
-// ❌ no more centroid import here
 import { rebuildBuckets } from "./bucketManager";
 import Extent from "@arcgis/core/geometry/Extent";
 import { useSession } from "next-auth/react";
@@ -38,10 +37,6 @@ function mercatorToLonLat(x: string, y: string): [number, number] {
   return [lon, lat];
 }
 
-interface URLS {
-  url: string;
-}
-
 interface FieldInfo {
   fieldName: string;
   label: string;
@@ -52,8 +47,10 @@ interface FieldInfo {
   };
 }
 
-interface FeatureLayerConfig {
+export interface FeatureLayerConfig {
+  id: string; // ✅ stable id
   url: string;
+  index: number;
   outFields: string[];
   popupEnabled: boolean;
   popupTemplate?: {
@@ -63,6 +60,30 @@ interface FeatureLayerConfig {
       fieldInfos?: FieldInfo[];
     }>;
   };
+}
+
+function genId() {
+  // Safe UUID generator (browser + Node)
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `layer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Ensure each layer has an id and a concrete index; keep sorted. */
+function normalizeLayers(
+  layers: Partial<FeatureLayerConfig>[]
+): FeatureLayerConfig[] {
+  return [...(layers ?? [])]
+    .map((l, i) => ({
+      id: (l as FeatureLayerConfig).id ?? genId(),
+      url: String(l.url ?? ""),
+      index: typeof l.index === "number" ? l.index : i,
+      outFields: (l.outFields as string[]) ?? ["*"],
+      popupEnabled: !!l.popupEnabled,
+      popupTemplate: l.popupTemplate as FeatureLayerConfig["popupTemplate"],
+    }))
+    .sort((a, b) => a.index - b.index);
 }
 
 export default function Sidebar() {
@@ -88,7 +109,14 @@ export default function Sidebar() {
   const [openSettings, setOpenSettings] = useState(false);
   const [center, setCenter] = useState({ x: "", y: "" });
   const [zoom, setZoom] = useState(10);
-  const [layers, setLayers] = useState<string[] | null>(null);
+
+  // Layers config (each layer has a stable `id`)
+  const [layers, setLayers] = useState<FeatureLayerConfig[]>([]);
+  // Per-layer popup field editor input, keyed by layer.id
+  const [fieldNameById, setFieldNameById] = useState<Record<string, string>>(
+    {}
+  );
+
   const [constraints, setConstraints] = useState<Constraints>({
     xmin: "",
     ymin: "",
@@ -122,7 +150,12 @@ export default function Sidebar() {
         ymax: String(currentExtent.ymax),
       });
     }
-    setLayers(returnLayerURLS(settingsRef.current.featureLayers));
+
+    // Pull latest, normalize (ids & indices), and sort
+    const featureLayers = normalizeLayers(
+      (settingsRef.current.featureLayers ?? []) as Partial<FeatureLayerConfig>[]
+    );
+    setLayers(featureLayers);
     setOpenSettings((o) => !o);
   };
 
@@ -132,7 +165,6 @@ export default function Sidebar() {
   const handleZoomChange = (value: number) => setZoom(value);
   const handleConstraintChange = (field: keyof Constraints, value: string) =>
     setConstraints((prev) => ({ ...prev, [field]: value }));
-  const handleLayers = (value: []) => setLayers(value);
 
   // ─── Apply to live view, persist in refs, and save to server ─────────
   const applySettings = () => {
@@ -148,6 +180,7 @@ export default function Sidebar() {
         spatialReference: view.spatialReference,
       });
     } else {
+      // @ts-ignore clear at runtime
       view.constraints.geometry = null;
     }
 
@@ -159,6 +192,11 @@ export default function Sidebar() {
         ? { xmin: +xmin, ymin: +ymin, xmax: +xmax, ymax: +ymax }
         : null;
 
+    // ✅ sort layers by their per-layer index before saving
+    const layersSorted = normalizeLayers(layers);
+
+    settingsRef.current.featureLayers = layersSorted;
+
     // Save to server
     if (userEmail) {
       const s = settingsRef.current;
@@ -166,6 +204,7 @@ export default function Sidebar() {
         zoom: s.zoom,
         center: [s.center.x, s.center.y] as [number, number],
         constraints: s.constraints,
+        featureLayers: layersSorted, // persisted with id + index
       });
     }
 
@@ -182,13 +221,13 @@ export default function Sidebar() {
       );
 
       if (editingId) {
-        const g = items.find((g: any) => g.attributes.id === editingId);
+        const g = items.find((gr: any) => gr.attributes.id === editingId);
         if (g) {
           setEditName(g.attributes.name);
           const { r, g: grn, b, a } = g.symbol.color;
           setEditColor(
             `#${[r, grn, b]
-              .map((v) => v.toString(16).padStart(2, "0"))
+              .map((v: number) => v.toString(16).padStart(2, "0"))
               .join("")}`
           );
           setEditAlpha(typeof a === "number" ? a : 0.6);
@@ -285,12 +324,17 @@ export default function Sidebar() {
       );
     }
 
+    // Save settings (incl. featureLayers) after polygon edit
     if (userEmail) {
       const s = settingsRef.current;
+      const layersSorted = normalizeLayers(layers);
+      settingsRef.current.featureLayers = layersSorted;
+
       saveMapToServer(mapId, userEmail, {
         zoom: s.zoom,
         center: [s.center.x, s.center.y] as [number, number],
         constraints: s.constraints,
+        featureLayers: layersSorted,
       });
     }
 
@@ -316,21 +360,18 @@ export default function Sidebar() {
       finalizedLayerRef.events.removeEventListener("change", handler);
   }, [editingId]);
 
-  function returnLayerURLS(s: FeatureLayerConfig[] | null) {
-    const urls: any = [];
-    s?.map((layer: URLS) => {
-      urls.push(layer.url);
-      console.log(layer.url);
-    });
-    return urls;
-  }
   // ─── Sync UI form when settingsRef changes externally ───────────────
   useEffect(() => {
     const sync = () => {
       const s = settingsRef.current;
       setCenter({ x: String(s.center.x), y: String(s.center.y) });
 
-      setLayers(returnLayerURLS(s.featureLayers));
+      // Normalize and sort whenever we pull them in
+      const featureLayers = normalizeLayers(
+        (s.featureLayers ?? []) as Partial<FeatureLayerConfig>[]
+      );
+      setLayers(featureLayers);
+
       setZoom(s.zoom);
       if (s.constraints) {
         setConstraints({
@@ -375,6 +416,8 @@ export default function Sidebar() {
             border: 1,
             p: 1,
             width: 300,
+            height: 500,
+            overflow: "scroll",
           }}
         >
           <Box
@@ -397,7 +440,9 @@ export default function Sidebar() {
               constraints={constraints}
               onConstraintChange={handleConstraintChange}
               layers={layers}
-              handlelayers={handleLayers}
+              setLayers={setLayers}
+              fieldNameById={fieldNameById} // ✅ by id
+              setFieldNameById={setFieldNameById} // ✅ by id
             />
           </Box>
           <Box display="flex" justifyContent="flex-end" mt={2}>

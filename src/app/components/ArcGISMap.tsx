@@ -61,6 +61,7 @@ interface FieldInfo {
 
 interface FeatureLayerConfig {
   url: string;
+  index: number;
   outFields: string[];
   popupEnabled: boolean;
   popupTemplate?: {
@@ -230,6 +231,7 @@ export default function ArcGISMap(mapData: ExportBody) {
               try {
                 console.log(`Creating feature layer ${index}:`, {
                   url: config.url,
+                  index: config.index,
                   outFields: config.outFields,
                   popupEnabled: config.popupEnabled,
                   hasPopupTemplate: !!config.popupTemplate,
@@ -237,6 +239,7 @@ export default function ArcGISMap(mapData: ExportBody) {
 
                 const featureLayer = new FeatureLayer({
                   url: config.url,
+                  index: config.index,
                   outFields: config.outFields || ["*"],
                   popupEnabled: config.popupEnabled !== false,
                   popupTemplate: config.popupTemplate || undefined,
@@ -329,10 +332,12 @@ export default function ArcGISMap(mapData: ExportBody) {
           //   labelsLayer,
           // ]);
           // Give stable ids (do this when you create the layers)
-          const featureLayersOrder = [5, 45];
+          //  const featureLayersOrder = [5, 45];
+
           featureLayers.forEach((fl, i) => {
+            console.log(fl);
             fl.id = `feature:${i}`;
-            (fl as any).z = featureLayersOrder[i];
+            (fl as any).z = fl.index;
           });
           mediaLayer.id = "media";
           (mediaLayer as any).z = 10;
