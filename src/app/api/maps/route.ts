@@ -1167,18 +1167,9 @@ const sampleMap = [
                 type: "fields",
                 fieldInfos: [
                   {
-                    fieldName: "hall",
-                    label: "Hall Name",
+                    fieldName: "AREA_",
+                    label: "Area",
                     visible: true,
-                  },
-                  {
-                    fieldName: "beds",
-                    label: "Number of Beds",
-                    visible: true,
-                    format: {
-                      digitSeparator: true,
-                      places: 0,
-                    },
                   },
                 ],
               },

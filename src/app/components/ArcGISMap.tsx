@@ -505,6 +505,8 @@ import {
   type CampusEvent,
 } from "./map/arcgisRefs";
 import "./ArcGISMap.css";
+import EventCalendarOverlay from "./map/MapControls/EventCalendarOverlay";
+
 import { useMapId } from "@/app/context/MapContext";
 import { rebuildBuckets, labelBuckets } from "./map/bucketManager";
 import { toGraphic as toEventGraphic } from "./map/MapControls/eventsLayer";
@@ -1001,7 +1003,22 @@ export default function ArcGISMap(mapData: ExportBody) {
     return () => clearInterval(intv);
   }, [mapId]);
 
-  return <div ref={mapDiv} style={{ width: "100%", height: "100%" }} />;
+  // return <div ref={mapDiv} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div
+        ref={mapDiv}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      />
+      {/* Calendar/Date filter overlay */}
+      <EventCalendarOverlay />
+    </div>
+  );
 }
 
 // "use client";
