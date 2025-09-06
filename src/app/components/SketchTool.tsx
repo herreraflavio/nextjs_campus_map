@@ -393,6 +393,7 @@ export default function ToggleSketchTool() {
         zoom: s.zoom,
         center: [s.center.x, s.center.y] as [number, number],
         constraints: s.constraints,
+        featureLayers: s.featureLayers,
       });
     }
 

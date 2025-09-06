@@ -123,6 +123,8 @@ export default function LoggedInDashboard({ user }) {
           sx={{
             flexGrow: 1,
             height: "100%", // fill this row
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <ArcGISWrapper />
