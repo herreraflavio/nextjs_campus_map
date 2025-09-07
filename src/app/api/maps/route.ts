@@ -1117,6 +1117,7 @@ const sampleMap = [
           endAt: "15:00",
           locationTag: "ballroom",
           names: ["ASUCM", "Clubs Council"],
+          fromUser: true,
         },
         geometry: {
           type: "point",
@@ -1135,6 +1136,7 @@ const sampleMap = [
           endAt: "20:00",
           locationTag: "cob1-105",
           names: ["TA: Jane Doe"],
+          fromUser: true,
         },
         geometry: {
           type: "point",

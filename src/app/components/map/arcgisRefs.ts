@@ -303,7 +303,7 @@ export const placesRegistry: Place[] = [
   {
     placeId: "rec-field",
     label: "Recreation Field",
-    geometry: { wkid: 4326, x: -120.4209, y: 37.369 },
+    geometry: { wkid: 3857, x: -13405694.019024547, y: 4489223.854452545 },
     aliases: ["rec field"],
   },
 ];
@@ -320,6 +320,7 @@ export type CampusEvent = {
   names?: string[];
   original?: any;
   geometry: { x: number; y: number; wkid: number }; // typically 4326
+  fromUser: boolean;
 };
 
 export const eventsStore = {

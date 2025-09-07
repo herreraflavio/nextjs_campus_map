@@ -560,6 +560,7 @@ interface EventPointDTO {
     locationTag?: string | null;
     names?: string[] | null;
     original?: any | null;
+    fromUser: boolean;
   };
   geometry: {
     type: "point";
@@ -926,6 +927,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                       names: ev.attributes.names ?? undefined,
                       original: ev.attributes.original ?? undefined,
                       geometry: { x: pt3857.x, y: pt3857.y, wkid: 3857 },
+                      fromUser: ev.attributes.fromUser,
                     };
 
                     eventsLayer.add(toEventGraphic(Graphic, ce));
@@ -948,6 +950,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           setLabelsLayer(labelsLayer);
           GraphicRef.current = Graphic;
           MapViewRef.current = view;
+          console.log(eventsLayer);
           eventsLayerRef.current = eventsLayer;
 
           // Pre-existing local events

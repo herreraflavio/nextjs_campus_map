@@ -441,6 +441,7 @@ interface EventPoint {
     locationTag?: string | null;
     names?: string[] | null;
     original?: any | null;
+    fromUser?: boolean;
   };
   geometry: {
     type: "point";

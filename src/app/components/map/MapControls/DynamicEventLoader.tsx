@@ -142,7 +142,7 @@ export default function DynamicEventLoader(props: {
 
           const start = new Date(startRaw);
           if (isNaN(start.getTime())) continue;
-
+          const fromUser = ev.fromUser;
           const ce: CampusEvent = {
             id: String(
               ev.id ?? ev.uuid ?? `api-${Date.now()}-${Math.random()}`
@@ -157,6 +157,7 @@ export default function DynamicEventLoader(props: {
             names: undefined,
             original: ev,
             geometry: { x: lon, y: lat, wkid: 4326 }, // 4326; toEventGraphic will handle projecting
+            fromUser: false,
           };
 
           const g = toEventGraphic(Graphic, ce);

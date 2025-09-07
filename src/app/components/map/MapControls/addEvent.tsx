@@ -530,8 +530,8 @@ export default function AddEvent() {
         style={{
           color: "black",
           position: "absolute",
-          bottom: "-70px",
-          right: "20px",
+          bottom: "-60px",
+          right: " 320px",
           zIndex: 999,
           padding: "10px 14px",
           fontWeight: 900,
@@ -641,6 +641,7 @@ function EventModal({ onClose }: { onClose: () => void }) {
             wkid: place.geometry.wkid, // 4326
           }
         : { x: -120.422045, y: 37.368169, wkid: 4326 },
+      fromUser: true,
     });
 
     // 2) Persist immediately (don’t debounce — the modal unmounts)

@@ -844,8 +844,9 @@ export default function EventCalendarOverlay() {
 /* Styles */
 const panelWrap: React.CSSProperties = {
   position: "absolute",
-  top: "25px",
-  right: "150px",
+
+  top: "17px",
+  right: "450px",
   zIndex: 1000,
   background: "white",
   border: "4px solid #000000ff",

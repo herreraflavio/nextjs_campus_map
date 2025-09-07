@@ -196,6 +196,7 @@ interface EventPoint {
     locationTag?: string | null;
     names?: string[] | null;
     original?: any | null;
+    fromUser: boolean;
   };
   geometry: {
     type: "point";
@@ -262,6 +263,7 @@ const NO_CONSTRAINTS: ExportBody["settings"]["constraints"] = null;
 
 /** NEW: fallback external event endpoints */
 const DEFAULT_EVENT_SOURCES: string[] = ["http://localhost:6050/events"];
+// const DEFAULT_EVENT_SOURCES: string[] = [];
 
 const ArcGISMap = dynamic(() => import("./ArcGISMap"), { ssr: false });
 
