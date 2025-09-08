@@ -846,7 +846,8 @@ const panelWrap: React.CSSProperties = {
   position: "absolute",
 
   top: "17px",
-  right: "450px",
+  // right: "450px",
+  right: "calc((100% / 2) - 196px)",
   zIndex: 1000,
   background: "white",
   border: "4px solid #000000ff",
@@ -897,7 +898,8 @@ const iconBtn: React.CSSProperties = {
 const fabStyle: React.CSSProperties = {
   position: "absolute",
   top: "17px",
-  right: "450px",
+  // right: "450px",
+  right: "calc((100% / 2) - 22px)",
   zIndex: 1000,
   width: 44,
   height: 44,
