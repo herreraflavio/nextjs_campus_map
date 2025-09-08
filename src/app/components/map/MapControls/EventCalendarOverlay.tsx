@@ -847,14 +847,16 @@ const panelWrap: React.CSSProperties = {
 
   top: "17px",
   // right: "450px",
-  right: "calc((100% / 2) - 196px)",
+  // right: "calc((100% / 2) - 196px)",
+  right: "calc((100% / 2) - 171px)",
   zIndex: 1000,
   background: "white",
   border: "4px solid #000000ff",
   borderRadius: 12,
   padding: 12,
   boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-  width: 360,
+  // width: 360,
+  width: 305,
   fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
   pointerEvents: "auto",
 };
