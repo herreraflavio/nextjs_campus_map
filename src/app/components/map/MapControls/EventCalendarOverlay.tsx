@@ -896,13 +896,13 @@ const iconBtn: React.CSSProperties = {
 };
 const fabStyle: React.CSSProperties = {
   position: "absolute",
-  top: "25px",
-  right: "150px",
+  top: "17px",
+  right: "450px",
   zIndex: 1000,
   width: 44,
   height: 44,
   borderRadius: "50%",
-  border: "1px solid #ddd",
+  border: "4px solid #000000ff",
   background: "white",
   boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
   cursor: "pointer",
