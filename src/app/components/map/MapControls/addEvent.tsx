@@ -512,12 +512,8 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
-import {
-  addEventToStore,
-  placesRegistry,
-  settingsRef,
-  saveMapToServer,
-} from "../arcgisRefs";
+import { addEventToStore, placesRegistry, settingsRef } from "../arcgisRefs";
+import { saveMapToServer } from "@/app/helper/saveMap";
 import { useMapId } from "@/app/context/MapContext";
 import { useSession } from "next-auth/react";
 
