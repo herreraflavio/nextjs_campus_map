@@ -19,6 +19,7 @@ import ShareMap from "@/app/components/button/ShareMap";
 import SketchTool from "@/app/components/SketchTool";
 import Sidebar from "./map/Sidebar";
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
+import AddEvent from "./map/MapControls/addEvent";
 
 export default function LoggedInDashboard({ user }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -127,6 +128,9 @@ export default function LoggedInDashboard({ user }) {
             flexDirection: "column",
           }}
         >
+          <div style={{ position: "relative" }}>
+            <AddEvent />
+          </div>
           <ArcGISWrapper />
         </Box>
       </Box>

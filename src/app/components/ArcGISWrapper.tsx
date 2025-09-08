@@ -141,7 +141,7 @@ import dynamic from "next/dynamic";
 import { useMapId } from "@/app/context/MapContext";
 import { useState, useEffect } from "react";
 import { settingsRef } from "../components/map/arcgisRefs";
-import AddEvent from "./map/MapControls/addEvent";
+// import AddEvent from "./map/MapControls/addEvent";
 
 /* ─────────────────────────────────────────
  * Types
@@ -423,9 +423,9 @@ export default function ArcGISWrapper() {
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
-      <div style={{ position: "relative" }}>
+      {/* <div style={{ position: "relative" }}>
         <AddEvent />
-      </div>
+      </div> */}
       <ArcGISMap {...mapData} />
     </div>
   );
