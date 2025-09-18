@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Canvas Polygon Cutout (Upload + Download)</title>
+    <style>
+      :root {
+        --w: 900px;
+        --h: 600px;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, Arial, sans-serif;
+        background: #f2f2f2;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 14px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+      header > * {
+        font-size: 14px;
+      }
+      input[type="file"] {
+        max-width: 320px;
+      }
+      button {
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background: #fafafa;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #f0f0f0;
+      }
+      .hint {
+        color: #666;
+      }
+      main {
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+      .stage {
+        width: var(--w);
+        height: var(--h);
+        border: 1px solid #333;
+        background: #fff;
+        position: relative;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .legend {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <input id="fileInput" type="file" accept="image/*" />
+      <button id="btnClose">Close Polygon</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnReset">Reset</button>
+      <button id="btnDownload">Download PNG</button>
+      <span class="hint"
+        >Tip: click to add vertices; click near the first point to close.</span
+      >
+    </header>
+
+    <main>
+      <div class="stage">
+        <canvas id="canvas"></canvas>
+        <div class="legend">
+          <div><strong>Status:</strong> <span id="status">drawing</span></div>
+          <div>Points: <span id="ptCount">0</span></div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // ─────────────────────────────────────────────────────────────
+      // Canvas setup (HiDPI-aware; draw in CSS pixels)
+      // ─────────────────────────────────────────────────────────────
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      function resizeCanvasToCSS() {
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = canvas.clientWidth;
+        const cssH = canvas.clientHeight;
+        canvas.width = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw using CSS pixel units
+      }
+      // Set initial CSS size via container; then map to device pixels
+      resizeCanvasToCSS();
+      window.addEventListener("resize", () => {
+        resizeCanvasToCSS();
+        draw();
+      });
+
+      // ─────────────────────────────────────────────────────────────
+      // State
+      // ─────────────────────────────────────────────────────────────
+      let points = []; // [{x,y}, ...] in canvas CSS coordinates
+      let closed = false;
+      let hover = null; // {x,y} live cursor for preview segment
+
+      // Image state + fit transform for display
+      let img = null; // HTMLImageElement
+      let fit = null; // {dx, dy, scale, dw, dh}
+
+      // UI
+      const statusEl = document.getElementById("status");
+      const ptCountEl = document.getElementById("ptCount");
+
+      // ─────────────────────────────────────────────────────────────
+      // Helpers
+      // ─────────────────────────────────────────────────────────────
+      function near(p, q, tol = 10) {
+        return Math.hypot(p.x - q.x, p.y - q.y) < tol;
+      }
+
+      function computeFit(image, w, h) {
+        // Scale-to-fit inside (w x h) preserving aspect ratio, centered.
+        const s = Math.min(w / image.naturalWidth, h / image.naturalHeight);
+        const dw = image.naturalWidth * s;
+        const dh = image.naturalHeight * s;
+        const dx = (w - dw) / 2;
+        const dy = (h - dh) / 2;
+        return { dx, dy, scale: s, dw, dh };
+      }
+
+      function drawImageFitted() {
+        if (!img) return;
+        const w = canvas.clientWidth,
+          h = canvas.clientHeight;
+        if (!fit) fit = computeFit(img, w, h);
+        ctx.drawImage(img, fit.dx, fit.dy, fit.dw, fit.dh);
+      }
+
+      function drawPolygonPath(pList, doClose = false) {
+        if (!pList.length) return;
+        ctx.beginPath();
+        ctx.moveTo(pList[0].x, pList[0].y);
+        for (let i = 1; i < pList.length; i++)
+          ctx.lineTo(pList[i].x, pList[i].y);
+        if (doClose) ctx.closePath();
+      }
+
+      function draw() {
+        // Clear
+        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+        // Background image
+        drawImageFitted();
+
+        // Draw polygon-in-progress
+        if (points.length) {
+          // edges
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = closed ? "#e53935" : "#1976d2";
+          drawPolygonPath(points, closed);
+          ctx.stroke();
+
+          // live preview segment
+          if (!closed && hover && points.length >= 1) {
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(
+              points[points.length - 1].x,
+              points[points.length - 1].y
+            );
+            ctx.lineTo(hover.x, hover.y);
+            ctx.strokeStyle = "#555";
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          // vertices
+          ctx.fillStyle = closed ? "#e53935" : "#1976d2";
+          for (const p of points) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // indicate first point (closing target)
+          if (!closed) {
+            const p0 = points[0];
+            ctx.beginPath();
+            ctx.arc(p0.x, p0.y, 8, 0, Math.PI * 2);
+            ctx.strokeStyle = "#ffa000";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+
+        // If closed, visually mask outside on the preview canvas too
+        if (closed && points.length >= 3) {
+          // draw dark overlay, then carve polygon hole using even-odd fill
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, canvas.clientWidth, canvas.clientHeight);
+          drawPolygonPath(points, true);
+          ctx.fillStyle = "rgba(0,0,0,0.5)";
+          ctx.fill("evenodd");
+          ctx.restore();
+        }
+
+        // Update UI
+        ptCountEl.textContent = String(points.length);
+        statusEl.textContent = closed ? "closed" : "drawing";
+      }
+
+      function closePolygon() {
+        if (closed || points.length < 3) return;
+        closed = true;
+        draw();
+      }
+
+      function resetAll() {
+        points = [];
+        closed = false;
+        hover = null;
+        draw();
+      }
+
+      function undoPoint() {
+        if (closed) return; // keep strict once closed
+        points.pop();
+        draw();
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // Mouse events
+      // ─────────────────────────────────────────────────────────────
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        hover = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        if (!closed) draw();
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        hover = null;
+        if (!closed) draw();
+      });
+
+      canvas.addEventListener("click", (e) => {
+        if (closed) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const pt = { x, y };
+
+        if (points.length >= 3 && near(pt, points[0], 10)) {
+          closePolygon();
+          return;
+        }
+        points.push(pt);
+        draw();
+      });
+
+      // Keyboard: Enter closes polygon, Backspace undo (when drawing)
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          closePolygon();
+        }
+        if (e.key === "Backspace" && !closed) {
+          e.preventDefault();
+          undoPoint();
+        }
+      });
+
+      // ─────────────────────────────────────────────────────────────
+      // Image upload
+      // ─────────────────────────────────────────────────────────────
+      document.getElementById("fileInput").addEventListener("change", (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+        const _img = new Image();
+        _img.onload = () => {
+          img = _img;
+          fit = computeFit(img, canvas.clientWidth, canvas.clientHeight);
+          draw();
+          URL.revokeObjectURL(url);
+        };
+        _img.src = url;
+      });
+
+      // ─────────────────────────────────────────────────────────────
+      // Export (download)
+      // ─────────────────────────────────────────────────────────────
+      function exportPNG() {
+        if (!closed || points.length < 3) {
+          // Auto-close if possible
+          if (points.length >= 3) {
+            closed = true;
+            draw();
+          } else {
+            alert(
+              "Add at least 3 points and close the polygon before exporting."
+            );
+            return;
+          }
+        }
+
+        // If we have an image, export at original image resolution (best quality).
+        if (img) {
+          const out = document.createElement("canvas");
+          out.width = img.naturalWidth;
+          out.height = img.naturalHeight;
+          const octx = out.getContext("2d");
+
+          // Map polygon points from canvas CSS space -> image pixel space.
+          // inverse: X_img = (X_canvas - dx) / scale
+          const polyImgCoords = points.map((p) => ({
+            x: (p.x - fit.dx) / fit.scale,
+            y: (p.y - fit.dy) / fit.scale,
+          }));
+
+          // Build mask + clip
+          octx.save();
+          octx.beginPath();
+          octx.moveTo(polyImgCoords[0].x, polyImgCoords[0].y);
+          for (let i = 1; i < polyImgCoords.length; i++) {
+            octx.lineTo(polyImgCoords[i].x, polyImgCoords[i].y);
+          }
+          octx.closePath();
+          octx.clip(); // keep inside polygon
+
+          // Draw the image; outside clipped area stays transparent
+          octx.drawImage(img, 0, 0);
+          octx.restore();
+
+          const dataURL = out.toDataURL("image/png");
+          triggerDownload(dataURL, "cutout.png");
+        } else {
+          // No image: export the current canvas-size cutout (transparent outside, white inside)
+          const w = canvas.clientWidth,
+            h = canvas.clientHeight;
+          const out = document.createElement("canvas");
+          out.width = w;
+          out.height = h;
+          const octx = out.getContext("2d");
+
+          // Clip to polygon
+          octx.save();
+          drawPolygonPathToContext(octx, points);
+          octx.clip();
+
+          // Fill inside with white (you can change this to any color or gradient)
+          octx.fillStyle = "#ffffff";
+          octx.fillRect(0, 0, w, h);
+          octx.restore();
+
+          const dataURL = out.toDataURL("image/png");
+          triggerDownload(dataURL, "cutout.png");
+        }
+      }
+
+      function drawPolygonPathToContext(anyCtx, pList) {
+        if (!pList.length) return;
+        anyCtx.beginPath();
+        anyCtx.moveTo(pList[0].x, pList[0].y);
+        for (let i = 1; i < pList.length; i++)
+          anyCtx.lineTo(pList[i].x, pList[i].y);
+        anyCtx.closePath();
+      }
+
+      function triggerDownload(dataURL, filename) {
+        const a = document.createElement("a");
+        a.href = dataURL;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // Buttons
+      // ─────────────────────────────────────────────────────────────
+      document
+        .getElementById("btnClose")
+        .addEventListener("click", closePolygon);
+      document.getElementById("btnUndo").addEventListener("click", undoPoint);
+      document.getElementById("btnReset").addEventListener("click", resetAll);
+      document
+        .getElementById("btnDownload")
+        .addEventListener("click", exportPNG);
+
+      // Initial draw
+      draw();
+    </script>
+  </body>
+</html>

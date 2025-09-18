@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>In-browser Georeference (UC Merced)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.33/esri/themes/light/main.css"
+    />
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+      }
+      .toolbar {
+        position: absolute;
+        z-index: 10;
+        top: 10px;
+        left: 10px;
+        background: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        display: grid;
+        gap: 8px;
+        width: 320px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .row label {
+        flex: 0 0 90px;
+      }
+      .row input[type="file"] {
+        flex: 1 1 auto;
+      }
+      .row button {
+        padding: 6px 10px;
+      }
+      #status {
+        font: 12px/1.3 system-ui, sans-serif;
+        color: #333;
+      }
+      textarea {
+        width: 100%;
+        height: 110px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+    </style>
+    <script src="https://js.arcgis.com/4.33/"></script>
+  </head>
+  <body>
+    <div class="toolbar">
+      <div class="row">
+        <label>Upload image</label>
+        <input id="imgInput" type="file" accept="image/*" />
+      </div>
+
+      <div class="row">
+        <label>Edit mode</label>
+        <input id="editToggle" type="checkbox" disabled />
+        <span id="status">—</span>
+      </div>
+
+      <div class="row">
+        <button id="saveBtn" disabled>Save georeference</button>
+        <button id="resetBtn" disabled>Reset box</button>
+        <button id="removeBtn" disabled>Remove</button>
+      </div>
+
+      <details>
+        <summary>Georeference JSON (WGS84)</summary>
+        <textarea id="outJson" readonly></textarea>
+      </details>
+    </div>
+
+    <div id="viewDiv"></div>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/geometry/Point",
+        "esri/geometry/Polygon",
+        "esri/geometry/support/webMercatorUtils",
+        "esri/layers/GraphicsLayer",
+        "esri/Graphic",
+        "esri/widgets/Sketch",
+        "esri/layers/MediaLayer",
+        "esri/layers/support/ImageElement",
+        "esri/layers/support/CornersGeoreference",
+      ], function (
+        Map,
+        MapView,
+        Point,
+        Polygon,
+        webMercatorUtils,
+        GraphicsLayer,
+        Graphic,
+        Sketch,
+        MediaLayer,
+        ImageElement,
+        CornersGeoreference
+      ) {
+        // --- 1) Map centered on UC Merced ---
+        const UC_MERCED = { longitude: -120.42498, latitude: 37.36628 }; // approx
+        const map = new Map({ basemap: "satellite" });
+        const view = new MapView({
+          container: "viewDiv",
+          map,
+          center: [UC_MERCED.longitude, UC_MERCED.latitude],
+          zoom: 16,
+        });
+
+        // --- 2) Layers/UI state ---
+        const editLayer = new GraphicsLayer();
+        map.add(editLayer);
+
+        let mediaLayer = null; // will hold the MediaLayer
+        let imageElement = null; // the ImageElement inside mediaLayer
+        let polygonGraphic = null; // 4-corner polygon graphic for editing
+        let uploadedName = null; // original filename (for saving)
+
+        // --- 3) UI elements ---
+        const imgInput = document.getElementById("imgInput");
+        const editToggle = document.getElementById("editToggle");
+        const saveBtn = document.getElementById("saveBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const removeBtn = document.getElementById("removeBtn");
+        const outJson = document.getElementById("outJson");
+        const status = document.getElementById("status");
+
+        // --- 4) Sketch for polygon editing (move/rotate/scale/reshape) ---
+        const sketch = new Sketch({
+          view,
+          layer: editLayer,
+          availableCreateTools: [], // no create tools; we provide the polygon
+          defaultUpdateOptions: {
+            enableRotation: true,
+            enableScaling: true,
+            multipleSelectionEnabled: false,
+            toggleToolOnClick: false,
+          },
+          visibleElements: {
+            createTools: false,
+            selectionTools: {
+              "lasso-selection": false,
+              "rectangle-selection": false,
+            },
+          },
+        });
+        view.ui.add(sketch, "top-right");
+
+        // Sync image from polygon vertices (index order preserved during transforms).
+        function syncMediaFromPolygon() {
+          if (!polygonGraphic || !imageElement) return;
+          const ring = polygonGraphic.geometry.rings[0]; // [ [x,y], [x,y], [x,y], [x,y], [x,y] ]
+          const sr = polygonGraphic.geometry.spatialReference;
+
+          const [tl, tr, br, bl] = ring
+            .slice(0, 4)
+            .map(([x, y]) => new Point({ x, y, spatialReference: sr }));
+
+          // Update the image georeference in-place
+          if (
+            !imageElement.georeference ||
+            imageElement.georeference.type !== "corners"
+          ) {
+            imageElement.georeference = new CornersGeoreference({
+              topLeft: tl,
+              topRight: tr,
+              bottomRight: br,
+              bottomLeft: bl,
+            });
+          } else {
+            imageElement.georeference.topLeft = tl;
+            imageElement.georeference.topRight = tr;
+            imageElement.georeference.bottomRight = br;
+            imageElement.georeference.bottomLeft = bl;
+          }
+
+          // Update JSON preview in WGS84
+          const tl84 = webMercatorUtils.webMercatorToGeographic(tl);
+          const tr84 = webMercatorUtils.webMercatorToGeographic(tr);
+          const br84 = webMercatorUtils.webMercatorToGeographic(br);
+          const bl84 = webMercatorUtils.webMercatorToGeographic(bl);
+
+          const payload = {
+            imageName: uploadedName || null,
+            spatialReference: 4326,
+            corners: {
+              topLeft: { lon: tl84.longitude, lat: tl84.latitude },
+              topRight: { lon: tr84.longitude, lat: tr84.latitude },
+              bottomRight: { lon: br84.longitude, lat: br84.latitude },
+              bottomLeft: { lon: bl84.longitude, lat: bl84.latitude },
+            },
+          };
+          outJson.value = JSON.stringify(payload, null, 2);
+        }
+
+        // Build a 4-corner rectangle polygon around a center (in WebMercator)
+        function buildDefaultBox(
+          centerPointWM,
+          widthMeters = 140,
+          heightMeters = 100
+        ) {
+          // Convert meters to map units (WebMercator meters)
+          const dx = widthMeters / 2;
+          const dy = heightMeters / 2;
+
+          const tl = [centerPointWM.x - dx, centerPointWM.y + dy];
+          const tr = [centerPointWM.x + dx, centerPointWM.y + dy];
+          const br = [centerPointWM.x + dx, centerPointWM.y - dy];
+          const bl = [centerPointWM.x - dx, centerPointWM.y - dy];
+
+          return new Polygon({
+            spatialReference: centerPointWM.spatialReference,
+            rings: [[tl, tr, br, bl, tl]],
+          });
+        }
+
+        // Create or replace the polygon graphic and start editing
+        function startEditForCurrentImage() {
+          if (!imageElement) return;
+
+          // If the image already has a corners georeference, use it to seed the polygon
+          let poly;
+          if (
+            imageElement.georeference &&
+            imageElement.georeference.type === "corners"
+          ) {
+            const { topLeft, topRight, bottomRight, bottomLeft } =
+              imageElement.georeference;
+            const toWM = (pt) =>
+              pt.spatialReference.isWGS84
+                ? webMercatorUtils.geographicToWebMercator(pt)
+                : pt;
+
+            const tl = toWM(topLeft),
+              tr = toWM(topRight),
+              br = toWM(bottomRight),
+              bl = toWM(bottomLeft);
+            poly = new Polygon({
+              spatialReference: tl.spatialReference,
+              rings: [
+                [
+                  [tl.x, tl.y],
+                  [tr.x, tr.y],
+                  [br.x, br.y],
+                  [bl.x, bl.y],
+                  [tl.x, tl.y],
+                ],
+              ],
+            });
+          } else {
+            // Otherwise seed a default box around the current view center
+            const centerWM = view.spatialReference.isWebMercator
+              ? view.center
+              : webMercatorUtils.geographicToWebMercator(view.center);
+            poly = buildDefaultBox(centerWM);
+          }
+
+          // Create/replace graphic
+          if (polygonGraphic) editLayer.remove(polygonGraphic);
+          polygonGraphic = new Graphic({
+            geometry: poly,
+            symbol: {
+              type: "simple-fill",
+              color: [0, 0, 0, 0.05],
+              outline: { color: [0, 120, 255, 1], width: 2 },
+            },
+          });
+          editLayer.add(polygonGraphic);
+
+          // Kick off interactive editing
+          sketch.update(polygonGraphic);
+          syncMediaFromPolygon();
+        }
+
+        // Listen for edits and keep image synced
+        sketch.on("update", (evt) => {
+          if (!evt.graphics.length) return;
+          // while transforming or when finished, sync the image
+          if (evt.state === "changing" || evt.state === "complete") {
+            syncMediaFromPolygon();
+          }
+        });
+
+        // --- 5) Hook up UI actions ---
+        imgInput.addEventListener("change", async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          uploadedName = file.name;
+          const objectUrl = URL.createObjectURL(file);
+
+          // Create/replace ImageElement + MediaLayer
+          const centerWM = view.spatialReference.isWebMercator
+            ? view.center
+            : webMercatorUtils.geographicToWebMercator(view.center);
+
+          const defaultPoly = buildDefaultBox(centerWM);
+          const ring = defaultPoly.rings[0];
+          const [tl, tr, br, bl] = ring.slice(0, 4).map(
+            ([x, y]) =>
+              new Point({
+                x,
+                y,
+                spatialReference: defaultPoly.spatialReference,
+              })
+          );
+
+          imageElement = new ImageElement({
+            image: objectUrl, // local blob URL
+            georeference: new CornersGeoreference({
+              topLeft: tl,
+              topRight: tr,
+              bottomRight: br,
+              bottomLeft: bl,
+            }),
+          });
+
+          if (!mediaLayer) {
+            mediaLayer = new MediaLayer({ source: [imageElement] });
+            map.add(mediaLayer);
+          } else {
+            mediaLayer.source.elements.removeAll();
+            mediaLayer.source.elements.add(imageElement);
+          }
+
+          // Enable controls
+          editToggle.disabled = false;
+          saveBtn.disabled = false;
+          resetBtn.disabled = false;
+          removeBtn.disabled = false;
+          status.textContent = `Loaded: ${uploadedName}`;
+
+          // Auto-enter edit mode
+          editToggle.checked = true;
+          startEditForCurrentImage();
+        });
+
+        editToggle.addEventListener("change", () => {
+          const on = editToggle.checked;
+          editLayer.visible = on;
+          if (on) {
+            startEditForCurrentImage();
+            status.textContent =
+              "Edit mode: drag to move; rotate/scale using handles.";
+          } else {
+            status.textContent = "Edit mode off.";
+          }
+        });
+
+        saveBtn.addEventListener("click", () => {
+          if (!outJson.value) return;
+          const blob = new Blob([outJson.value], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            (uploadedName ? uploadedName.replace(/\.[^.]+$/, "") : "image") +
+            "_georef.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+
+        resetBtn.addEventListener("click", () => {
+          if (!imageElement) return;
+          startEditForCurrentImage(); // rebuilds the default/edit polygon from current image
+        });
+
+        removeBtn.addEventListener("click", () => {
+          if (mediaLayer) {
+            mediaLayer.source.elements.removeAll();
+          }
+          imageElement = null;
+          uploadedName = null;
+          outJson.value = "";
+          editLayer.removeAll();
+          polygonGraphic = null;
+          editToggle.checked = false;
+          editToggle.disabled = true;
+          saveBtn.disabled = true;
+          resetBtn.disabled = true;
+          removeBtn.disabled = true;
+          status.textContent = "—";
+          imgInput.value = "";
+        });
+      });
+    </script>
+  </body>
+</html>
