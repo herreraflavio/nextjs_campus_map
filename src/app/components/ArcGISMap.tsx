@@ -649,6 +649,7 @@ export default function ArcGISMap(mapData: ExportBody) {
 
       (window as any).require(
         [
+          "esri/config",
           "esri/Map",
           "esri/views/MapView",
           "esri/Graphic",
@@ -666,6 +667,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           "esri/layers/WebTileLayer",
         ],
         (
+          esriConfig: any,
           EsriMap: any,
           MapView: any,
           Graphic: any,
@@ -760,9 +762,13 @@ export default function ArcGISMap(mapData: ExportBody) {
               weight: "bold",
             },
           });
+          esriConfig.apiKey = process.env.NEXT_PUBLIC_ARCGIS_API_KEY as string;
 
           /* ─────────── Map & View ─────────── */
-          const map = new EsriMap({ basemap: "satellite" });
+          // const map = new EsriMap({ basemap: "light-gray/labels" });
+          const map = new EsriMap({
+            basemap: "arcgis/light-gray", // ✅ not "light-gray"
+          });
 
           const [cx, cy] = mapData.settings.center;
           const centerPoint =
@@ -804,7 +810,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           // ➕ Your CloudFront XYZ tiles as a WebTileLayer
           const campusTiles = new WebTileLayer({
             urlTemplate:
-              "https://tiles.flavioherrera.com/v2/{level}/{col}/{row}.png",
+              "https://tiles.flavioherrera.com/v5/{level}/{col}/{row}.png",
             id: "campus-xyz",
             opacity: 1,
           });
@@ -859,7 +865,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           const allLayers = [
             campusTiles, // ⬅️ add your WebTileLayer
             ...featureLayers,
-            mediaLayer,
+            // mediaLayer,
             finalizedLayer,
             editingLayer,
             eventsLayer,
