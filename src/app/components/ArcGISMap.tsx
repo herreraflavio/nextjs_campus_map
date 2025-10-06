@@ -810,7 +810,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           // ➕ Your CloudFront XYZ tiles as a WebTileLayer
           const campusTiles = new WebTileLayer({
             urlTemplate:
-              "https://tiles.flavioherrera.com/v5/{level}/{col}/{row}.png",
+              "https://tiles.flavioherrera.com/v6/{level}/{col}/{row}.png",
             id: "campus-xyz",
             opacity: 1,
           });
