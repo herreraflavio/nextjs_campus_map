@@ -1046,11 +1046,12 @@ export default function ArcGISMap(mapData: ExportBody) {
           height: "100%",
         }}
       />
+      {/* hidden for now, unhide */}
       {/* Fetch dynamic events for a generous rolling window; overlay will filter visibility */}
-      <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
+      {/* <DynamicEventLoader eventSources={mapData.eventSources ?? []} /> */}
       {/* Calendar/Date filter overlay (self-contained) */}
-      <EventCalendarOverlay />
-      <TurnByTurnOverlay />
+      {/* <EventCalendarOverlay />
+      <TurnByTurnOverlay /> */}
     </div>
   );
 }
