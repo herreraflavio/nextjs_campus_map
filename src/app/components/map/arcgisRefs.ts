@@ -321,6 +321,8 @@ export type CampusEvent = {
   original?: any;
   geometry: { x: number; y: number; wkid: number }; // typically 4326
   fromUser: boolean;
+  iconSize: number;
+  iconUrl: string;
 };
 
 export const eventsStore = {

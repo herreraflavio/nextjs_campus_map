@@ -16,7 +16,7 @@ export default function AddEvent() {
           color: "black",
           position: "absolute",
           bottom: "-60px",
-          right: " 320px",
+          right: "calc(100% / 2 + -54px)",
           zIndex: 999,
           padding: "10px 14px",
           fontWeight: 900,
@@ -127,6 +127,8 @@ function EventModal({ onClose }: { onClose: () => void }) {
           }
         : { x: -120.422045, y: 37.368169, wkid: 4326 },
       fromUser: true,
+      iconSize: 36,
+      iconUrl: "/icons/event-pin.png",
     });
 
     // 2) Persist immediately (don’t debounce — the modal unmounts)
@@ -156,7 +158,7 @@ function EventModal({ onClose }: { onClose: () => void }) {
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.5)",
-        zIndex: 1000,
+        zIndex: 999999,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

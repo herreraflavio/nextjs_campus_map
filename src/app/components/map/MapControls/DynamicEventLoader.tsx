@@ -158,6 +158,8 @@ export default function DynamicEventLoader(props: {
             original: ev,
             geometry: { x: lon, y: lat, wkid: 4326 }, // 4326; toEventGraphic will handle projecting
             fromUser: false,
+            iconSize: 36,
+            iconUrl: "/icons/event-pin.png",
           };
 
           const g = toEventGraphic(Graphic, ce);

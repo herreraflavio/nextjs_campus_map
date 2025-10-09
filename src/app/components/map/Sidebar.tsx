@@ -416,7 +416,7 @@ export default function Sidebar() {
             position: "absolute",
             bottom: 25,
             left: 320,
-            zIndex: 9999,
+            zIndex: 99,
             bgcolor: "background.paper",
             border: 1,
             p: 1,

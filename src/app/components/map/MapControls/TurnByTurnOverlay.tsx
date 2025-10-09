@@ -299,14 +299,15 @@ export default function TurnByTurnOverlay() {
   return (
     <div
       style={{
-        position: "absolute",
-        top: 12,
-        right: 12,
+        position: "relative",
+        top: 0,
+        right: 0,
         zIndex: 1000,
         background: "rgba(255,255,255,0.94)",
         borderRadius: 12,
         padding: 12,
-        width: 320,
+        width: 330,
+        border: "solid 4px",
         boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
         fontFamily: "system-ui, sans-serif",
       }}
