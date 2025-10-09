@@ -1277,15 +1277,15 @@ export default function EventCalendarOverlay({
 /* Styles — panel offset leaves room for the right-hand launchers */
 const panelWrap: React.CSSProperties = {
   position: "absolute",
-  top: "17px",
-  left: "76px", // <-- room for the two launcher buttons at right
+  top: "5px",
+  left: "55px", // <-- room for the two launcher buttons at right
   zIndex: 1000,
   background: "white",
   border: "4px solid #000000ff",
   borderRadius: 12,
-  padding: 12,
+  padding: 3,
   boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-  width: 330,
+  width: "280px",
   fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
   pointerEvents: "auto",
 };
@@ -1301,6 +1301,7 @@ const input: React.CSSProperties = {
   borderRadius: 8,
   border: "1px solid #ccc",
   fontSize: 14,
+  width: "90px",
 };
 const btn: React.CSSProperties = {
   padding: "8px 10px",

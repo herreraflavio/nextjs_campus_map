@@ -1132,8 +1132,8 @@ export default function ArcGISMap(mapData: ExportBody) {
 /* ───────── Styles ───────── */
 const dockWrap: React.CSSProperties = {
   position: "absolute",
-  top: 17,
-  left: 17,
+  top: 5,
+  left: 5,
   zIndex: 2000, // above panels so buttons are always clickable
   pointerEvents: "auto",
   display: "flex",
@@ -1162,8 +1162,8 @@ const launcherActive: React.CSSProperties = {
 
 const turnWrap: React.CSSProperties = {
   position: "absolute",
-  top: 17,
-  left: 76, // leave space for the launcher column (44 + margins)
+  top: 5,
+  left: 55, // leave space for the launcher column (44 + margins)
   zIndex: 1000,
   pointerEvents: "auto",
 };
