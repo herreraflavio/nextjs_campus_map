@@ -306,7 +306,7 @@ export default function TurnByTurnOverlay() {
         background: "rgba(255,255,255,0.94)",
         borderRadius: 12,
         padding: 3,
-        width: "280",
+        width: "280px",
         border: "solid 4px",
         boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
         fontFamily: "system-ui, sans-serif",
