@@ -834,7 +834,7 @@ export default function ArcGISMap(mapData: ExportBody) {
 
           const campusTiles = new WebTileLayer({
             urlTemplate:
-              "https://tiles.flavioherrera.com/v6/{level}/{col}/{row}.png",
+              "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png",
             id: "campus-xyz",
             opacity: 1,
           });
