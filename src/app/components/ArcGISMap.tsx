@@ -1069,7 +1069,7 @@ export default function ArcGISMap(mapData: ExportBody) {
       />
 
       {/* Rolling events fetcher (overlay handles visibility) */}
-      <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
+      {/* <DynamicEventLoader eventSources={mapData.eventSources ?? []} /> */}
 
       {/* ───────── Overlay Launchers (both always visible) ───────── */}
       <div style={dockWrap}>
