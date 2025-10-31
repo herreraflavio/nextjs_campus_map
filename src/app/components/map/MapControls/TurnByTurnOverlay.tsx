@@ -517,7 +517,7 @@ export default function TurnByTurnOverlay() {
         background: "rgba(255,255,255,0.94)",
         borderRadius: 12,
         padding: 8,
-        width: 300,
+        width: 270,
         border: "solid 4px",
         boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
         fontFamily: "system-ui, sans-serif",
@@ -538,7 +538,7 @@ export default function TurnByTurnOverlay() {
             <select
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
-              style={{ flex: 1, padding: "6px 8px" }}
+              style={{ flex: 1, padding: "6px 8px", width: "220px" }}
             >
               {publicNodes.map((n) => (
                 <option key={n.id} value={n.id}>
@@ -568,7 +568,7 @@ export default function TurnByTurnOverlay() {
             <select
               value={dest}
               onChange={(e) => setDest(e.target.value)}
-              style={{ flex: 1, padding: "6px 8px" }}
+              style={{ flex: 1, padding: "6px 8px", width: "220px" }}
             >
               {publicNodes.map((n) => (
                 <option key={n.id} value={n.id}>
