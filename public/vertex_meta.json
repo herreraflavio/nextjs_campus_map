@@ -47,7 +47,7 @@
   { "id": 1523, "name": "Facilities Services B" },
   { "id": 1523, "name": "Research Server" },
   { "id": 1542, "name": "North Bown Lot 2" },
-  { "id": 1542, "name": "North Bown Lot P3 Lot" },
+  { "id": 1542, "name": "P3 Lot" },
   { "id": 1542, "name": "North Bown Lot 1" },
   { "id": 1541, "name": "Northern Pond" },
   { "id": 1434, "name": "University Police" },
@@ -84,5 +84,6 @@
   { "id": 150, "name": "Welcome Center 2" },
   { "id": 184, "name": "Health & Aquatic Center" },
   { "id": 84, "name": "University Transit Center" },
-  { "id": 69, "name": "Pump House" }
+  { "id": 69, "name": "Pump House" },
+  { "id": 1362, "name": "Kolligian Library" }
 ]
