@@ -101,7 +101,7 @@ export const placesRegistry: Place[] = [
   {
     placeId: "ballroom",
     label: "UC Merced Ballroom Conference Center",
-    geometry: { wkid: 4326, x: -120.425, y: 37.3656 },
+    geometry: { wkid: 4326, x: -120.4271702086338, y: 37.362759538767769 },
     aliases: ["conference center", "ballroom"],
   },
   {

@@ -1121,8 +1121,8 @@ const sampleMap = [
         },
         geometry: {
           type: "point",
-          x: -120.425,
-          y: 37.3656,
+          x: -120.4271702086338,
+          y: 37.362759538767769,
           spatialReference: { wkid: 4326, latestWkid: 4326 },
         },
       },
