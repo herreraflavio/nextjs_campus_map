@@ -107,7 +107,7 @@ export const placesRegistry: Place[] = [
   {
     placeId: "cob1-105",
     label: "COB1 105",
-    geometry: { wkid: 4326, x: -120.4245, y: 37.3637 },
+    geometry: { wkid: 4326, x: -120.42344423309218, y: 37.367006016916903 },
     aliases: ["cob 1 105", "classroom office building 1 room 105"],
   },
   {
