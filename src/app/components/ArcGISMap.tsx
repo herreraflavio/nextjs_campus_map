@@ -470,6 +470,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                 });
                 rebuildAllLabelsFromPolygons(savedLabelMap);
 
+                //render events saved to database
                 (data.events || []).forEach((ev) => {
                   try {
                     const srcPt = new Point({
@@ -495,6 +496,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                       iconSize: ev.attributes.iconSize ?? 36,
                       iconUrl: ev.attributes.iconUrl ?? "/icons/event-pin.png",
                     };
+                    console.log(ce);
                     eventsLayer.add(toEventGraphic(Graphic, ce));
                   } catch (e) {
                     console.error("Failed to load event:", ev, e);
@@ -568,7 +570,7 @@ export default function ArcGISMap(mapData: ExportBody) {
         }}
       />
 
-      {/* <DynamicEventLoader eventSources={mapData.eventSources ?? []} /> */}
+      <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
 
       <div style={dockWrap}>
         <button

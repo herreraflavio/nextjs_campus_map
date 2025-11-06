@@ -127,7 +127,8 @@ const NO_CONSTRAINTS: ExportBody["settings"]["constraints"] = null;
 /** NEW: fallback external event endpoints */
 // const DEFAULT_EVENT_SOURCES: string[] = ["http://localhost:6050/events"];
 const DEFAULT_EVENT_SOURCES: string[] = [
-  "https://uc-merced-campus-event-api-backend.onrender.com/events",
+  // "https://uc-merced-campus-event-api-backend.onrender.com/get/events",
+  "http://127.0.0.1:8050/get/events",
 ];
 // const DEFAULT_EVENT_SOURCES: string[] = [];
 
