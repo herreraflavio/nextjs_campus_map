@@ -149,6 +149,8 @@ export default function ArcGISMap(mapData: ExportBody) {
           "esri/geometry/geometryEngine",
           "esri/layers/FeatureLayer",
           "esri/layers/WebTileLayer",
+          "esri/widgets/Locate",
+          "esri/widgets/Track",
         ],
         (
           esriConfig: any,
@@ -165,7 +167,9 @@ export default function ArcGISMap(mapData: ExportBody) {
           webMercatorUtils: any,
           geometryEngine: any,
           FeatureLayer: any,
-          WebTileLayer: any
+          WebTileLayer: any,
+          Locate: any,
+          Track: any
         ) => {
           const isLonLat = (x: number, y: number) =>
             Math.abs(x) <= 180 && Math.abs(y) <= 90;
@@ -276,6 +280,41 @@ export default function ArcGISMap(mapData: ExportBody) {
           });
 
           view.ui.move("zoom", "bottom-right");
+
+          // --- Locate widget (like <arcgis-locate>) ---
+          const locateWidget = new Locate({
+            view,
+          });
+
+          // Override default goTo behavior to match the tutorial (scale 1500)
+          locateWidget.goToOverride = (view: __esri.MapView, options: any) => {
+            options.target.scale = 1500;
+            return view.goTo(options.target);
+          };
+
+          // Add it to the top-left corner
+          view.ui.add(locateWidget, "top-right");
+
+          // --- Track widget (like <arcgis-track>) ---
+          const trackWidget = new Track({
+            view,
+            // Use a custom green symbol like in your tutorial
+            graphic: new Graphic({
+              symbol: {
+                type: "simple-marker",
+                size: "12px",
+                color: "green",
+                outline: {
+                  color: "#efefef",
+                  width: "1.5px",
+                },
+              },
+            }),
+            useHeadingEnabled: true, // rotates view with direction of travel
+          });
+
+          // If you only want tracking, you could skip the locateWidget above
+          view.ui.add(trackWidget, "top-right");
 
           /* Layers */
           const editingLayer = new GraphicsLayer({ id: "editing" });
