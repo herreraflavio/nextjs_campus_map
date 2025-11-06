@@ -568,7 +568,7 @@ export default function ArcGISMap(mapData: ExportBody) {
         }}
       />
 
-      <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
+      {/* <DynamicEventLoader eventSources={mapData.eventSources ?? []} /> */}
 
       <div style={dockWrap}>
         <button
