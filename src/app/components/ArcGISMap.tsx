@@ -621,7 +621,7 @@ export default function ArcGISMap(mapData: ExportBody) {
         expanded={activeOverlay === "calendar"}
         onClose={() => setActiveOverlay(null)}
       />
-
+      {/* 
       {activeOverlay === "turn" && (
         <div style={turnWrap}>
           <TurnByTurnOverlay />
@@ -635,7 +635,26 @@ export default function ArcGISMap(mapData: ExportBody) {
             </button>
           </div>
         </div>
-      )}
+      )} */}
+      <div
+        style={{
+          ...turnWrap,
+          // 👇 hide but keep component mounted so state persists
+          display: activeOverlay === "turn" ? "block" : "none",
+          pointerEvents: activeOverlay === "turn" ? "auto" : "none",
+        }}
+      >
+        <TurnByTurnOverlay />
+        <div style={{ position: "absolute", top: 5, right: 5, zIndex: 9999 }}>
+          <button
+            onClick={() => setActiveOverlay(null)}
+            style={closeTurnBtn}
+            title="Close"
+          >
+            ⤫
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
