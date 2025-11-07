@@ -688,7 +688,7 @@ export default function DynamicEventLoader(props: {
             //   wkid: 3857,
             // },
             geometry: { x: lon, y: lat, wkid: 4326 }, // 4326 → ArcGIS will project as needed
-            fromUser: true,
+            fromUser: false,
             iconSize: 36,
             iconUrl: "/icons/event-pin.png",
             // iconUrl,
