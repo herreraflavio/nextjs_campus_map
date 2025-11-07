@@ -266,6 +266,7 @@ export default function ArcGISMap(mapData: ExportBody) {
             spatialReference: { wkid: 3857 },
             center: centerPoint,
             zoom: mapData.settings.zoom,
+
             constraints: mapData.settings.constraints
               ? {
                   geometry: new Extent({
@@ -278,6 +279,20 @@ export default function ArcGISMap(mapData: ExportBody) {
                 }
               : undefined,
           });
+
+          // Keep popup floating (undocked) even on mobile
+          view.popup.dockEnabled = false; // start undocked
+
+          view.popup.dockOptions = {
+            // Disable auto-docking on small screens
+            breakpoint: false,
+
+            // Optional: keep the dock button so users can manually dock if they want
+
+            // position only matters when dockEnabled = true, so can be omitted,
+            // but you can set it if you ever dock:
+            // position: "top-right",
+          };
 
           view.ui.move("zoom", "bottom-right");
 
