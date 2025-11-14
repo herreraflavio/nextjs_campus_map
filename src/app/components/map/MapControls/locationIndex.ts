@@ -125,11 +125,11 @@ async function getLocationIndex(): Promise<LocationIndex> {
  * Returns { x, y } in EPSG:4326 (lon, lat) or null if no match.
  */
 export async function lookupCoordinatesByLocation(
-  location: string | null | undefined
+  location_at: string | null | undefined
 ): Promise<{ x: number; y: number } | null> {
-  if (!location) return null;
+  if (!location_at) return null;
 
-  const normalized = location.toLowerCase().trim();
+  const normalized = location_at.toLowerCase().trim();
   if (!normalized) return null;
 
   const { byName, byId } = await getLocationIndex();

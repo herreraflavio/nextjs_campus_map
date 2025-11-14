@@ -528,7 +528,7 @@ export function saveMapToServer(
       event_name: event.attributes.event_name,
       date: event.attributes.date,
       fromUser: event.attributes.fromUser,
-      location: event.attributes.locationTag,
+      location_at: event.attributes.locationTag,
       geometry: {
         x: event.geometry.x,
         y: event.geometry.y,

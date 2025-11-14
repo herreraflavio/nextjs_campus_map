@@ -259,7 +259,9 @@ export default function Sidebar() {
     const target = graphic.geometry.extent?.center || graphic.geometry;
     view
       .goTo({ target, zoom: 18 })
-      .then(() => view.popup.open({ features: [graphic], location: target }));
+      .then(() =>
+        view.popup.open({ features: [graphic], location_at: target })
+      );
   };
   const startEditing = (graphic: any) => setEditingId(graphic.attributes.id);
 

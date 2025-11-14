@@ -94,10 +94,10 @@ function EventModal({ onClose }: { onClose: () => void }) {
       if (start) setStartAt(start);
       if (end) setEndAt(end);
 
-      if (typeof data?.location === "string" && data.location.trim()) {
-        const guess = guessPlaceId(data.location);
+      if (typeof data?.location_at === "string" && data.location_at.trim()) {
+        const guess = guessPlaceId(data.location_at);
         if (guess) setSelectedPlaceId(guess);
-        else setSearch(data.location);
+        else setSearch(data.location_at);
       }
     } finally {
       setIsAnalyzing(false);

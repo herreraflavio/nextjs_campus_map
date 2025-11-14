@@ -556,10 +556,10 @@ export default function DynamicEventLoader(props: {
           // 4) If no coordinates, try to resolve from `location` via campus JSONs
           if (
             (lat == null || lon == null) &&
-            typeof ev.location === "string" &&
-            ev.location.trim().length > 0
+            typeof ev.location_at === "string" &&
+            ev.location_at.trim().length > 0
           ) {
-            const coords = await lookupCoordinatesByLocation(ev.location);
+            const coords = await lookupCoordinatesByLocation(ev.location_at);
             if (coords) {
               console.log(coords);
               lon = coords.x;
@@ -607,7 +607,7 @@ export default function DynamicEventLoader(props: {
 
             // You can decide what you want as locationTag; here we keep the raw string
             locationTag:
-              typeof ev.location === "string" ? ev.location : undefined,
+              typeof ev.location_at === "string" ? ev.location_at : undefined,
 
             // Use host as the sole "person" if you want
             names: host ? [host] : undefined,
