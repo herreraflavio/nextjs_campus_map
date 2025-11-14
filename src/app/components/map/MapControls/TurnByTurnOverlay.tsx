@@ -378,7 +378,7 @@ const SearchableLocationInput: React.FC<SearchableLocationInputProps> = ({
           </ul>
         )}
       </div>
-      <button
+      {/* <button
         onClick={onPickClick}
         style={{
           padding: "6px 8px",
@@ -391,7 +391,7 @@ const SearchableLocationInput: React.FC<SearchableLocationInputProps> = ({
         title={`Pick ${label.toLowerCase()} on map (snaps to nearest PUBLIC node)`}
       >
         Pick
-      </button>
+      </button> */}
     </div>
   );
 };
