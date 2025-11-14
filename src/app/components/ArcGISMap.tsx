@@ -377,7 +377,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           (campusTiles as any).z = 15;
           (finalizedLayer as any).z = 30;
           (editingLayer as any).z = 40;
-          (eventsLayer as any).z = 45;
+          (eventsLayer as any).z = 65;
           (labelsLayer as any).z = 70;
 
           const createFeatureLayers = () => {
