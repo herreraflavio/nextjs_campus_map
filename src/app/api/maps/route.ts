@@ -1106,45 +1106,47 @@ const sampleMap = [
       },
     ],
     // ⬇️ NEW: sample events (stored as {attributes, geometry})
+    // will temporarily remove default events
+
     events: [
-      {
-        attributes: {
-          id: "evt-1",
-          event_name: "Club Fair",
-          description: "Meet campus orgs",
-          date: "2025-09-15",
-          startAt: "12:00",
-          endAt: "15:00",
-          locationTag: "ballroom",
-          names: ["ASUCM", "Clubs Council"],
-          fromUser: true,
-        },
-        geometry: {
-          type: "point",
-          x: -120.4271702086338,
-          y: 37.362759538767769,
-          spatialReference: { wkid: 4326, latestWkid: 4326 },
-        },
-      },
-      {
-        attributes: {
-          id: "evt-2",
-          event_name: "GDG Project Presentation",
-          description: "GDG Project share to panelist",
-          date: "2025-09-20",
-          startAt: "18:00",
-          endAt: "20:00",
-          locationTag: "cob1-105",
-          names: ["UC Merced GDG"],
-          fromUser: true,
-        },
-        geometry: {
-          type: "point",
-          x: -120.42344423309218,
-          y: 37.367006016916903,
-          spatialReference: { wkid: 4326, latestWkid: 4326 },
-        },
-      },
+      // {
+      //   attributes: {
+      //     id: "evt-1",
+      //     event_name: "Club Fair",
+      //     description: "Meet campus orgs",
+      //     date: "2025-09-15",
+      //     startAt: "12:00",
+      //     endAt: "15:00",
+      //     locationTag: "ballroom",
+      //     names: ["ASUCM", "Clubs Council"],
+      //     fromUser: true,
+      //   },
+      //   geometry: {
+      //     type: "point",
+      //     x: -120.4271702086338,
+      //     y: 37.362759538767769,
+      //     spatialReference: { wkid: 4326, latestWkid: 4326 },
+      //   },
+      // },
+      // {
+      //   attributes: {
+      //     id: "evt-2",
+      //     event_name: "GDG Project Presentation",
+      //     description: "GDG Project share to panelist",
+      //     date: "2025-09-20",
+      //     startAt: "18:00",
+      //     endAt: "20:00",
+      //     locationTag: "cob1-105",
+      //     names: ["UC Merced GDG"],
+      //     fromUser: true,
+      //   },
+      //   geometry: {
+      //     type: "point",
+      //     x: -120.42344423309218,
+      //     y: 37.367006016916903,
+      //     spatialReference: { wkid: 4326, latestWkid: 4326 },
+      //   },
+      // },
     ],
 
     settings: {
