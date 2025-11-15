@@ -131,8 +131,8 @@ const DEFAULT_SETTINGS: ExportBody["settings"] = {
 
 /** fallback external event endpoints */
 const DEFAULT_EVENT_SOURCES: string[] = [
-  // "https://uc-merced-campus-event-api-backend.onrender.com/get/events",
-  "http://127.0.0.1:6050/get/events",
+  "https://uc-merced-campus-event-api-backend.onrender.com/get/events",
+  // "http://127.0.0.1:6050/get/events",
 ];
 
 const ArcGISMap = dynamic(() => import("./ArcGISMap"), { ssr: false });
