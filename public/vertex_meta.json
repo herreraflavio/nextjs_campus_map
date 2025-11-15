@@ -214,7 +214,7 @@
   },
   {
     "id": 1936,
-    "name": ["Student Services", "Student Services Building (SSB)", "SSB"]
+    "name": ["SSB", "Student Services", "Student Services Building (SSB)"]
   },
   {
     "id": 1978,
@@ -223,9 +223,9 @@
   {
     "id": 1882,
     "name": [
+      "SSM",
       "Social Sciences and Management",
-      "Social Sciences and Management Building (SSM)",
-      "SSM"
+      "Social Sciences and Management Building (SSM)"
     ]
   },
   {
