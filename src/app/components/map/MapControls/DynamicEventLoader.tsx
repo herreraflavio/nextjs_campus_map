@@ -608,6 +608,8 @@ export default function DynamicEventLoader(props: {
             // You can decide what you want as locationTag; here we keep the raw string
             locationTag:
               typeof ev.location_at === "string" ? ev.location_at : undefined,
+            fullLocationTag:
+              typeof ev.location === "string" ? ev.location : undefined,
 
             // Use host as the sole "person" if you want
             names: host ? [host] : undefined,

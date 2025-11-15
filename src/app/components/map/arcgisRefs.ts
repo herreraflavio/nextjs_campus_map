@@ -157,6 +157,7 @@ export type CampusEvent = {
   startAt?: string; // "HH:mm"
   endAt?: string; // "HH:mm"
   locationTag?: string; // placeId
+  fullLocationTag?: string; // full location tag
   names?: string[];
   original?: any;
   geometry: { x: number; y: number; wkid: number }; // typically 4326
@@ -368,6 +369,7 @@ export function generateExport(): {
         startAt: a.startAt ?? null,
         endAt: a.endAt ?? null,
         locationTag: a.locationTag ?? null,
+        fullLocationTag: a.fullLocationTag ?? null,
         names: a.names ?? null,
         original: a.original ?? null,
       },
@@ -391,6 +393,7 @@ export function generateExport(): {
       startAt: ev.startAt ?? null,
       endAt: ev.endAt ?? null,
       locationTag: ev.locationTag ?? null,
+      fullLocationTag: ev.fullLocationTag ?? null,
       names: ev.names ?? null,
       original: ev.original ?? null,
     },

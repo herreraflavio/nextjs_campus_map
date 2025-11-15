@@ -4,6 +4,7 @@ export interface BackendEventDTO {
   id: string;
   _id: string;
   location_at: string;
+  fullLocationTag: string;
   date: string; // "YYYY-MM-DD"
   start_at: string; // "HH:MM"
   end_at: string; // "HH:MM"
