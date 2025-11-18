@@ -174,19 +174,19 @@
   },
   {
     "id": 1574,
-    "name": ["Scholar’s Lane Spot 1"]
+    "name": ["Scholar's Lane Spot 1"]
   },
   {
     "id": 1568,
-    "name": ["Scholar’s Lane Spot 2"]
+    "name": ["Scholar's Lane Spot 2"]
   },
   {
     "id": 1610,
-    "name": ["Scholar’s Lane Spot 3"]
+    "name": ["Scholar's Lane Spot 3"]
   },
   {
     "id": 1672,
-    "name": ["Scholar’s Lane Spot 4"]
+    "name": ["Scholar's Lane Spot 4"]
   },
   {
     "id": 1764,
@@ -214,7 +214,7 @@
   },
   {
     "id": 1936,
-    "name": ["SSB", "Student Services", "Student Services Building (SSB)"]
+    "name": ["Student Services", "Student Services Building (SSB)", "SSB"]
   },
   {
     "id": 1978,
@@ -223,9 +223,9 @@
   {
     "id": 1882,
     "name": [
-      "SSM",
       "Social Sciences and Management",
-      "Social Sciences and Management Building (SSM)"
+      "Social Sciences and Management Building (SSM)",
+      "SSM"
     ]
   },
   {
