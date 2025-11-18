@@ -53,14 +53,14 @@
   },
   {
     "id": 976,
-    "name": ["Half Dome Housing", "Half Dome Hall", "HDH"]
+    "name": ["Half Dome", "Half Dome Housing", "Half Dome Hall", "HDH"]
   },
   {
     "id": 848,
     "name": [
+      "Summits",
       "The Summits Housing",
-      "The Summits (Cathedral, Tenaya, Half Dome)",
-      "Summits"
+      "The Summits (Cathedral, Tenaya, Half Dome)"
     ]
   },
   {
@@ -214,7 +214,7 @@
   },
   {
     "id": 1936,
-    "name": ["Student Services", "Student Services Building (SSB)", "SSB"]
+    "name": ["SSB", "Student Services", "Student Services Building (SSB)"]
   },
   {
     "id": 1978,
@@ -223,9 +223,9 @@
   {
     "id": 1882,
     "name": [
+      "SSM",
       "Social Sciences and Management",
-      "Social Sciences and Management Building (SSM)",
-      "SSM"
+      "Social Sciences and Management Building (SSM)"
     ]
   },
   {
@@ -285,9 +285,9 @@
   {
     "id": 1552,
     "name": [
+      "SE2",
       "Science and Engineering 2",
-      "Science and Engineering Building 2 (SE2)",
-      "SE2"
+      "Science and Engineering Building 2 (SE2)"
     ]
   },
   {
@@ -297,9 +297,9 @@
   {
     "id": 1670,
     "name": [
+      "SE1",
       "Science and Engineering 1",
-      "Science and Engineering Building 1 (SE1)",
-      "SE1"
+      "Science and Engineering Building 1 (SE1)"
     ]
   },
   {
@@ -324,9 +324,9 @@
   {
     "id": 1084,
     "name": [
+      "SRE",
       "Sustainability Research & Engineering",
-      "Sustainability Research & Engineering Building (SRE)",
-      "SRE"
+      "Sustainability Research & Engineering Building (SRE)"
     ]
   },
   {
@@ -336,9 +336,9 @@
   {
     "id": 1162,
     "name": [
+      "BSP",
       "Biomedical Sciences & Physics",
-      "Biomedical Sciences and Physics Building (BSP)",
-      "BSP"
+      "Biomedical Sciences and Physics Building (BSP)"
     ]
   },
   {
@@ -357,14 +357,14 @@
   {
     "id": 712,
     "name": [
+      "ACS",
       "Arts & Computational Sciences",
-      "Arts & Computational Sciences Building (ACS)",
-      "ACS"
+      "Arts & Computational Sciences Building (ACS)"
     ]
   },
   {
     "id": 774,
-    "name": ["Pavilion", "PAV"]
+    "name": ["PAV", "Pavilion"]
   },
   {
     "id": 1106,
