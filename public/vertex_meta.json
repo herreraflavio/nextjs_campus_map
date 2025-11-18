@@ -385,9 +385,10 @@
   {
     "id": 590,
     "name": [
+      "Glacier Point",
       "Glacier Point & Glacier Point Housing",
       "Glacier Point Hall",
-      "Glacier Point",
+
       "GP"
     ]
   },
@@ -398,18 +399,20 @@
   {
     "id": 526,
     "name": [
+      "Granite Pass",
       "Granite Pass & Granite Pass Housing",
       "Granite Pass Hall",
-      "Granite Pass",
+
       "GRP"
     ]
   },
   {
     "id": 484,
     "name": [
+      "Sentinel Rock",
       "Sentinel Rock Housing",
       "Sentinel Rock Hall",
-      "Sentinel Rock",
+
       "SRH"
     ]
   },
