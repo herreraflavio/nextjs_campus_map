@@ -195,7 +195,7 @@ export default function DynamicEventLoader(props: {
               ? ev.host
               : undefined;
 
-          const iconUrl =
+          const poster_url =
             (typeof ev.poster_url === "string" && ev.poster_url) ||
             "/icons/event-pin.png";
 
@@ -230,6 +230,7 @@ export default function DynamicEventLoader(props: {
             fromUser: false,
             iconSize: 36,
             iconUrl: "/icons/event-pin.png",
+            poster_url: ev.poster_url,
           };
 
           console.log("Processed event:", ce);

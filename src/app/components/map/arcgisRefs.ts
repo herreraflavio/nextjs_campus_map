@@ -166,6 +166,7 @@ export type CampusEvent = {
   fromUser: boolean;
   iconSize: number;
   iconUrl: string;
+  poster_url?: string;
 };
 
 export const eventsStore = {
