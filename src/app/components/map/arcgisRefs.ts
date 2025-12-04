@@ -156,6 +156,8 @@ export type CampusEvent = {
   date?: string; // "YYYY-MM-DD"
   startAt?: string; // "HH:mm"
   endAt?: string; // "HH:mm"
+  location_at?: string;
+  location?: string;
   locationTag?: string; // placeId
   fullLocationTag?: string; // full location tag
   names?: string[];

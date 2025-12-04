@@ -5,6 +5,7 @@ import { addEventToStore, placesRegistry, settingsRef } from "../arcgisRefs";
 import { saveMapToServer } from "@/app/helper/saveMap";
 import { useMapId } from "@/app/context/MapContext";
 import { useSession } from "next-auth/react";
+import { lookupCoordinatesByLocation } from "./locationIndex";
 
 export default function AddEvent() {
   const [open, setOpen] = useState(false);
@@ -81,6 +82,7 @@ function EventModal({ onClose }: { onClose: () => void }) {
       fd.append("file", file);
       const res = await fetch(
         "https://uc-merced-campus-event-api-backend.onrender.com/ask",
+        // "http://127.0.0.1:8050/ask",
         { method: "POST", body: fd }
       );
       const data = await res.json();
@@ -94,18 +96,35 @@ function EventModal({ onClose }: { onClose: () => void }) {
       if (start) setStartAt(start);
       if (end) setEndAt(end);
 
-      if (typeof data?.location_at === "string" && data.location_at.trim()) {
-        const guess = guessPlaceId(data.location_at);
+      if (typeof data?.location === "string" && data.location.trim()) {
+        console.log("================found=================");
+        setSelectedPlaceId(data.location);
+      } else {
+        console.log("===============couldnt=found==================");
+        const guess = guessPlaceId(data.location);
         if (guess) setSelectedPlaceId(guess);
-        else setSearch(data.location_at);
+        else setSearch(data.location);
       }
     } finally {
       setIsAnalyzing(false);
     }
   }
 
-  function save() {
+  async function save() {
     const place = placesRegistry.find((p) => p.placeId === selectedPlaceId);
+    const coords = await lookupCoordinatesByLocation(selectedPlaceId);
+
+    // 1. Initialize with a default number (so they aren't 'undefined')
+    let lat = 0;
+    let lon = 0;
+
+    if (coords) {
+      // 2. Use '?? 0' just in case coords.x is technically undefined in the type def
+      lon = coords.x ?? 0;
+      lat = coords.y ?? 0;
+    }
+    console.log(coords);
+    console.log(lon, lat);
     const id = `evt-${Date.now()}`;
 
     // 1) Add to in-memory store so the map renders immediately
@@ -116,14 +135,18 @@ function EventModal({ onClose }: { onClose: () => void }) {
       date: dateStr || undefined,
       startAt: startAt || undefined,
       endAt: endAt || undefined,
-      locationTag: place?.placeId,
+      fullLocationTag: place?.placeId || apiRaw?.location_at || undefined,
+      location_at: apiRaw?.location_at || undefined,
+      location: apiRaw?.location || undefined,
       names: apiRaw?.names || undefined,
       original: apiRaw || undefined,
-      geometry: place
+      geometry: coords
         ? {
-            x: place.geometry.x,
-            y: place.geometry.y,
-            wkid: place.geometry.wkid, // 4326
+            // x: place.geometry.x,
+            // y: place.geometry.y,
+            x: lon,
+            y: lat,
+            wkid: 4326,
           }
         : { x: -120.422045, y: 37.368169, wkid: 4326 },
       fromUser: true,
