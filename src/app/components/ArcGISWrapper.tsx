@@ -110,6 +110,7 @@ interface ExportBody {
       ymax: number;
     } | null;
     featureLayers: FeatureLayerConfig[] | null; // Array of feature layer configs
+    tileLayer: string;
   };
 }
 
@@ -122,11 +123,14 @@ const DEFAULT_CENTER: ExportBody["settings"]["center"] = [
 ];
 const DEFAULT_ZOOM = 15;
 const NO_CONSTRAINTS: ExportBody["settings"]["constraints"] = null;
+const DEFAULT_TILELAYER =
+  "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png";
 const DEFAULT_SETTINGS: ExportBody["settings"] = {
   zoom: DEFAULT_ZOOM,
   center: DEFAULT_CENTER,
   constraints: NO_CONSTRAINTS,
   featureLayers: null,
+  tileLayer: DEFAULT_TILELAYER,
 };
 
 /** fallback external event endpoints */
@@ -203,11 +207,17 @@ export default function ArcGISWrapper() {
             ? (rawS.constraints as any)
             : NO_CONSTRAINTS;
 
+        const tileLayer =
+          typeof rawS.tileLayer === "string" && rawS.tileLayer != null
+            ? rawS.tileLayer
+            : DEFAULT_TILELAYER;
+
         const settings: ExportBody["settings"] = {
           zoom,
           center,
           constraints,
           featureLayers: rawS.featureLayers ?? null,
+          tileLayer,
         };
 
         // update global settings ref for other modules
