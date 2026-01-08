@@ -165,6 +165,8 @@ function EventModal({ onClose }: { onClose: () => void }) {
         center: [s.center.x, s.center.y] as [number, number],
         constraints: s.constraints,
         featureLayers: s.featureLayers ?? null,
+        mapTile: s.mapTile,
+        apiSources: s.apiSources,
       };
       saveMapToServer(mapId, email, payloadSettings);
     }
