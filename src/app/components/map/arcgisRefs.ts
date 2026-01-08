@@ -66,6 +66,8 @@ export interface ExportBodySettingsForRef {
     ymax: number;
   } | null;
   featureLayers: FeatureLayerConfig[] | null;
+  mapTile: string | null;
+  apiSources: string[];
 }
 
 /** Settings shape expected by the POST /api/maps/[id] (center as [x,y]) */
@@ -235,6 +237,8 @@ export const settingsRef: { current: ExportBodySettingsForRef } = {
         },
       },
     ],
+    mapTile: null,
+    apiSources: [],
   },
 };
 

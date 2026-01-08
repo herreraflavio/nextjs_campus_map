@@ -402,6 +402,8 @@ export function saveMapToServer(
       ymax: number;
     };
     featureLayers: FeatureLayerConfig[] | null;
+    mapTile: string | null;
+    apiSources: string[];
   }
 ): void {
   console.log("========== STARTING SAVE TO SERVER ==========");

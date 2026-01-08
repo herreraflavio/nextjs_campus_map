@@ -627,6 +627,11 @@ const sampleMap = [
           },
         },
       ],
+      mapTile: "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png",
+      apiSources: [
+        "https://api.ucmercedhub.com/crimelogs",
+        "https://uc-merced-campus-event-api-backend.onrender.com/presence_events",
+      ],
     },
   },
 ];

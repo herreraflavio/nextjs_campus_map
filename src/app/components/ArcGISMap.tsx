@@ -116,6 +116,8 @@ interface ExportBody {
       ymax: number;
     } | null;
     featureLayers: FeatureLayerConfig[] | null;
+    mapTile: string | null;
+    apiSources: string[];
   };
 }
 
@@ -359,8 +361,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           eventsLayerRef.current = eventsLayer;
 
           const campusTiles = new WebTileLayer({
-            urlTemplate:
-              "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png",
+            urlTemplate: mapData.settings.mapTile,
             id: "campus-xyz",
             opacity: 1,
           });

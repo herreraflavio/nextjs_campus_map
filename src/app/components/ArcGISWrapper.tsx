@@ -110,7 +110,8 @@ interface ExportBody {
       ymax: number;
     } | null;
     featureLayers: FeatureLayerConfig[] | null; // Array of feature layer configs
-    tileLayer: string;
+    mapTile: string;
+    apiSources: string[];
   };
 }
 
@@ -125,21 +126,26 @@ const DEFAULT_ZOOM = 15;
 const NO_CONSTRAINTS: ExportBody["settings"]["constraints"] = null;
 const DEFAULT_TILELAYER =
   "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png";
+const DEFAULT_APISOURCES: string[] = [];
 const DEFAULT_SETTINGS: ExportBody["settings"] = {
   zoom: DEFAULT_ZOOM,
   center: DEFAULT_CENTER,
   constraints: NO_CONSTRAINTS,
   featureLayers: null,
-  tileLayer: DEFAULT_TILELAYER,
+  mapTile: DEFAULT_TILELAYER,
+  apiSources: DEFAULT_APISOURCES,
 };
 
 /** fallback external event endpoints */
 const DEFAULT_EVENT_SOURCES: string[] = [
   //"https://uc-merced-campus-event-api-backend.onrender.com/get/events",
-  "https://api.ucmercedhub.com/crimelogs",
+  // "https://api.ucmercedhub.com/crimelogs",
   // "https://uc-merced-campus-event-api-backend.onrender.com/presence_events",
   // "http://127.0.0.1:8050/presence_events",
 ];
+
+// "https://api.ucmercedhub.com/crimelogs",
+//   "https://uc-merced-campus-event-api-backend.onrender.com/presence_events"
 
 const ArcGISMap = dynamic(() => import("./ArcGISMap"), { ssr: false });
 
@@ -178,13 +184,15 @@ export default function ArcGISWrapper() {
         const events = Array.isArray((data as any).events)
           ? ((data as any).events as EventPoint[])
           : [];
-
+        console.log(data);
         // event sources: from API if present, else fallback
         const eventSources =
-          Array.isArray((data as any).eventSources) &&
-          (data as any).eventSources!.length > 0 &&
-          (data as any).eventSources!.every((u: any) => typeof u === "string")
-            ? ((data as any).eventSources as string[])
+          Array.isArray((data as any).settings.apiSources) &&
+          (data as any).settings.apiSources!.length > 0 &&
+          (data as any).settings.apiSources!.every(
+            (u: any) => typeof u === "string"
+          )
+            ? ((data as any).settings.apiSources as string[])
             : DEFAULT_EVENT_SOURCES;
 
         const rawS: Partial<ExportBody["settings"]> = data.settings ?? {};
@@ -208,17 +216,37 @@ export default function ArcGISWrapper() {
             ? (rawS.constraints as any)
             : NO_CONSTRAINTS;
 
-        const tileLayer =
-          typeof rawS.tileLayer === "string" && rawS.tileLayer != null
-            ? rawS.tileLayer
+        const mapTile =
+          typeof rawS.mapTile === "string" && rawS.mapTile != null
+            ? rawS.mapTile
             : DEFAULT_TILELAYER;
+
+        function isHttpUrl(value: string): boolean {
+          try {
+            const u = new URL(value);
+            return u.protocol === "http:" || u.protocol === "https:";
+          } catch {
+            return false;
+          }
+        }
+
+        const raw_apiSources = Array.isArray(rawS.apiSources)
+          ? rawS.apiSources
+              .filter((v): v is string => typeof v === "string")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0 && isHttpUrl(s))
+          : DEFAULT_APISOURCES;
+
+        const apiSources =
+          raw_apiSources.length > 0 ? raw_apiSources : DEFAULT_APISOURCES;
 
         const settings: ExportBody["settings"] = {
           zoom,
           center,
           constraints,
           featureLayers: rawS.featureLayers ?? null,
-          tileLayer,
+          mapTile,
+          apiSources,
         };
 
         // update global settings ref for other modules
@@ -231,6 +259,8 @@ export default function ArcGISWrapper() {
           settingsRef.current.zoom = settings.zoom;
           settingsRef.current.featureLayers = settings.featureLayers ?? null;
           settingsRef.current.constraints = settings.constraints;
+          settingsRef.current.mapTile = settings.mapTile;
+          settingsRef.current.apiSources = settings.apiSources;
         } catch {
           // ignore
         }

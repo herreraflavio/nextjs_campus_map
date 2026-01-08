@@ -79,6 +79,11 @@ interface Props {
   setFieldNameById: React.Dispatch<
     React.SetStateAction<Record<string, string>>
   >;
+
+  // map tile
+  // layers
+  mapTile: string | null;
+  setMapTile: (value: string) => void;
 }
 
 export default function MapControls({
@@ -94,6 +99,8 @@ export default function MapControls({
   setLayers,
   fieldNameById,
   setFieldNameById,
+  mapTile,
+  setMapTile,
 }: Props) {
   const handleZoomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -680,8 +687,8 @@ export default function MapControls({
               // type="number"
               variant="outlined"
               size="small"
-              // value={zoom}
-              // onChange={handleZoomInput}
+              value={mapTile}
+              onChange={(e) => setMapTile(e.target.value)}
               sx={{
                 "& .MuiInputBase-input": {
                   padding: "4px 6px",
