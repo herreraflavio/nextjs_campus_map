@@ -394,6 +394,8 @@ export default function ToggleSketchTool() {
         center: [s.center.x, s.center.y] as [number, number],
         constraints: s.constraints,
         featureLayers: s.featureLayers,
+        mapTile: s.mapTile,
+        apiSources: s.apiSources,
       });
     }
 
