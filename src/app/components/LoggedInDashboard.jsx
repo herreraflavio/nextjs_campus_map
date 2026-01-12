@@ -131,9 +131,148 @@ export default function LoggedInDashboard({ user }) {
           <div style={{ position: "relative" }}>
             <AddEvent />
           </div>
-          <ArcGISWrapper />
+          <div style={{ position: "relative", height: "inherit" }}>
+            <ArcGISWrapper />
+            <div>
+              <div style={crosshairWrap} aria-hidden="true">
+                <div style={crosshairH} />
+                <div style={crosshairV} />
+                <div style={crosshairDot} />
+              </div>
+              {/* Corner brackets overlay */}
+              <div style={cornersWrap} aria-hidden="true">
+                {/* Top-left */}
+                <div style={{ ...cornerBox, ...cornerTL }}>
+                  <div style={{ ...cornerH, ...hTop }} />
+                  <div style={{ ...cornerV, ...vLeft }} />
+                </div>
+                {/* Top-right */}
+                <div style={{ ...cornerBox, ...cornerTR }}>
+                  <div style={{ ...cornerH, ...hTop }} />
+                  <div style={{ ...cornerV, ...vRight }} />
+                </div>
+                {/* Bottom-left */}
+                <div style={{ ...cornerBox, ...cornerBL }}>
+                  <div style={{ ...cornerH, ...hBottom }} />
+                  <div style={{ ...cornerV, ...vLeft }} />
+                </div>
+                {/* Bottom-right */}
+                <div style={{ ...cornerBox, ...cornerBR }}>
+                  <div style={{ ...cornerH, ...hBottom }} />
+                  <div style={{ ...cornerV, ...vRight }} />
+                </div>
+              </div>
+            </div>
+          </div>
         </Box>
       </Box>
     </Box>
   );
 }
+
+const crosshairWrap = {
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 34,
+  height: 34,
+  zIndex: 1500,
+  pointerEvents: "none",
+};
+
+// A tiny alpha background is important: many browsers won’t apply backdrop-filter on fully transparent pixels.
+const backdropInvert = {
+  background: "rgba(255,255,255,0.06)",
+  backdropFilter: "invert(1)",
+  WebkitBackdropFilter: "invert(1)",
+};
+
+const crosshairH = {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  top: "50%",
+  height: 3,
+  transform: "translateY(-50%)",
+  borderRadius: 999,
+  ...backdropInvert,
+};
+
+const crosshairV = {
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  left: "50%",
+  width: 3,
+  transform: "translateX(-50%)",
+  borderRadius: 999,
+  ...backdropInvert,
+};
+
+const crosshairDot = {
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  width: 8,
+  height: 8,
+  transform: "translate(-50%, -50%)",
+  borderRadius: "50%",
+  ...backdropInvert,
+};
+
+const CORNER_PAD = 60; // distance from the map container edge
+const CORNER_LEN = 26; // length of each bracket leg
+const CORNER_THICK = 3; // thickness of the bracket leg
+
+const cornersWrap = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 1490, // keep below your dockWrap (2000), above map
+  pointerEvents: "none",
+};
+
+// Container for each corner
+const cornerBox = {
+  position: "absolute",
+  width: CORNER_LEN,
+  height: CORNER_LEN,
+};
+
+// Positions
+const cornerTL = { top: CORNER_PAD, left: CORNER_PAD };
+const cornerTR = { top: CORNER_PAD, right: CORNER_PAD };
+const cornerBL = { bottom: CORNER_PAD, left: CORNER_PAD };
+const cornerBR = { bottom: CORNER_PAD, right: CORNER_PAD };
+
+// Inverting “ink” (same idea as your crosshair)
+const invertInk = {
+  background: "rgba(255,255,255,0.06)", // keep non-zero alpha so backdrop-filter applies
+  backdropFilter: "invert(1)",
+  WebkitBackdropFilter: "invert(1)",
+  borderRadius: 999,
+};
+
+// Horizontal/vertical legs
+const cornerH = {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  height: CORNER_THICK,
+  ...invertInk,
+};
+
+const cornerV = {
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  width: CORNER_THICK,
+  ...invertInk,
+};
+
+// Edge variants
+const hTop = { top: 0 };
+const hBottom = { bottom: 0 };
+
+const vLeft = { left: 0 };
+const vRight = { right: 0 };
