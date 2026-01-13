@@ -403,6 +403,7 @@ export function saveMapToServer(
     };
     featureLayers: FeatureLayerConfig[] | null;
     mapTile: string | null;
+    baseMap: string | null;
     apiSources: string[];
   }
 ): void {

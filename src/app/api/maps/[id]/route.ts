@@ -31,6 +31,7 @@ export interface MapDoc extends Document {
       ymax: number;
     };
     mapTile: string;
+    baseMap: string;
     apiSources: string[];
   };
   createdAt: Date;
@@ -109,6 +110,7 @@ interface ExportBody {
       ymax: number;
     };
     mapTile: string;
+    baseMap: string;
     apiSources: string[];
   };
 }

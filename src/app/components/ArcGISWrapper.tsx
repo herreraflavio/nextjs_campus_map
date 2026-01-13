@@ -111,6 +111,7 @@ interface ExportBody {
     } | null;
     featureLayers: FeatureLayerConfig[] | null; // Array of feature layer configs
     mapTile: string;
+    baseMap: string;
     apiSources: string[];
   };
 }
@@ -126,6 +127,7 @@ const DEFAULT_ZOOM = 15;
 const NO_CONSTRAINTS: ExportBody["settings"]["constraints"] = null;
 const DEFAULT_TILELAYER =
   "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png";
+const DEFAULT_BASEMAP = "arcgis/nova";
 const DEFAULT_APISOURCES: string[] = [];
 const DEFAULT_SETTINGS: ExportBody["settings"] = {
   zoom: DEFAULT_ZOOM,
@@ -133,6 +135,7 @@ const DEFAULT_SETTINGS: ExportBody["settings"] = {
   constraints: NO_CONSTRAINTS,
   featureLayers: null,
   mapTile: DEFAULT_TILELAYER,
+  baseMap: DEFAULT_BASEMAP,
   apiSources: DEFAULT_APISOURCES,
 };
 
@@ -221,6 +224,11 @@ export default function ArcGISWrapper() {
             ? rawS.mapTile
             : DEFAULT_TILELAYER;
 
+        const baseMap =
+          typeof rawS.baseMap === "string" && rawS.baseMap != null
+            ? rawS.baseMap
+            : DEFAULT_BASEMAP;
+
         function isHttpUrl(value: string): boolean {
           try {
             const u = new URL(value);
@@ -246,6 +254,7 @@ export default function ArcGISWrapper() {
           constraints,
           featureLayers: rawS.featureLayers ?? null,
           mapTile,
+          baseMap,
           apiSources,
         };
 
@@ -260,6 +269,7 @@ export default function ArcGISWrapper() {
           settingsRef.current.featureLayers = settings.featureLayers ?? null;
           settingsRef.current.constraints = settings.constraints;
           settingsRef.current.mapTile = settings.mapTile;
+          settingsRef.current.baseMap = settings.baseMap;
           settingsRef.current.apiSources = settings.apiSources;
         } catch {
           // ignore

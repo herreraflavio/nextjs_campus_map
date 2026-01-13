@@ -117,6 +117,7 @@ interface ExportBody {
     } | null;
     featureLayers: FeatureLayerConfig[] | null;
     mapTile: string | null;
+    baseMap: string;
     apiSources: string[];
   };
 }
@@ -276,7 +277,7 @@ export default function ArcGISMap(mapData: ExportBody) {
             (window as any).__ARCGIS_API_KEY__ ||
             process.env.NEXT_PUBLIC_ARCGIS_API_KEY;
 
-          const map = new EsriMap({ basemap: "arcgis/light-gray" });
+          const map = new EsriMap({ basemap: mapData.settings.baseMap });
 
           const [cx, cy] = mapData.settings.center;
           const centerPoint =

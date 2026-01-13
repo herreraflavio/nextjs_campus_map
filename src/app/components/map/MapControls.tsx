@@ -781,6 +781,9 @@ interface Props {
   mapTile: string | null;
   setMapTile: (value: string) => void;
 
+  baseMap: string | null;
+  setBaseMap: (value: string) => void;
+
   onCapture: (type: "center" | "zoom" | "constraints") => void;
 }
 
@@ -798,6 +801,8 @@ export default function MapControls({
   setFieldNameById,
   mapTile,
   setMapTile,
+  baseMap,
+  setBaseMap,
   onCapture,
 }: Props) {
   const handleZoomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1354,6 +1359,58 @@ export default function MapControls({
               size="small"
               value={mapTile}
               onChange={(e) => setMapTile(e.target.value)}
+              sx={{
+                "& .MuiInputBase-input": {
+                  padding: "4px 6px",
+                  fontSize: "0.75rem",
+                  width: "100%",
+                },
+                "& fieldset": { border: "2px solid black" },
+              }}
+            />
+          </div>
+        </Box>
+      </Box>
+      {/* --- Base Map  --- */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ my: 2 }}
+      >
+        <Typography variant="body1" fontFamily="monospace">
+          ╠═
+        </Typography>
+        <Typography variant="subtitle1" sx={{ mx: 1 }}>
+          Base Map
+        </Typography>
+        <Typography variant="body1" fontFamily="monospace">
+          ═╣
+        </Typography>
+      </Box>
+      <Box
+        mx={1}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        gap={1.5}
+      >
+        <Box
+          width="100%"
+          maxWidth="400px"
+          display="flex"
+          gap={1}
+          alignItems="center"
+        >
+          <Typography variant="body2" fontSize="16px" minWidth="45px">
+            Base Map Name:
+          </Typography>
+          <div style={{ flexGrow: "1" }}>
+            <TextField
+              variant="outlined"
+              size="small"
+              value={baseMap}
+              onChange={(e) => setBaseMap(e.target.value)}
               sx={{
                 "& .MuiInputBase-input": {
                   padding: "4px 6px",

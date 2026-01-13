@@ -67,6 +67,7 @@ export interface ExportBodySettingsForRef {
   } | null;
   featureLayers: FeatureLayerConfig[] | null;
   mapTile: string | null;
+  baseMap: string | null;
   apiSources: string[];
 }
 
@@ -238,6 +239,7 @@ export const settingsRef: { current: ExportBodySettingsForRef } = {
       },
     ],
     mapTile: null,
+    baseMap: "arcgis/light-gray",
     apiSources: [],
   },
 };

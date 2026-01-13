@@ -754,6 +754,7 @@ export default function Sidebar() {
 
   const [layers, setLayers] = useState<FeatureLayerConfig[]>([]);
   const [mapTile, setMapTile] = useState<string | null>(null);
+  const [baseMap, setBaseMap] = useState<string | null>(null);
   const [apiSources, setApiSources] = useState<string[]>(DEFAULT_APISOURCES);
   const [fieldNameById, setFieldNameById] = useState<Record<string, string>>(
     {}
@@ -842,6 +843,7 @@ export default function Sidebar() {
     );
     setLayers(featureLayers);
     setMapTile(settingsRef.current.mapTile);
+    setBaseMap(settingsRef.current.baseMap);
 
     const sAny = settingsRef.current as any;
     const fromRef = coerceStringArray(sAny.apiSources);
@@ -910,6 +912,7 @@ export default function Sidebar() {
     const layersSorted = normalizeLayers(layers);
     settingsRef.current.featureLayers = layersSorted;
     settingsRef.current.mapTile = mapTile;
+    settingsRef.current.baseMap = baseMap;
 
     // 6. API Sources
     const cleaned = apiSources.map((s) => s.trim()).filter((s) => s.length > 0);
@@ -926,6 +929,7 @@ export default function Sidebar() {
         constraints: s.constraints,
         featureLayers: layersSorted,
         mapTile: mapTile,
+        baseMap: baseMap,
         apiSources: deduped,
       });
     }
@@ -1064,6 +1068,7 @@ export default function Sidebar() {
         constraints: s.constraints,
         featureLayers: featureLayersSnapshot,
         mapTile: s.mapTile,
+        baseMap: s.baseMap,
         apiSources: apiSourcesSnapshot,
       });
     }
@@ -1087,6 +1092,7 @@ export default function Sidebar() {
       );
       setLayers(featureLayers);
       setMapTile(settingsRef.current.mapTile);
+      setBaseMap(settingsRef.current.baseMap);
       setZoom(s.zoom);
 
       const fromRef = coerceStringArray(s.apiSources);
@@ -1173,6 +1179,8 @@ export default function Sidebar() {
               setFieldNameById={setFieldNameById}
               mapTile={mapTile}
               setMapTile={setMapTile}
+              baseMap={baseMap}
+              setBaseMap={setBaseMap}
               onCapture={handleCapture}
             />
 
