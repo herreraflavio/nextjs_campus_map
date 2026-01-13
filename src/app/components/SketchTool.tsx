@@ -395,6 +395,7 @@ export default function ToggleSketchTool() {
         constraints: s.constraints,
         featureLayers: s.featureLayers,
         mapTile: s.mapTile,
+        baseMap: s.baseMap,
         apiSources: s.apiSources,
       });
     }
