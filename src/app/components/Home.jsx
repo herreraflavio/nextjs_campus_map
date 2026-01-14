@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-
+import "./Home.css";
 export default function Home({ user }) {
   const [maps, setMaps] = useState([]);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -60,6 +60,10 @@ export default function Home({ user }) {
     if (res.status === 204) {
       setMaps((prev) => prev.filter((m) => m._id !== id));
     }
+  };
+
+  const openMap = async (id) => {
+    window.open(`/maps/${id}`, "_blank").focus();
   };
 
   // Toggle privacy (public ↔ private)
@@ -135,19 +139,14 @@ export default function Home({ user }) {
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div style={{ flexGrow: "1" }}>
-          <h1>Welcome {user.email}</h1>
+          <h2>Welcome {user.email}</h2>
         </div>
-        <div>
+        <div style={{ padding: "16px" }}>
           <button
-            onClick={() => signOut()}
-            sx={{
-              backgroundColor: "rgba(0, 0, 0, 0.08)", // stronger gray
-              "&:hover": {
-                backgroundColor: "rgba(0, 0, 0, 0.15)", // slightly darker on hover
-              },
-            }}
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="signout"
           >
-            Logout
+            Sign Out
           </button>
         </div>
       </div>
@@ -324,9 +323,9 @@ export default function Home({ user }) {
                   gap: "0.5rem",
                 }}
               >
-                <Link
-                  // onClick={() => openMap(map._id)}
-                  href={`/maps/${map._id}`}
+                <button
+                  onClick={() => openMap(map._id)}
+                  // href={`/maps/${map._id}`}
                   style={{
                     padding: "0.4rem 0.6rem",
                     background: "green",
@@ -337,10 +336,11 @@ export default function Home({ user }) {
                     fontSize: "0.85rem",
                     textDecoration: "none",
                     textAlign: "center",
+                    width: "100px",
                   }}
                 >
                   Open Map
-                </Link>
+                </button>
                 <button
                   onClick={() => deleteMap(map._id)}
                   style={{
@@ -351,6 +351,7 @@ export default function Home({ user }) {
                     borderRadius: "4px",
                     cursor: "pointer",
                     fontSize: "0.85rem",
+                    width: "100px",
                   }}
                 >
                   Delete
@@ -365,6 +366,7 @@ export default function Home({ user }) {
                     borderRadius: "4px",
                     cursor: "pointer",
                     fontSize: "0.85rem",
+                    width: "100px",
                   }}
                 >
                   {map.isPrivate ? "Make Public" : "Make Private"}

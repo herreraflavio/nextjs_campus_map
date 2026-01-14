@@ -1,0 +1,16 @@
+.signout {
+  background-color: rgba(0, 0, 0, 0.08); /* stronger gray */
+  padding: 0.4rem 0.6rem;
+  color: #000000ff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: none;
+  text-align: center;
+  width: 100px;
+}
+
+.signout:hover {
+  background-color: rgba(0, 0, 0, 0.15); /* slightly darker on hover */
+}
