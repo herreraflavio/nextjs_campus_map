@@ -173,6 +173,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           "esri/layers/WebTileLayer",
           "esri/widgets/Locate",
           "esri/widgets/Track",
+          "esri/layers/TileLayer",
         ],
         (
           esriConfig: any,
@@ -191,7 +192,8 @@ export default function ArcGISMap(mapData: ExportBody) {
           FeatureLayer: any,
           WebTileLayer: any,
           Locate: any,
-          Track: any
+          Track: any,
+          TileLayer: any
         ) => {
           if (destroyed) return;
 
@@ -361,11 +363,28 @@ export default function ArcGISMap(mapData: ExportBody) {
           });
           eventsLayerRef.current = eventsLayer;
 
-          const campusTiles = new WebTileLayer({
-            urlTemplate: mapData.settings.mapTile,
-            id: "campus-xyz",
-            opacity: 1,
-          });
+          // const campusTiles = new WebTileLayer({
+          //   urlTemplate: mapData.settings.mapTile,
+          //   id: "campus-xyz",
+          //   opacity: 1,
+          // });
+
+          const tileSrc = mapData.settings.mapTile;
+
+          const campusTiles =
+            tileSrc && /\/MapServer\/?$/i.test(tileSrc)
+              ? new TileLayer({
+                  url: tileSrc,
+                  id: "campus-tiles",
+                  opacity: 1,
+                })
+              : tileSrc
+              ? new WebTileLayer({
+                  urlTemplate: tileSrc,
+                  id: "campus-xyz",
+                  opacity: 1,
+                })
+              : null;
 
           const mediaLayer = new (MediaLayer as any)({
             source: [
@@ -416,10 +435,18 @@ export default function ArcGISMap(mapData: ExportBody) {
           };
 
           const featureLayers = createFeatureLayers();
+          // const allLayers = [
+          //   campusTiles,
+          //   ...featureLayers,
+          //   // mediaLayer, // optional overlay
+          //   finalizedLayer,
+          //   editingLayer,
+          //   eventsLayer,
+          //   labelsLayer,
+          // ].filter(Boolean);
           const allLayers = [
-            campusTiles,
+            ...(campusTiles ? [campusTiles] : []),
             ...featureLayers,
-            // mediaLayer, // optional overlay
             finalizedLayer,
             editingLayer,
             eventsLayer,
