@@ -36,7 +36,7 @@ export default function SignInPage() {
     }
 
     if (res?.ok) {
-      router.refresh();
+      router.push("/");
     }
   }
 

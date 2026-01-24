@@ -1,42 +1,104 @@
 // app/(auth)/layout.tsx
 // Shared layout for auth pages: /signin and /register
-//
-// Place your pages at:
-//   app/(auth)/signin/page.tsx
-//   app/(auth)/register/page.tsx
-//
-// This layout provides:
-// - Full-screen backdrop image with subtle overlay
-// - Centered auth card area (your existing pages render here)
-// - Company logo + product tagline (placeholders for now)
 
 import type { ReactNode } from "react";
-import { Box, Container, Typography } from "@mui/material";
+import Link from "next/link";
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
+  const toolbarHeights = { xs: 64, sm: 72 };
+
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        display: "flex",
         position: "relative",
         overflow: "hidden",
-        // Backdrop image (placeholder)
-        backgroundImage:
-          'url("https://images.unsplash.com/photo-1526401485004-2aa7d7b1bcd5?auto=format&fit=crop&w=2400&q=80")',
+        backgroundImage: 'url("/branding/bg_image.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }}
     >
-      {/* Overlay for readability */}
+      {/* Top navigation (white background) */}
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          backgroundColor: "rgba(255, 255, 255, 1)",
+          color: "text.primary",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <Container maxWidth="lg" disableGutters sx={{ px: { xs: 2, sm: 3 } }}>
+          <Toolbar disableGutters sx={{ minHeight: toolbarHeights }}>
+            {/* Logo -> / */}
+            <Box
+              component={Link}
+              href="/"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1.25,
+                textDecoration: "none",
+                color: "inherit",
+              }}
+            >
+              <Box
+                component="img"
+                src="/branding/logo.png"
+                alt="Company logo"
+                sx={{
+                  height: 67,
+                  width: "auto",
+                }}
+              />
+            </Box>
+
+            <Box sx={{ flex: 1 }} />
+
+            {/* Optional right-side nav actions */}
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                component={Link}
+                href="/signin"
+                variant="text"
+                sx={{ fontWeight: 800 }}
+              >
+                Sign in
+              </Button>
+              <Button
+                component={Link}
+                href="/register"
+                variant="contained"
+                sx={{ fontWeight: 900, borderRadius: 999 }}
+              >
+                Create account
+              </Button>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      {/* Offset content under fixed AppBar */}
+      <Toolbar sx={{ minHeight: toolbarHeights }} />
+
+      {/* Overlay for readability (stronger, since the image is bright) */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(120deg, rgba(0,0,0,0.75), rgba(0,0,0,0.35))",
           zIndex: 0,
+          background:
+            "linear-gradient(90deg, rgb(8 12 20 / 12%) 0%, rgb(8 12 20 / 25%) 45%, rgb(8 12 20 / 0%) 100%)",
         }}
       />
 
@@ -45,8 +107,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), rgba(0,0,0,0) 55%)",
           zIndex: 0,
           pointerEvents: "none",
         }}
@@ -65,37 +125,21 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           py: { xs: 6, md: 10 },
         }}
       >
-        {/* Brand / Marketing panel */}
+        {/* Marketing panel */}
         <Box
           sx={{
             flex: 1,
             width: "100%",
-            maxWidth: { xs: 520, md: 560 },
+            maxWidth: { xs: 540, md: 600 },
             color: "rgba(255,255,255,0.92)",
             textAlign: { xs: "center", md: "left" },
           }}
         >
-          {/* Placeholder logo (swap with your own asset later) */}
-          <Box
-            component="img"
-            src="https://dummyimage.com/220x56/ffffff/111111.png&text=Your+Logo"
-            alt="Company logo"
-            sx={{
-              height: 56,
-              width: "auto",
-              borderRadius: "10px",
-              boxShadow: "0 12px 30px rgba(0,0,0,0.35)",
-              mb: 3,
-              mx: { xs: "auto", md: 0 },
-              display: "block",
-            }}
-          />
-
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
               lineHeight: 1.05,
               fontSize: { xs: "2.0rem", sm: "2.4rem", md: "3.0rem" },
             }}
@@ -106,11 +150,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <Typography
             sx={{
               mt: 2,
-              maxWidth: 520,
+              maxWidth: 560,
               mx: { xs: "auto", md: 0 },
               color: "rgba(255,255,255,0.78)",
               fontSize: { xs: "1.0rem", md: "1.05rem" },
-              lineHeight: 1.6,
+              lineHeight: 1.65,
             }}
           >
             A focused workspace for creating, sharing, and maintaining
@@ -124,7 +168,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               display: "grid",
               gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
               gap: 2,
-              maxWidth: 560,
+              maxWidth: 600,
               mx: { xs: "auto", md: 0 },
             }}
           >
@@ -148,16 +192,19 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 sx={{
                   borderRadius: "18px",
                   p: 2.2,
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  backdropFilter: "blur(10px)",
+                  backgroundColor: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backdropFilter: "blur(12px)",
                 }}
               >
-                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                <Typography sx={{ fontWeight: 800, mb: 0.5 }}>
                   {item.title}
                 </Typography>
                 <Typography
-                  sx={{ color: "rgba(255,255,255,0.75)", fontSize: "0.95rem" }}
+                  sx={{
+                    color: "rgba(255,255,255,0.78)",
+                    fontSize: "0.95rem",
+                  }}
                 >
                   {item.desc}
                 </Typography>
@@ -176,7 +223,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             justifyContent: "center",
           }}
         >
-          {/* Your /signin or /register page content will render here */}
           {children}
         </Box>
       </Container>
@@ -191,11 +237,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           zIndex: 1,
           px: 2,
           textAlign: "center",
-          color: "rgba(255,255,255,0.65)",
+          color: "rgba(255,255,255,0.70)",
           fontSize: "0.9rem",
         }}
       >
-        © {new Date().getFullYear()} Your Company. All rights reserved.
+        © {new Date().getFullYear()} Logit. All rights reserved.
       </Box>
     </Box>
   );

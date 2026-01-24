@@ -44,7 +44,7 @@ export default function RegisterPage() {
       }
 
       await signIn("credentials", { email, password, redirect: false });
-      router.refresh();
+      router.push("/");
     } catch {
       setError("Server error");
     }
