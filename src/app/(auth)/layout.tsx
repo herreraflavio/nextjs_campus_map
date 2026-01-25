@@ -175,17 +175,20 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             {[
               {
                 title: "API-driven layers",
-                desc: "Bring live datasets onto maps.",
+                desc: "Plug in live datasets and keep maps fresh.",
               },
               {
-                title: "Simple publishing",
-                desc: "Share in seconds, iterate daily.",
+                title: "Polygons + popups",
+                desc: "Draw, annotate, and explain visually.",
               },
               {
-                title: "Fast performance",
-                desc: "Optimized for real-world usage.",
+                title: "Shareable pages",
+                desc: "Publish maps and share a clean URL.",
               },
-              { title: "Secure access", desc: "Keep private maps private." },
+              {
+                title: "Extensible",
+                desc: "Build toward digital twin workflows.",
+              },
             ].map((item) => (
               <Box
                 key={item.title}

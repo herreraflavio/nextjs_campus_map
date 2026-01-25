@@ -13,132 +13,85 @@ import {
   CardContent,
   Stack,
   Divider,
-  CardActionArea,
 } from "@mui/material";
 
+// SIMPLIFIED PARTNER COMPONENT
+// SIMPLIFIED PARTNER COMPONENT
 function PartnerLogoCard({ name, src, href }) {
   const [imgOk, setImgOk] = useState(true);
 
+  const isLink = Boolean(href) && href !== "#";
+
   return (
-    <Card
+    <Box
+      component={isLink ? "a" : "div"}
+      href={isLink ? href : undefined}
+      target={isLink ? "_blank" : undefined}
+      rel={isLink ? "noopener noreferrer" : undefined}
+      aria-label={isLink ? `Open ${name} in a new tab` : undefined}
       sx={{
-        // UPDATED: Reduced border radius (was 4)
+        width: { xs: 140, sm: 180 },
+        height: { xs: 80, sm: 180 },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         borderRadius: 2,
         border: "1px solid rgba(0,0,0,0.08)",
-        boxShadow: "0 10px 26px rgba(0,0,0,0.06)",
+        backgroundColor: "#fff",
+        transition: "all 0.2s ease",
+        textDecoration: "none",
         overflow: "hidden",
-        // UPDATED: Force square aspect ratio
-        aspectRatio: "1 / 1",
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(0,0,0,0.01))",
+        cursor: isLink ? "pointer" : "default",
+
+        "&:hover": {
+          borderColor: "rgba(0,0,0,0.2)",
+          backgroundColor: "rgba(0,0,0,0.01)",
+        },
       }}
     >
-      <CardActionArea
-        component={href ? "a" : "div"}
-        href={href}
-        sx={{
-          // UPDATED: Remove fixed height, let aspect-ratio drive it.
-          // Remove padding (px, py) so it goes edge-to-edge.
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      {imgOk ? (
         <Box
+          component="img"
+          src={src}
+          alt={name}
+          loading="lazy"
           sx={{
             width: "100%",
             height: "100%",
-            // UPDATED: Removed inner border radius and border to be cleaner
-            backgroundColor: "rgba(255,255,255,0.75)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-            overflow: "hidden",
+            objectFit: "contain",
+            display: "block",
+          }}
+          onError={() => setImgOk(false)}
+        />
+      ) : (
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            color: "rgba(0,0,0,0.4)",
+            textAlign: "center",
+            px: 1,
+            fontSize: "0.8rem",
           }}
         >
-          {/* Subtle brand-ish sheen */}
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "radial-gradient(900px 140px at 20% 10%, rgba(0,0,0,0.06), transparent 55%)",
-              pointerEvents: "none",
-            }}
-          />
-
-          {imgOk ? (
-            <Box
-              component="img"
-              src={src}
-              alt={name}
-              loading="lazy"
-              sx={{
-                // UPDATED: Bigger image limits (was 80% / 64px)
-                maxWidth: "85%",
-                maxHeight: "85%",
-                width: "auto",
-                height: "auto",
-                objectFit: "contain",
-                filter: "grayscale(20%) contrast(1.02)",
-                opacity: 0.94,
-                transition: "transform 200ms ease, opacity 200ms ease",
-                ".MuiCardActionArea-root:hover &": {
-                  transform: "scale(1.03)",
-                  opacity: 1,
-                },
-              }}
-              onError={() => setImgOk(false)}
-            />
-          ) : (
-            <Box
-              sx={{
-                px: 2,
-                textAlign: "center",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 950,
-                  letterSpacing: "-0.02em",
-                  color: "rgba(0,0,0,0.62)",
-                  fontSize: { xs: "0.95rem", sm: "1.0rem" },
-                  lineHeight: 1.2,
-                }}
-              >
-                {name}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.5,
-                  color: "rgba(0,0,0,0.45)",
-                  fontSize: "0.85rem",
-                }}
-              >
-                Logo placeholder
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </CardActionArea>
-    </Card>
+          {name}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
 export default function LandingPage() {
   const toolbarHeights = { xs: 64, sm: 72 };
 
-  // Placeholder screenshots for slideshow
   const slides = useMemo(
     () => [
-      { src: "/landingpage/shot1.jpg", alt: "Screenshot 1" },
-      { src: "/landingpage/shot2.jpg", alt: "Screenshot 2" },
-      { src: "/landingpage/shot3.jpg", alt: "Screenshot 3" },
+      { src: "/landingpage/ss1.png", alt: "Screenshot 1" },
+      { src: "/landingpage/ss2.png", alt: "Screenshot 2" },
+      { src: "/landingpage/ss3.png", alt: "Screenshot 3" },
+      { src: "/landingpage/ss4.png", alt: "Screenshot 4" },
     ],
-    [],
+    []
   );
 
   const partners = useMemo(
@@ -146,11 +99,10 @@ export default function LandingPage() {
       {
         name: "Partner A",
         src: "/landingpage/Map UC Merced.png",
-        href: "#",
+        href: "https://campusmap.ucmercedhub.com/", // replace with real URL
       },
-      // You can add more here to see the grid effect
     ],
-    [],
+    []
   );
 
   const [active, setActive] = useState(0);
@@ -169,7 +121,7 @@ export default function LandingPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#fff" }}>
-      {/* Navbar (safe, reusable later) */}
+      {/* Navbar */}
       <AppBar
         position="sticky"
         elevation={0}
@@ -195,24 +147,13 @@ export default function LandingPage() {
             >
               <Box
                 component="img"
-                src="/landingpage/logo.png"
+                src="/branding/logo.png"
                 alt="Company logo"
                 sx={{
-                  height: 38,
+                  height: 67,
                   width: "auto",
-                  borderRadius: "10px",
-                  boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
                 }}
               />
-              <Typography
-                sx={{
-                  fontWeight: 900,
-                  letterSpacing: "-0.02em",
-                  display: { xs: "none", sm: "block" },
-                }}
-              >
-                Logit
-              </Typography>
             </Box>
 
             <Box sx={{ flex: 1 }} />
@@ -285,21 +226,6 @@ export default function LandingPage() {
                 Build, publish, and maintain interactive maps—fast.
               </Typography>
 
-              <Typography
-                sx={{
-                  mt: 2,
-                  maxWidth: 640,
-                  color: "rgba(0,0,0,0.70)",
-                  fontSize: { xs: "1.05rem", md: "1.1rem" },
-                  lineHeight: 1.7,
-                }}
-              >
-                Logit is a focused workspace for creating data-driven maps:
-                API-fed layers, shareable views, and a clean editing experience.
-                Placeholder copy for now—replace with your final positioning
-                later.
-              </Typography>
-
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={1.5}
@@ -314,36 +240,10 @@ export default function LandingPage() {
                 >
                   Get started
                 </Button>
-                <Button
-                  component="a"
-                  href="#videos"
-                  variant="outlined"
-                  size="large"
-                  sx={{ borderRadius: 999, fontWeight: 900 }}
-                >
-                  Watch demo
-                </Button>
-              </Stack>
-
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2.5}
-                sx={{ mt: 4, color: "rgba(0,0,0,0.65)" }}
-              >
-                {[
-                  { k: "Live feeds", v: "API-driven layers" },
-                  { k: "Publishing", v: "Shareable map pages" },
-                  { k: "Editing", v: "Polygons + popups" },
-                ].map((item) => (
-                  <Box key={item.k} sx={{ minWidth: 160 }}>
-                    <Typography sx={{ fontWeight: 900 }}>{item.k}</Typography>
-                    <Typography sx={{ mt: 0.25 }}>{item.v}</Typography>
-                  </Box>
-                ))}
               </Stack>
             </Box>
 
-            {/* Hero right card (placeholder graphic) */}
+            {/* Hero Video Card */}
             <Card
               sx={{
                 borderRadius: 4,
@@ -353,34 +253,23 @@ export default function LandingPage() {
               }}
             >
               <Box
+                component="video"
+                src="/landingpage/mapbuilder_trimed.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls={false}
                 sx={{
-                  height: { xs: 240, sm: 300, md: 360 },
-                  background:
-                    "linear-gradient(135deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02))",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  p: 3,
+                  width: "100%",
+                  height: "100%",
+                  display: "block",
+                  objectFit: "cover",
+                  borderRadius: 3,
+                  boxShadow: "0 18px 40px rgba(0,0,0,0.18)",
+                  backgroundColor: "rgba(0,0,0,0.06)",
                 }}
-              >
-                <Typography
-                  sx={{
-                    textAlign: "center",
-                    fontWeight: 900,
-                    color: "rgba(0,0,0,0.55)",
-                  }}
-                >
-                  Placeholder hero mockup / screenshot
-                </Typography>
-              </Box>
-              <CardContent>
-                <Typography sx={{ fontWeight: 900 }}>
-                  Map Builder Preview
-                </Typography>
-                <Typography sx={{ mt: 0.5, color: "rgba(0,0,0,0.70)" }}>
-                  Swap this card with a real product screenshot when ready.
-                </Typography>
-              </CardContent>
+              />
             </Card>
           </Box>
         </Container>
@@ -392,10 +281,6 @@ export default function LandingPage() {
           sx={{ fontWeight: 950, letterSpacing: "-0.03em", fontSize: "2.0rem" }}
         >
           Product highlights
-        </Typography>
-        <Typography sx={{ mt: 1, color: "rgba(0,0,0,0.70)", maxWidth: 760 }}>
-          Placeholder section—use this area for core product messaging and
-          primary differentiators.
         </Typography>
 
         <Box
@@ -424,14 +309,6 @@ export default function LandingPage() {
               desc: "Publish maps and share a clean URL.",
             },
             {
-              title: "Role-based access",
-              desc: "Placeholder for permissions and teams.",
-            },
-            {
-              title: "Performance-focused",
-              desc: "Optimized for real-world use cases.",
-            },
-            {
               title: "Extensible",
               desc: "Build toward digital twin workflows.",
             },
@@ -457,72 +334,8 @@ export default function LandingPage() {
         </Box>
       </Container>
 
-      <Divider />
-
-      {/* VIDEOS */}
-      <Container id="videos" maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
-        <Typography
-          sx={{ fontWeight: 950, letterSpacing: "-0.03em", fontSize: "2.0rem" }}
-        >
-          Demo videos
-        </Typography>
-        <Typography sx={{ mt: 1, color: "rgba(0,0,0,0.70)", maxWidth: 760 }}>
-          Embed YouTube, Vimeo, or hosted MP4 videos here. The boxes below are
-          placeholders.
-        </Typography>
-
-        <Box
-          sx={{
-            mt: 4,
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-            gap: 2,
-          }}
-        >
-          {[0, 1].map((i) => (
-            <Box
-              key={i}
-              sx={{
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid rgba(0,0,0,0.10)",
-                boxShadow: "0 14px 40px rgba(0,0,0,0.08)",
-                background: "rgba(0,0,0,0.03)",
-              }}
-            >
-              {/* Replace this with an <iframe> or <video> */}
-              <Box
-                sx={{
-                  aspectRatio: "16/9",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  p: 3,
-                }}
-              >
-                <Typography sx={{ fontWeight: 900, color: "rgba(0,0,0,0.55)" }}>
-                  Video embed placeholder
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-      </Container>
-
-      <Divider />
-
       {/* SLIDESHOW */}
-      <Container maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
-        <Typography
-          sx={{ fontWeight: 950, letterSpacing: "-0.03em", fontSize: "2.0rem" }}
-        >
-          Screenshots
-        </Typography>
-        <Typography sx={{ mt: 1, color: "rgba(0,0,0,0.70)", maxWidth: 760 }}>
-          A lightweight slideshow for product screenshots. Replace placeholder
-          images in <code>/public/landingpage</code>.
-        </Typography>
-
+      <Container maxWidth="lg" sx={{ pt: 0, pb: { xs: 7, md: 9 } }}>
         <Box
           sx={{
             mt: 4,
@@ -531,6 +344,10 @@ export default function LandingPage() {
             border: "1px solid rgba(0,0,0,0.10)",
             boxShadow: "0 18px 55px rgba(0,0,0,0.10)",
             backgroundColor: "rgba(0,0,0,0.02)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
           }}
         >
           {!slideError ? (
@@ -539,8 +356,8 @@ export default function LandingPage() {
               src={slides[active]?.src}
               alt={slides[active]?.alt}
               sx={{
-                width: "100%",
-                height: { xs: 260, sm: 380, md: 460 },
+                width: "711px",
+                height: "622px",
                 objectFit: "cover",
                 display: "block",
               }}
@@ -570,14 +387,8 @@ export default function LandingPage() {
               px: { xs: 2, sm: 3 },
               py: 2,
               borderTop: "1px solid rgba(0,0,0,0.08)",
-              backgroundColor: "rgba(255,255,255,0.80)",
-              backdropFilter: "blur(10px)",
             }}
           >
-            <Typography sx={{ fontWeight: 900 }}>
-              {slides[active]?.alt || "Screenshot"}
-            </Typography>
-
             <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
@@ -619,7 +430,6 @@ export default function LandingPage() {
                 backgroundColor:
                   i === active ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.12)",
               }}
-              aria-label={`Go to slide ${i + 1}`}
               role="button"
             />
           ))}
@@ -639,13 +449,12 @@ export default function LandingPage() {
         <Box
           sx={{
             mt: 4,
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(2, minmax(0, 1fr))",
-              sm: "repeat(3, minmax(0, 1fr))",
-              md: "repeat(4, minmax(0, 1fr))",
-            },
-            gap: { xs: 1.5, sm: 2 },
+            // UPDATED: Using Flex instead of Grid
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 3,
+            // Centers the item(s) horizontally
+            justifyContent: "left",
           }}
         >
           {partners.map((p) => (
