@@ -1,5 +1,19 @@
 import { CampusEvent } from "../arcgisRefs";
 
+// Converts military time "14:00" to standard time "2:00 pm"
+function formatTimeAMPM(timeStr?: string): string {
+  if (!timeStr || !timeStr.includes(":")) return timeStr || "";
+
+  const [hourStr, minute] = timeStr.split(":");
+  let hour = parseInt(hourStr, 10);
+
+  const ampm = hour >= 12 ? "pm" : "am";
+  hour = hour % 12;
+  hour = hour ? hour : 12; // Convert "0" hours (midnight) to "12"
+
+  return `${hour}:${minute} ${ampm}`;
+}
+
 /** Create a popup-enabled point Graphic from a CampusEvent using the AMD Graphic class */
 export function toGraphic(Graphic: any, ev: CampusEvent) {
   // tweak these per icon
@@ -10,12 +24,11 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
     ev.iconUrl ??
     "https://icon2.cleanpng.com/20180523/puq/kisspng-computer-icons-organization-logo-coventry-high-sch-sensory-lab-5b0572940a3a27.6884089015270836680419.jpg"; // 👈 popup photo fallback
 
-  // const poster_url =
-  //   "https://icon2.cleanpng.com/20180523/puq/kisspng-computer-icons-organization-logo-coventry-high-sch-sensory-lab-5b0572940a3a27.6884089015270836680419.jpg"; // 👈 popup photo fallback
-
   const attributes = {
     ...ev,
     poster_url, // make available to popup as {poster_url}
+    startAt: formatTimeAMPM(ev.startAt),
+    endAt: formatTimeAMPM(ev.endAt),
   };
 
   return new Graphic({

@@ -193,7 +193,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           WebTileLayer: any,
           Locate: any,
           Track: any,
-          TileLayer: any
+          TileLayer: any,
         ) => {
           if (destroyed) return;
 
@@ -215,7 +215,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                   x: geom.x,
                   y: geom.y,
                   spatialReference: { wkid: 4326 },
-                })
+                }),
               );
             }
             return geom;
@@ -289,7 +289,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                     x: cx,
                     y: cy,
                     spatialReference: { wkid: 4326 },
-                  })
+                  }),
                 )
               : new Point({ x: cx, y: cy, spatialReference: { wkid: 3857 } });
 
@@ -379,12 +379,12 @@ export default function ArcGISMap(mapData: ExportBody) {
                   opacity: 1,
                 })
               : tileSrc
-              ? new WebTileLayer({
-                  urlTemplate: tileSrc,
-                  id: "campus-xyz",
-                  opacity: 1,
-                })
-              : null;
+                ? new WebTileLayer({
+                    urlTemplate: tileSrc,
+                    id: "campus-xyz",
+                    opacity: 1,
+                  })
+                : null;
 
           const mediaLayer = new (MediaLayer as any)({
             source: [
@@ -406,7 +406,10 @@ export default function ArcGISMap(mapData: ExportBody) {
 
           // Canonical z (bottom -> top)
           (mediaLayer as any).z = 10;
-          (campusTiles as any).z = 15;
+          if (campusTiles) {
+            (campusTiles as any).z = 15;
+          }
+
           (finalizedLayer as any).z = 30;
           (editingLayer as any).z = 40;
           (eventsLayer as any).z = 65;
@@ -467,7 +470,7 @@ export default function ArcGISMap(mapData: ExportBody) {
 
           /* Build labels from polygons */
           const rebuildAllLabelsFromPolygons = (
-            savedLabelMap: globalThis.Map<string, LabelDTO>
+            savedLabelMap: globalThis.Map<string, LabelDTO>,
           ) => {
             labelsLayer.removeAll();
             finalizedLayer.graphics.toArray().forEach((polyG: any) => {
@@ -631,7 +634,7 @@ export default function ArcGISMap(mapData: ExportBody) {
               eventsLayer.add(toEventGraphic(Graphic, finalEv));
               console.log(
                 "📍 Added new dynamic event to map:",
-                finalEv.event_name
+                finalEv.event_name,
               );
             } catch (err) {
               console.error("Error adding dynamic event to map:", err);
@@ -663,7 +666,7 @@ export default function ArcGISMap(mapData: ExportBody) {
             });
             rebuildAllLabelsFromPolygons(savedLabelMap2);
           });
-        }
+        },
       );
     };
 
@@ -706,7 +709,7 @@ export default function ArcGISMap(mapData: ExportBody) {
       if (storeListenerRef.current) {
         eventsStore.events.removeEventListener(
           "added",
-          storeListenerRef.current
+          storeListenerRef.current,
         );
         storeListenerRef.current = null;
       }
