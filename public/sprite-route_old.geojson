@@ -1,0 +1,130 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:3857"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 29,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-13405584.2774, 4490253.9001000002]
+      },
+      "properties": { "OBJECTID": 29, "pointId": 29, "order": 0, "wkid": 3857 }
+    },
+    {
+      "type": "Feature",
+      "id": 30,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-13405880, 4489650]
+      },
+      "properties": {
+        "kind": "path-point",
+        "OBJECTID": 30,
+        "pointId": 30,
+        "order": 1,
+        "wkid": 3857
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 31,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-13405710, 4489750]
+      },
+      "properties": {
+        "kind": "path-point",
+        "OBJECTID": 31,
+        "pointId": 31,
+        "order": 2,
+        "wkid": 3857
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 32,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-13405560, 4489680]
+      },
+      "properties": {
+        "kind": "path-point",
+        "OBJECTID": 32,
+        "pointId": 32,
+        "order": 3,
+        "wkid": 3857
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 33,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-13405440, 4489520]
+      },
+      "properties": {
+        "kind": "path-point",
+        "OBJECTID": 33,
+        "pointId": 33,
+        "order": 4,
+        "wkid": 3857
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 34,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-13405620, 4489440]
+      },
+      "properties": {
+        "kind": "path-point",
+        "OBJECTID": 34,
+        "pointId": 34,
+        "order": 5,
+        "wkid": 3857
+      }
+    },
+
+    {
+      "type": "Feature",
+      "id": "hide-30-31",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-13405880, 4489650],
+          [-13405710, 4489750]
+        ]
+      },
+      "properties": {
+        "kind": "hidden-segment",
+        "fromId": 30,
+        "toId": 31,
+        "invisible": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "hide-33-34",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-13405440, 4489520],
+          [-13405620, 4489440]
+        ]
+      },
+      "properties": {
+        "kind": "hidden-segment",
+        "fromId": 33,
+        "toId": 34,
+        "invisible": true
+      }
+    }
+  ]
+}

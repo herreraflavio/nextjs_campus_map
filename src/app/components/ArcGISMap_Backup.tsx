@@ -23,12 +23,10 @@ import { toGraphic as toEventGraphic } from "./map/MapControls/eventsLayer";
 /* ─────────────────────────────────────────
  * Types from API payload
  * ───────────────────────────────────── */
-
 interface SpatialReference {
   wkid: number;
   latestWkid: number;
 }
-
 interface PolygonDTO {
   attributes: Record<string, any>;
   geometry: {
@@ -38,11 +36,10 @@ interface PolygonDTO {
   };
   symbol: {
     type: string;
-    color: number[];
+    color: number[]; // [r,g,b,a]
     outline: { color: number[]; width: number };
   };
 }
-
 interface LabelDTO {
   attributes: {
     parentId: string;
@@ -61,7 +58,6 @@ interface LabelDTO {
     spatialReference: SpatialReference;
   };
 }
-
 interface EventPointDTO {
   attributes: {
     id: string;
@@ -88,14 +84,12 @@ interface EventPointDTO {
     spatialReference: SpatialReference;
   };
 }
-
 interface FieldInfo {
   fieldName: string;
   label: string;
   visible: boolean;
   format?: { digitSeparator?: boolean; places?: number };
 }
-
 interface FeatureLayerConfig {
   url: string;
   index: number;
@@ -106,7 +100,6 @@ interface FeatureLayerConfig {
     content: Array<{ type: string; fieldInfos?: FieldInfo[] }>;
   };
 }
-
 interface ExportBody {
   userEmail: string;
   polygons: PolygonDTO[];
@@ -130,177 +123,36 @@ interface ExportBody {
 }
 
 /* ─────────────────────────────────────────
- * Sprite GeoJSON config
- * ───────────────────────────────────── */
-
-type SupportedWkid = 4326 | 3857 | 102100;
-type PathPointId = string | number;
-
-type SpriteRoutePointFeature = {
-  type: "Feature";
-  id?: PathPointId;
-  geometry: {
-    type: "Point";
-    coordinates: [number, number];
-  };
-  properties: {
-    kind: "path-point";
-    order: number;
-    pointId?: PathPointId;
-    wkid?: SupportedWkid;
-    OBJECTID?: PathPointId;
-    [key: string]: any;
-  };
-};
-
-type SpriteRouteHiddenSegmentFeature = {
-  type: "Feature";
-  id?: string | number;
-  geometry: {
-    type: "LineString";
-    coordinates: [number, number][];
-  };
-  properties: {
-    kind: "hidden-segment";
-    fromId: PathPointId;
-    toId: PathPointId;
-    invisible?: boolean;
-    [key: string]: any;
-  };
-};
-
-type SpriteRouteFeature =
-  | SpriteRoutePointFeature
-  | SpriteRouteHiddenSegmentFeature;
-
-type SpriteRouteGeoJSON = {
-  type: "FeatureCollection";
-  crs?: {
-    type: "name";
-    properties: {
-      name: string;
-    };
-  };
-  features: SpriteRouteFeature[];
-};
-
-type FacingDirection = "up" | "down" | "left" | "right";
-
-type SpritePathNode = {
-  id: string;
-  point: __esri.Point;
-};
-
-const SPRITE_ROUTE_URL = "/sprite-route.geojson";
-
-// 4 frames for each direction = 16 total
-const SPRITE_FRAMES = {
-  up: [
-    "/sprites/bobcat/up/up-1.png",
-    "/sprites/bobcat/up/up-2.png",
-    "/sprites/bobcat/up/up-3.png",
-    "/sprites/bobcat/up/up-4.png",
-  ],
-  down: [
-    "/sprites/bobcat/down/down-1.png",
-    "/sprites/bobcat/down/down-2.png",
-    "/sprites/bobcat/down/down-3.png",
-    "/sprites/bobcat/down/down-4.png",
-  ],
-  left: [
-    "/sprites/bobcat/left/left-1.png",
-    "/sprites/bobcat/left/left-2.png",
-    "/sprites/bobcat/left/left-3.png",
-    "/sprites/bobcat/left/left-4.png",
-  ],
-  right: [
-    "/sprites/bobcat/right/right-1.png",
-    "/sprites/bobcat/right/right-2.png",
-    "/sprites/bobcat/right/right-3.png",
-    "/sprites/bobcat/right/right-4.png",
-  ],
-} as const;
-
-// const SPRITE_DURATION_MS = 12000;
-const SPRITE_DURATION_MS = 300000;
-const SPRITE_FRAME_MS = 120;
-
-const normalizePathId = (id: PathPointId | null | undefined): string =>
-  String(id);
-
-const makeSegmentKey = (a: PathPointId, b: PathPointId): string => {
-  const aId = normalizePathId(a);
-  const bId = normalizePathId(b);
-  return aId < bId ? `${aId}--${bId}` : `${bId}--${aId}`;
-};
-
-const inferWkidFromCrs = (
-  geojson: SpriteRouteGeoJSON,
-): SupportedWkid | undefined => {
-  const crsName = geojson.crs?.properties?.name?.toUpperCase() ?? "";
-
-  if (crsName.includes("3857")) return 3857;
-  if (crsName.includes("102100")) return 102100;
-  if (crsName.includes("4326")) return 4326;
-
-  return undefined;
-};
-
-const loadSpriteRouteGeoJSON = async (): Promise<SpriteRouteGeoJSON | null> => {
-  try {
-    const res = await fetch(SPRITE_ROUTE_URL, { cache: "no-store" });
-    if (!res.ok) {
-      console.error(
-        `Failed to load sprite route GeoJSON from ${SPRITE_ROUTE_URL}: ${res.status}`,
-      );
-      return null;
-    }
-
-    const json = (await res.json()) as SpriteRouteGeoJSON;
-
-    if (
-      !json ||
-      json.type !== "FeatureCollection" ||
-      !Array.isArray(json.features)
-    ) {
-      console.error("Invalid sprite route GeoJSON:", json);
-      return null;
-    }
-
-    return json;
-  } catch (err) {
-    console.error("Error loading sprite route GeoJSON:", err);
-    return null;
-  }
-};
-
-/* ─────────────────────────────────────────
  * Component
  * ───────────────────────────────────── */
-
 export default function ArcGISMap(mapData: ExportBody) {
   const mapDiv = useRef<HTMLDivElement>(null);
 
   type ActiveOverlay = "calendar" | "turn" | null;
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
 
+  // NEW: track when MapView + layers are fully ready
   const [viewReady, setViewReady] = useState(false);
 
+  // NEW: Ref to hold the store event listener for cleanup
   const storeListenerRef = useRef<EventListener | null>(null);
-  const spriteAnimRef = useRef<number | null>(null);
 
   useEffect(() => {
     let destroyed = false;
     let viewRef: __esri.MapView | null = null;
     let pollId: number | null = null;
 
+    // reset while we re-init
     setViewReady(false);
 
     const startArcGIS = () => {
       if (destroyed) return;
 
       const amd = (window as any).require;
-      if (!amd) return;
+      if (!amd) {
+        // if this happens, the poller will try again
+        return;
+      }
 
       amd(
         [
@@ -350,13 +202,9 @@ export default function ArcGISMap(mapData: ExportBody) {
 
           const toViewSR = (geom: __esri.Geometry | any): __esri.Geometry => {
             const wkid = geom?.spatialReference?.wkid;
-
             if (wkid === 3857 || wkid === 102100) return geom;
-
-            if (wkid === 4326) {
+            if (wkid === 4326)
               return webMercatorUtils.geographicToWebMercator(geom);
-            }
-
             if (
               geom?.x !== undefined &&
               geom?.y !== undefined &&
@@ -370,52 +218,43 @@ export default function ArcGISMap(mapData: ExportBody) {
                 }),
               );
             }
-
             return geom;
           };
 
           const computeLabelPoint = (poly: __esri.Polygon): __esri.Point => {
             try {
               const p = geometryEngine.labelPoints(poly);
-              if (p) {
+              if (p)
                 return new Point({
                   x: p.x,
                   y: p.y,
                   spatialReference: { wkid: 3857 },
                 });
-              }
             } catch {}
-
             const c1 = (poly as any).centroid;
-            if (c1) {
+            if (c1)
               return new Point({
                 x: c1.x,
                 y: c1.y,
                 spatialReference: { wkid: 3857 },
               });
-            }
-
-            if (poly.extent?.center) {
+            if (poly.extent?.center)
               return new Point({
                 x: poly.extent.center.x,
                 y: poly.extent.center.y,
                 spatialReference: { wkid: 3857 },
               });
-            }
-
             const ring = poly.rings?.[0] ?? [];
-            let minX = Infinity;
-            let maxX = -Infinity;
-            let minY = Infinity;
-            let maxY = -Infinity;
-
+            let minX = Infinity,
+              maxX = -Infinity,
+              minY = Infinity,
+              maxY = -Infinity;
             for (const [x, y] of ring) {
               if (x < minX) minX = x;
               if (x > maxX) maxX = x;
               if (y < minY) minY = y;
               if (y > maxY) maxY = y;
             }
-
             return new Point({
               x: (minX + maxX) / 2,
               y: (minY + maxY) / 2,
@@ -436,53 +275,6 @@ export default function ArcGISMap(mapData: ExportBody) {
             },
           });
 
-          const createSpriteSymbol = (url: string) => ({
-            type: "picture-marker",
-            url,
-            width: "42px",
-            height: "42px",
-            yoffset: "14px",
-          });
-
-          const toPathPoint3857 = (
-            x: number,
-            y: number,
-            wkid: SupportedWkid,
-          ): __esri.Point => {
-            const pt = new Point({
-              x,
-              y,
-              spatialReference: { wkid },
-            });
-
-            return toViewSR(pt) as __esri.Point;
-          };
-
-          const getFacing = (
-            a: __esri.Point,
-            b: __esri.Point,
-          ): FacingDirection => {
-            const dx = b.x - a.x;
-            const dy = b.y - a.y;
-
-            if (Math.abs(dx) >= Math.abs(dy)) {
-              return dx >= 0 ? "right" : "left";
-            }
-
-            return dy >= 0 ? "up" : "down";
-          };
-
-          const lerpPoint = (
-            a: __esri.Point,
-            b: __esri.Point,
-            t: number,
-          ): __esri.Point =>
-            new Point({
-              x: a.x + (b.x - a.x) * t,
-              y: a.y + (b.y - a.y) * t,
-              spatialReference: { wkid: 3857 },
-            });
-
           esriConfig.apiKey =
             (window as any).__ARCGIS_API_KEY__ ||
             process.env.NEXT_PUBLIC_ARCGIS_API_KEY;
@@ -501,6 +293,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                 )
               : new Point({ x: cx, y: cy, spatialReference: { wkid: 3857 } });
 
+          // Local non-null view instance
           const view: __esri.MapView = new MapView({
             container: mapDiv.current as HTMLDivElement,
             map,
@@ -520,7 +313,7 @@ export default function ArcGISMap(mapData: ExportBody) {
               : undefined,
           });
 
-          viewRef = view;
+          viewRef = view; // for cleanup
           MapViewRef.current = view;
 
           const popup = view.popup;
@@ -533,6 +326,7 @@ export default function ArcGISMap(mapData: ExportBody) {
 
           view.ui.move("zoom", "bottom-right");
 
+          // Locate widget
           const locateWidget = new Locate({ view });
           locateWidget.goToOverride = (view: __esri.MapView, options: any) => {
             options.target.scale = 1500;
@@ -540,6 +334,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           };
           view.ui.add(locateWidget, "top-right");
 
+          // Track widget
           const trackWidget = new Track({
             view,
             graphic: new Graphic({
@@ -566,13 +361,13 @@ export default function ArcGISMap(mapData: ExportBody) {
             title: "Campus Events",
             listMode: "show",
           });
-          const spriteLayer = new GraphicsLayer({
-            id: "sprite-layer",
-            title: "Animated Sprite",
-            listMode: "hide",
-          });
-
           eventsLayerRef.current = eventsLayer;
+
+          // const campusTiles = new WebTileLayer({
+          //   urlTemplate: mapData.settings.mapTile,
+          //   id: "campus-xyz",
+          //   opacity: 1,
+          // });
 
           const tileSrc = mapData.settings.mapTile;
 
@@ -590,7 +385,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                     opacity: 1,
                   })
                 : null;
-
+          // https://campusmap.flavioherrera.com/testing/map4.png
           const mediaLayer = new (MediaLayer as any)({
             source: [
               new ImageElement({
@@ -610,6 +405,7 @@ export default function ArcGISMap(mapData: ExportBody) {
             ],
           });
 
+          // Canonical z (bottom -> top)
           (mediaLayer as any).z = 20;
           if (campusTiles) {
             (campusTiles as any).z = 15;
@@ -617,15 +413,12 @@ export default function ArcGISMap(mapData: ExportBody) {
 
           (finalizedLayer as any).z = 30;
           (editingLayer as any).z = 40;
-          (spriteLayer as any).z = 65;
-          (eventsLayer as any).z = 75;
-
-          (labelsLayer as any).z = 80;
+          (eventsLayer as any).z = 65;
+          (labelsLayer as any).z = 70;
 
           const createFeatureLayers = () => {
             const layers: any[] = [];
             if (!mapData.settings.featureLayers?.length) return layers;
-
             mapData.settings.featureLayers.forEach((config, index) => {
               try {
                 const fl = new FeatureLayer({
@@ -642,20 +435,26 @@ export default function ArcGISMap(mapData: ExportBody) {
                 console.error("Error creating feature layer", index, e);
               }
             });
-
             return layers;
           };
 
           const featureLayers = createFeatureLayers();
-
+          // const allLayers = [
+          //   campusTiles,
+          //   ...featureLayers,
+          //   // mediaLayer, // optional overlay
+          //   finalizedLayer,
+          //   editingLayer,
+          //   eventsLayer,
+          //   labelsLayer,
+          // ].filter(Boolean);
           const allLayers = [
             ...(campusTiles ? [campusTiles] : []),
             ...featureLayers,
-            // mediaLayer,
+            mediaLayer, // optional overlay
             finalizedLayer,
             editingLayer,
             eventsLayer,
-            spriteLayer,
             labelsLayer,
           ].filter(Boolean);
 
@@ -667,9 +466,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           const applyLabelVisibility = (zoom: number) => {
             labelBuckets.forEach((bucket) => {
               const show = zoom >= bucket.minZoom && zoom <= bucket.maxZoom;
-              bucket.labels.forEach((lbl) => {
-                lbl.visible = show;
-              });
+              bucket.labels.forEach((lbl) => (lbl.visible = show));
             });
           };
 
@@ -678,14 +475,11 @@ export default function ArcGISMap(mapData: ExportBody) {
             savedLabelMap: globalThis.Map<string, LabelDTO>,
           ) => {
             labelsLayer.removeAll();
-
             finalizedLayer.graphics.toArray().forEach((polyG: any) => {
               if (polyG.geometry?.type !== "polygon") return;
-
               const poly3857 = toViewSR(polyG.geometry) as __esri.Polygon;
               const pt = computeLabelPoint(poly3857);
               const saved = savedLabelMap.get(polyG.attributes?.id);
-
               const attrs = {
                 parentId: polyG.attributes?.id,
                 text:
@@ -697,171 +491,18 @@ export default function ArcGISMap(mapData: ExportBody) {
                 haloColor: saved?.attributes.haloColor ?? [255, 255, 255, 1],
                 haloSize: saved?.attributes.haloSize ?? 2,
               };
-
               const labelGraphic = new Graphic({
                 geometry: pt,
                 symbol: createTextSymbol(attrs),
                 attributes: attrs,
               });
-
               labelsLayer.add(labelGraphic);
             });
-
             rebuildBuckets(labelsLayer);
             applyLabelVisibility(view.zoom);
           };
 
-          /* Sprite animation */
-          const startSpriteAnimation = (routeGeoJSON: SpriteRouteGeoJSON) => {
-            const defaultWkid = inferWkidFromCrs(routeGeoJSON) ?? 3857;
-
-            const pointFeatures = routeGeoJSON.features
-              .filter(
-                (feature): feature is SpriteRoutePointFeature =>
-                  feature.geometry?.type === "Point" &&
-                  feature.properties?.kind === "path-point",
-              )
-              .sort((a, b) => a.properties.order - b.properties.order);
-
-            const basePathNodes: SpritePathNode[] = pointFeatures.map(
-              (feature) => {
-                const [x, y] = feature.geometry.coordinates;
-                const pointId =
-                  feature.id ??
-                  feature.properties.pointId ??
-                  feature.properties.OBJECTID;
-
-                return {
-                  id: normalizePathId(pointId),
-                  point: toPathPoint3857(
-                    x,
-                    y,
-                    feature.properties.wkid ?? defaultWkid,
-                  ),
-                };
-              },
-            );
-
-            if (basePathNodes.length < 2) {
-              console.warn(
-                "Sprite route GeoJSON needs at least 2 path-point features.",
-              );
-              return;
-            }
-
-            const hiddenSegmentKeys = new Set(
-              routeGeoJSON.features
-                .filter(
-                  (feature): feature is SpriteRouteHiddenSegmentFeature =>
-                    feature.geometry?.type === "LineString" &&
-                    feature.properties?.kind === "hidden-segment",
-                )
-                .filter((feature) => feature.properties.invisible !== false)
-                .map((feature) =>
-                  makeSegmentKey(
-                    feature.properties.fromId,
-                    feature.properties.toId,
-                  ),
-                ),
-            );
-
-            const firstNode = basePathNodes[0];
-            const lastNode = basePathNodes[basePathNodes.length - 1];
-
-            const pathNodes =
-              firstNode.point.x === lastNode.point.x &&
-              firstNode.point.y === lastNode.point.y
-                ? basePathNodes
-                : [...basePathNodes, firstNode];
-
-            const segmentLengths: number[] = [];
-            let totalLength = 0;
-
-            for (let i = 0; i < pathNodes.length - 1; i++) {
-              const a = pathNodes[i].point;
-              const b = pathNodes[i + 1].point;
-              const len = Math.hypot(b.x - a.x, b.y - a.y);
-              segmentLengths.push(len);
-              totalLength += len;
-            }
-
-            if (totalLength <= 0) return;
-
-            const spriteGraphic = new Graphic({
-              geometry: pathNodes[0].point,
-              symbol: createSpriteSymbol(SPRITE_FRAMES.down[0]),
-              attributes: { id: "animated-sprite" },
-              visible: true,
-            });
-
-            spriteLayer.removeAll();
-            spriteLayer.add(spriteGraphic);
-
-            let startTs: number | null = null;
-            let lastUrl = "";
-
-            const frame = (ts: number) => {
-              if (destroyed) return;
-
-              if (startTs === null) startTs = ts;
-
-              const elapsed = (ts - startTs) % SPRITE_DURATION_MS;
-              const targetDistance =
-                (elapsed / SPRITE_DURATION_MS) * totalLength;
-
-              let walked = 0;
-              let segIndex = 0;
-
-              while (
-                segIndex < segmentLengths.length - 1 &&
-                walked + segmentLengths[segIndex] < targetDistance
-              ) {
-                walked += segmentLengths[segIndex];
-                segIndex++;
-              }
-
-              const fromNode = pathNodes[segIndex];
-              const toNode = pathNodes[segIndex + 1];
-
-              const a = fromNode.point;
-              const b = toNode.point;
-              const segLen = segmentLengths[segIndex] || 1;
-              const t = Math.max(
-                0,
-                Math.min(1, (targetDistance - walked) / segLen),
-              );
-
-              spriteGraphic.geometry = lerpPoint(a, b, t);
-
-              const isHidden = hiddenSegmentKeys.has(
-                makeSegmentKey(fromNode.id, toNode.id),
-              );
-
-              spriteGraphic.visible = !isHidden;
-
-              const facing = getFacing(a, b);
-              const frames = SPRITE_FRAMES[facing];
-              const frameIndex =
-                Math.floor(ts / SPRITE_FRAME_MS) % frames.length;
-              const nextUrl = frames[frameIndex];
-
-              if (nextUrl !== lastUrl) {
-                spriteGraphic.symbol = createSpriteSymbol(nextUrl);
-                lastUrl = nextUrl;
-              }
-
-              spriteAnimRef.current = window.requestAnimationFrame(frame);
-            };
-
-            if (spriteAnimRef.current !== null) {
-              window.cancelAnimationFrame(spriteAnimRef.current);
-              spriteAnimRef.current = null;
-            }
-
-            spriteAnimRef.current = window.requestAnimationFrame(frame);
-          };
-
-          /* Initial data load */
+          /* Initial data load (use props from wrapper) */
           const data = {
             polygons: mapData.polygons || [],
             labels: mapData.labels || [],
@@ -871,7 +512,6 @@ export default function ArcGISMap(mapData: ExportBody) {
           (data.polygons || []).forEach((p) => {
             const polyGeom = Polygon.fromJSON(p.geometry);
             const projectedGeom = toViewSR(polyGeom) as __esri.Polygon;
-
             const polyGraphic = new Graphic({
               geometry: projectedGeom,
               symbol: p.symbol,
@@ -881,7 +521,6 @@ export default function ArcGISMap(mapData: ExportBody) {
                 content: p.attributes.description,
               },
             });
-
             finalizedLayer.add(polyGraphic);
           });
 
@@ -891,11 +530,11 @@ export default function ArcGISMap(mapData: ExportBody) {
               savedLabelMap.set(l.attributes.parentId, l);
             }
           });
-
           rebuildAllLabelsFromPolygons(savedLabelMap);
 
           (data.events || []).forEach((ev) => {
             try {
+              // Forced wkid: 4326 here
               const srcPt = new Point({
                 x: ev.geometry.x,
                 y: ev.geometry.y,
@@ -904,6 +543,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                 },
               });
 
+              // toViewSR handles the projection from 4326 -> 3857 automatically
               const pt3857 = toViewSR(srcPt) as __esri.Point;
 
               const ce: CampusEvent = {
@@ -913,6 +553,7 @@ export default function ArcGISMap(mapData: ExportBody) {
                 date: ev.attributes.date ?? undefined,
                 startAt: ev.attributes.startAt ?? undefined,
                 endAt: ev.attributes.endAt ?? undefined,
+                // locationTag: ev.attributes.locationTag ?? undefined,
                 locationTag:
                   (ev.attributes.fullLocationTag ||
                     ev.attributes.location_at) ??
@@ -927,76 +568,71 @@ export default function ArcGISMap(mapData: ExportBody) {
                 iconUrl: ev.attributes.iconUrl ?? "/icons/event-pin.png",
                 poster_url: ev.attributes.poster_url,
               };
-
               eventsLayer.add(toEventGraphic(Graphic, ce));
             } catch (e) {
               console.error("Failed to load event:", ev, e);
             }
           });
 
-          view.when(async () => {
+          // When the view is fully ready -> apply label visibility AND mark view ready for children
+          view.when(() => {
             applyLabelVisibility(view.zoom);
             setViewReady(true);
-
-            const routeGeoJSON = await loadSpriteRouteGeoJSON();
-            if (destroyed || !routeGeoJSON) return;
-
-            startSpriteAnimation(routeGeoJSON);
           });
 
           finalizedLayerRef.events.dispatchEvent(new Event("change"));
 
+          /* Refs */
           editingLayerRef.current = editingLayer;
           setFinalizedLayer(finalizedLayer);
           setLabelsLayer(labelsLayer);
           GraphicRef.current = Graphic;
 
+          // ───────── UPDATED SECTION START ─────────
+          // 1. Initial Load from Store (e.g. navigation back/forward)
           for (const ev of eventsStore.items) {
             let finalEv = ev;
-
             try {
               if (ev.geometry.wkid === 4326) {
+                // Ensure we project store items if they are in 4326
                 const pt = new Point({
                   x: ev.geometry.x,
                   y: ev.geometry.y,
                   spatialReference: { wkid: 4326 },
                 });
-
                 const proj = toViewSR(pt) as __esri.Point;
                 finalEv = {
                   ...ev,
                   geometry: { x: proj.x, y: proj.y, wkid: 3857 },
                 };
               }
-
               eventsLayer.add(toEventGraphic(Graphic, finalEv));
             } catch (e) {
               console.error("Error loading store event", e);
             }
           }
 
+          // 2. Setup Listener for NEW events added via AddEvent modal
           const onEventAdded = (e: Event) => {
             const custom = e as CustomEvent<CampusEvent>;
             const ev = custom.detail;
             if (!ev) return;
-
             try {
               let finalEv = ev;
-
+              // Project 4326 -> 3857
               if (ev.geometry.wkid === 4326) {
                 const pt = new Point({
                   x: ev.geometry.x,
                   y: ev.geometry.y,
                   spatialReference: { wkid: 4326 },
                 });
-
+                // toViewSR is available in this closure
                 const proj = toViewSR(pt) as __esri.Point;
                 finalEv = {
                   ...ev,
                   geometry: { x: proj.x, y: proj.y, wkid: 3857 },
                 };
               }
-
               eventsLayer.add(toEventGraphic(Graphic, finalEv));
               console.log(
                 "📍 Added new dynamic event to map:",
@@ -1007,14 +643,15 @@ export default function ArcGISMap(mapData: ExportBody) {
             }
           };
 
+          // Attach listener and save ref for cleanup
           eventsStore.events.addEventListener("added", onEventAdded);
           storeListenerRef.current = onEventAdded;
+          // ───────── UPDATED SECTION END ─────────
 
           view.watch("zoom", (z: number) => applyLabelVisibility(z));
 
           finalizedLayer.graphics.on("change", () => {
             const savedLabelMap2 = new globalThis.Map<string, LabelDTO>();
-
             labelsLayer.graphics.toArray().forEach((lbl: any) => {
               const att = lbl.attributes;
               if (att?.parentId) {
@@ -1029,7 +666,6 @@ export default function ArcGISMap(mapData: ExportBody) {
                 } as any);
               }
             });
-
             rebuildAllLabelsFromPolygons(savedLabelMap2);
           });
         },
@@ -1040,7 +676,6 @@ export default function ArcGISMap(mapData: ExportBody) {
       startArcGIS();
     } else {
       let tries = 0;
-
       pollId = window.setInterval(() => {
         if (destroyed) {
           if (pollId !== null) {
@@ -1049,7 +684,6 @@ export default function ArcGISMap(mapData: ExportBody) {
           }
           return;
         }
-
         if ((window as any).require) {
           if (pollId !== null) {
             window.clearInterval(pollId);
@@ -1068,17 +702,12 @@ export default function ArcGISMap(mapData: ExportBody) {
 
     return () => {
       destroyed = true;
-
       if (pollId !== null) {
         window.clearInterval(pollId);
         pollId = null;
       }
 
-      if (spriteAnimRef.current !== null) {
-        window.cancelAnimationFrame(spriteAnimRef.current);
-        spriteAnimRef.current = null;
-      }
-
+      // Cleanup the event listener for the store
       if (storeListenerRef.current) {
         eventsStore.events.removeEventListener(
           "added",
@@ -1101,7 +730,6 @@ export default function ArcGISMap(mapData: ExportBody) {
   const toggleCalendar = () => {
     setActiveOverlay((cur) => (cur === "calendar" ? null : "calendar"));
   };
-
   const toggleTurn = () => {
     setActiveOverlay((cur) => (cur === "turn" ? null : "turn"));
   };
@@ -1118,6 +746,7 @@ export default function ArcGISMap(mapData: ExportBody) {
         }}
       />
 
+      {/* Only mount dynamic loader when the map + layers are ready */}
       {viewReady && (
         <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
       )}
@@ -1136,7 +765,6 @@ export default function ArcGISMap(mapData: ExportBody) {
         >
           📅
         </button>
-
         <button
           type="button"
           aria-label="Turn-by-turn directions"
@@ -1165,6 +793,7 @@ export default function ArcGISMap(mapData: ExportBody) {
           pointerEvents: activeOverlay === "turn" ? "auto" : "none",
         }}
       >
+        {/* Pass viewReady so overlay only attaches once the view exists */}
         <TurnByTurnOverlay viewReady={viewReady} />
         <div style={{ position: "absolute", top: 5, right: 5, zIndex: 9999 }}>
           <button
@@ -1181,7 +810,6 @@ export default function ArcGISMap(mapData: ExportBody) {
 }
 
 /* ───────── Styles ───────── */
-
 const dockWrap: React.CSSProperties = {
   position: "absolute",
   top: 5,
