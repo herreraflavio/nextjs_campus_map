@@ -45,6 +45,7 @@ interface EventPoint {
     date?: string | null;
     startAt?: string | null;
     endAt?: string | null;
+    poster_url?: string | null;
     locationTag?: string | null;
     location?: string | null;
     location_at?: string | null;
@@ -80,7 +81,7 @@ const isTrue = (v: unknown): boolean => {
 // ── NEW HELPER: WebMercator (3857) -> WGS84 (4326) ───────────────────────────
 function webMercatorToGeographic(
   x: number,
-  y: number
+  y: number,
 ): { lon: number; lat: number } {
   // If coordinates look like they are already Lat/Lon (small numbers), return as is.
   if (Math.abs(x) <= 180 && Math.abs(y) <= 90) {
@@ -112,22 +113,22 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
   console.log("eventsLayerRef.current type:", typeof eventsLayerRef.current);
   console.log(
     "eventsLayerRef.current keys:",
-    eventsLayerRef.current ? Object.keys(eventsLayerRef.current) : "null"
+    eventsLayerRef.current ? Object.keys(eventsLayerRef.current) : "null",
   );
 
   if (eventsLayerRef.current && typeof eventsLayerRef.current === "object") {
     console.log(
       "eventsLayerRef.current.graphics:",
-      eventsLayerRef.current.graphics
+      eventsLayerRef.current.graphics,
     );
     if (eventsLayerRef.current.graphics) {
       console.log(
         "eventsLayerRef.current.graphics.items:",
-        eventsLayerRef.current.graphics.items
+        eventsLayerRef.current.graphics.items,
       );
       console.log(
         "eventsLayerRef.current.graphics.items length:",
-        eventsLayerRef.current.graphics?.items?.length || 0
+        eventsLayerRef.current.graphics?.items?.length || 0,
       );
     }
   }
@@ -159,7 +160,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
     });
 
     console.log(
-      `Processing ${layerUserItems.length} user events from graphics layer (out of ${rawItems.length})...`
+      `Processing ${layerUserItems.length} user events from graphics layer (out of ${rawItems.length})...`,
     );
 
     layerUserItems.forEach((graphic: any, index: number) => {
@@ -190,6 +191,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
             locationTag: a.locationTag ?? null,
             location: a.location ?? null,
             location_at: a.location_at ?? null,
+            poster_url: a.poster_url ?? null,
             names: a.names ?? null,
             original: a.original ?? null,
             fromUser: true, // normalized + guaranteed by filter
@@ -209,7 +211,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
 
         events.push(eventObj);
         console.log(
-          `Added user event from layer: "${a.event_name}" (id: ${a.id})`
+          `Added user event from layer: "${a.event_name}" (id: ${a.id})`,
         );
       }
     });
@@ -220,7 +222,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
   // --- STORE: add items not already in the layer (optionally filter) ---
   if (eventsStore?.items && Array.isArray(eventsStore.items)) {
     console.log(
-      `Processing ${eventsStore.items.length} events from eventsStore...`
+      `Processing ${eventsStore.items.length} events from eventsStore...`,
     );
 
     eventsStore.items.forEach((ev: any, index: number) => {
@@ -279,7 +281,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
 
         events.push(eventObj);
         console.log(
-          `Added event from store: "${ev.event_name}" (id: ${ev.id})`
+          `Added event from store: "${ev.event_name}" (id: ${ev.id})`,
         );
       }
     });
@@ -290,7 +292,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
   console.log(`TOTAL EVENTS COLLECTED: ${events.length}`);
   events.forEach((e, i) => {
     console.log(
-      `Final Event ${i}: "${e.attributes.event_name}" (id: ${e.attributes.id}, fromUser: ${e.attributes.fromUser})`
+      `Final Event ${i}: "${e.attributes.event_name}" (id: ${e.attributes.id}, fromUser: ${e.attributes.fromUser})`,
     );
   });
 
@@ -341,7 +343,7 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
           },
         },
       };
-    }
+    },
   );
   console.log(`Total polygons: ${polygons.length}`);
 
@@ -371,11 +373,11 @@ function generateExport(): { polygons: any[]; labels: any[]; events: any[] } {
       };
 
       console.log(
-        `Label ${index}: "${sym.text}" (parentId: ${attrs.parentId})`
+        `Label ${index}: "${sym.text}" (parentId: ${attrs.parentId})`,
       );
 
       return { attributes: attrs, geometry: geom };
-    }
+    },
   );
   console.log(`Total labels: ${labels.length}`);
 
@@ -405,7 +407,7 @@ export function saveMapToServer(
     mapTile: string | null;
     baseMap: string | null;
     apiSources: string[];
-  }
+  },
 ): void {
   console.log("========== STARTING SAVE TO SERVER ==========");
   console.log("Map ID:", mapId);

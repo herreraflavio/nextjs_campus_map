@@ -1,15 +1,33 @@
 import { CampusEvent } from "../arcgisRefs";
 
 // Converts military time "14:00" to standard time "2:00 pm"
+// Leaves already-formatted times like "2:00 pm" unchanged
 function formatTimeAMPM(timeStr?: string): string {
-  if (!timeStr || !timeStr.includes(":")) return timeStr || "";
+  if (!timeStr) return "";
 
-  const [hourStr, minute] = timeStr.split(":");
+  const normalized = timeStr.trim();
+
+  // Already in am/pm format
+  if (/\b(am|pm)\b/i.test(normalized)) {
+    return normalized;
+  }
+
+  // Not a time we know how to convert
+  if (!normalized.includes(":")) {
+    return normalized;
+  }
+
+  const [hourStr, minute] = normalized.split(":");
   let hour = parseInt(hourStr, 10);
+
+  // If hour is invalid, return original value
+  if (Number.isNaN(hour)) {
+    return normalized;
+  }
 
   const ampm = hour >= 12 ? "pm" : "am";
   hour = hour % 12;
-  hour = hour ? hour : 12; // Convert "0" hours (midnight) to "12"
+  hour = hour ? hour : 12;
 
   return `${hour}:${minute} ${ampm}`;
 }
@@ -22,11 +40,11 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
   const poster_url =
     ev.poster_url ??
     ev.iconUrl ??
-    "https://icon2.cleanpng.com/20180523/puq/kisspng-computer-icons-organization-logo-coventry-high-sch-sensory-lab-5b0572940a3a27.6884089015270836680419.jpg"; // 👈 popup photo fallback
+    "https://cdn-icons-png.flaticon.com/512/2558/2558944.png"; // 👈 popup photo fallback
 
   const attributes = {
     ...ev,
-    poster_url, // make available to popup as {poster_url}
+    poster_url,
     startAt: formatTimeAMPM(ev.startAt),
     endAt: formatTimeAMPM(ev.endAt),
   };
@@ -42,7 +60,6 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
     popupTemplate: {
       title: "{event_name}",
       content: [
-        // 👇 PHOTO BLOCK
         {
           type: "text",
           text:
@@ -51,17 +68,14 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
             "style='max-width:300px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);' />" +
             "</div>",
         },
-        // existing fields
         {
           type: "fields",
           fieldInfos: [
             { fieldName: "date", label: "Date" },
             { fieldName: "startAt", label: "Start" },
             { fieldName: "endAt", label: "End" },
-            // { fieldName: "locationTag", label: "Location (placeId)" },
-            { fieldName: "fullLocationTag", label: "Location (placeId)" },
-            // { fieldName: "location_at", label: "Location" },
-            // { fieldName: "location", label: "Location" },
+            { fieldName: "fullLocationTag", label: "Location" },
+            { fieldName: "location_at", label: "Location" },
             { fieldName: "description", label: "Description" },
             { fieldName: "names", label: "People" },
           ],
@@ -70,12 +84,11 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
     },
     symbol: {
       type: "picture-marker",
-      url, // marker icon
+      url,
       width: `${size}px`,
       height: `${size}px`,
-      // Anchor bottom-center on the point (default anchor is the image center)
       xoffset: 0,
-      yoffset: size / 2, // move icon up by half its height
+      yoffset: size / 2,
     } as any,
   });
 }

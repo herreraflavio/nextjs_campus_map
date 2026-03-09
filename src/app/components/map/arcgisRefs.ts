@@ -178,6 +178,7 @@ export const eventsStore = {
 };
 
 export function addEventToStore(ev: CampusEvent) {
+  console.log(ev);
   eventsStore.items.push(ev);
   eventsStore.events.dispatchEvent(new CustomEvent("added", { detail: ev }));
 }
@@ -380,6 +381,7 @@ export function generateExport(): {
         date: a.date ?? null,
         startAt: a.startAt ?? null,
         endAt: a.endAt ?? null,
+        poster_url: a.poster_url ?? null,
         locationTag: a.locationTag ?? null,
         fullLocationTag: a.fullLocationTag ?? null,
         names: a.names ?? null,
@@ -404,6 +406,7 @@ export function generateExport(): {
       date: ev.date ?? null,
       startAt: ev.startAt ?? null,
       endAt: ev.endAt ?? null,
+      poster_url: ev.poster_url ?? null,
       locationTag: ev.locationTag ?? null,
       fullLocationTag: ev.fullLocationTag ?? null,
       names: ev.names ?? null,
@@ -435,7 +438,7 @@ export function generateExport(): {
 export function saveMapToServer(
   mapId: string,
   userEmail: string,
-  settings: SaveSettings
+  settings: SaveSettings,
 ): void {
   const { polygons, labels, events } = generateExport();
 

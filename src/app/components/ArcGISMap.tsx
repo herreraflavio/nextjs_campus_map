@@ -906,6 +906,8 @@ export default function ArcGISMap(mapData: ExportBody) {
 
               const pt3857 = toViewSR(srcPt) as __esri.Point;
 
+              console.log(ev);
+
               const ce: CampusEvent = {
                 id: ev.attributes.id || `evt-${Date.now()}`,
                 event_name: ev.attributes.event_name || "Event",
