@@ -183,6 +183,119 @@ export function addEventToStore(ev: CampusEvent) {
   eventsStore.events.dispatchEvent(new CustomEvent("added", { detail: ev }));
 }
 
+// Add this below addEventToStore in arcgisRefs.ts
+
+// export function updateEventInStore(updatedEv: CampusEvent) {
+//   // 1. Update in the local store
+//   const index = eventsStore.items.findIndex((e) => e.id === updatedEv.id);
+//   if (index > -1) {
+//     eventsStore.items[index] = updatedEv;
+//   } else {
+//     // If it was dynamic and is now being edited, add to store
+//     eventsStore.items.push(updatedEv);
+//   }
+//   eventsStore.events.dispatchEvent(
+//     new CustomEvent("updated", { detail: updatedEv }),
+//   );
+
+//   // 2. Update the graphic on the layer directly so the map visually updates instantly
+//   const layer = eventsLayerRef.current as any;
+//   if (layer?.graphics) {
+//     const graphic = layer.graphics.find(
+//       (g: any) => g.attributes?.id === updatedEv.id,
+//     );
+//     if (graphic) {
+//       Object.assign(graphic.attributes, {
+//         event_name: updatedEv.event_name,
+//         description: updatedEv.description,
+//         date: updatedEv.date,
+//         startAt: updatedEv.startAt,
+//         endAt: updatedEv.endAt,
+//         locationTag: updatedEv.locationTag,
+//         fullLocationTag: updatedEv.fullLocationTag,
+//       });
+//       // Optionally update geometry here if the location changed
+//       if (updatedEv.geometry && GraphicRef.current) {
+//         const Graphic = GraphicRef.current as any;
+//         graphic.geometry = new Graphic({
+//           geometry: {
+//             type: "point",
+//             x: updatedEv.geometry.x,
+//             y: updatedEv.geometry.y,
+//             spatialReference: { wkid: updatedEv.geometry.wkid },
+//           },
+//         }).geometry;
+//       }
+//     }
+//   }
+// }
+export function updateEventInStore(updatedEv: CampusEvent) {
+  // 1. Update in the local store
+  const index = eventsStore.items.findIndex((e) => e.id === updatedEv.id);
+  if (index > -1) {
+    eventsStore.items[index] = updatedEv;
+  } else {
+    // If it was dynamic and is now being edited, add to store
+    eventsStore.items.push(updatedEv);
+  }
+  eventsStore.events.dispatchEvent(
+    new CustomEvent("updated", { detail: updatedEv }),
+  );
+
+  // 2. Update the graphic on the layer directly so the map visually updates instantly
+  const layer = eventsLayerRef.current as any;
+  if (layer?.graphics) {
+    const graphic = layer.graphics.find(
+      (g: any) => g.attributes?.id === updatedEv.id,
+    );
+    if (graphic) {
+      Object.assign(graphic.attributes, {
+        event_name: updatedEv.event_name,
+        description: updatedEv.description,
+        date: updatedEv.date,
+        startAt: updatedEv.startAt,
+        endAt: updatedEv.endAt,
+        locationTag: updatedEv.locationTag,
+        fullLocationTag: updatedEv.fullLocationTag,
+        // 👇 The missing fields are added here
+        location: updatedEv.location,
+        location_at: updatedEv.location_at,
+        poster_url: updatedEv.poster_url,
+        names: updatedEv.names,
+      });
+      // Optionally update geometry here if the location changed
+      if (updatedEv.geometry && GraphicRef.current) {
+        const Graphic = GraphicRef.current as any;
+        graphic.geometry = new Graphic({
+          geometry: {
+            type: "point",
+            x: updatedEv.geometry.x,
+            y: updatedEv.geometry.y,
+            spatialReference: { wkid: updatedEv.geometry.wkid },
+          },
+        }).geometry;
+      }
+    }
+  }
+}
+
+export function deleteEventFromStore(id: string) {
+  // 1. Remove from store
+  eventsStore.items = eventsStore.items.filter((item) => item.id !== id);
+  eventsStore.events.dispatchEvent(
+    new CustomEvent("removed", { detail: { id } }),
+  );
+
+  // 2. Remove from the map layer
+  const layer = eventsLayerRef.current as any;
+  if (layer?.graphics) {
+    const graphic = layer.graphics.find((g: any) => g.attributes?.id === id);
+    if (graphic) {
+      layer.remove(graphic);
+    }
+  }
+}
+
 /* ───────────── Layer refs ───────────── */
 export const editingLayerRef = { current: null as any };
 export const finalizedLayerRef = {
@@ -382,6 +495,8 @@ export function generateExport(): {
         startAt: a.startAt ?? null,
         endAt: a.endAt ?? null,
         poster_url: a.poster_url ?? null,
+        location_at: a.location_at ?? null,
+        location: a.location ?? null,
         locationTag: a.locationTag ?? null,
         fullLocationTag: a.fullLocationTag ?? null,
         names: a.names ?? null,
@@ -407,6 +522,8 @@ export function generateExport(): {
       startAt: ev.startAt ?? null,
       endAt: ev.endAt ?? null,
       poster_url: ev.poster_url ?? null,
+      location_at: ev.location_at ?? null,
+      location: ev.location ?? null,
       locationTag: ev.locationTag ?? null,
       fullLocationTag: ev.fullLocationTag ?? null,
       names: ev.names ?? null,

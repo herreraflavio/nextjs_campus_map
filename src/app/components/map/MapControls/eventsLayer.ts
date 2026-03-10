@@ -74,7 +74,7 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
             { fieldName: "date", label: "Date" },
             { fieldName: "startAt", label: "Start" },
             { fieldName: "endAt", label: "End" },
-            { fieldName: "fullLocationTag", label: "Location" },
+            // { fieldName: "fullLocationTag", label: "Location" },
             { fieldName: "location_at", label: "Location" },
             { fieldName: "description", label: "Description" },
             { fieldName: "names", label: "People" },

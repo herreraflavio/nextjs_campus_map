@@ -22,6 +22,7 @@ import SketchTool from "@/app/components/SketchTool";
 import Sidebar from "./map/Sidebar";
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
 import AddEvent from "./map/MapControls/addEvent";
+import EventsDashboard from "./map/MapControls/EventsDashboard";
 
 /** Memoize map wrapper so header/menu state changes don't cause map rerenders */
 const MemoArcGISWrapper = React.memo(ArcGISWrapper);
@@ -144,6 +145,9 @@ export default function LoggedInDashboard({ user }) {
         >
           <div style={{ position: "relative" }}>
             <AddEvent />
+          </div>
+          <div style={{ position: "relative" }}>
+            <EventsDashboard />
           </div>
 
           <div style={{ position: "relative", height: "inherit" }}>

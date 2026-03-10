@@ -112,8 +112,8 @@ export default function DynamicEventLoader(props: {
       const list: any[] = Array.isArray(payload?.events)
         ? payload.events
         : Array.isArray(payload)
-        ? payload
-        : []; // --- REFACTOR: Process all events in parallel ---
+          ? payload
+          : []; // --- REFACTOR: Process all events in parallel ---
 
       const eventPromises = list.map(async (ev) => {
         try {
@@ -201,7 +201,7 @@ export default function DynamicEventLoader(props: {
 
           const ce: CampusEvent = {
             id: String(
-              ev.id ?? ev.uuid ?? `api-${Date.now()}-${Math.random()}`
+              ev.id ?? ev.uuid ?? `api-${Date.now()}-${Math.random()}`,
             ),
             event_name: String(title),
 
@@ -222,6 +222,8 @@ export default function DynamicEventLoader(props: {
             locationTag:
               typeof ev.location === "string" ? ev.location : undefined, // Use host as the sole "person" if you want
             fullLocationTag:
+              typeof ev.location === "string" ? ev.location_at : undefined,
+            location_at:
               typeof ev.location === "string" ? ev.location_at : undefined,
 
             names: host ? [host] : undefined,
@@ -244,7 +246,7 @@ export default function DynamicEventLoader(props: {
       }); // Wait for all events from *this* source to be processed
 
       const graphics = (await Promise.all(eventPromises)).filter(
-        (g) => g !== null
+        (g) => g !== null,
       );
       return graphics; // Return the array of graphics
     });
@@ -302,9 +304,12 @@ export default function DynamicEventLoader(props: {
   useEffect(() => {
     if (!refreshMs || refreshMs <= 0) return;
     if (refreshRef.current) window.clearInterval(refreshRef.current);
-    refreshRef.current = window.setInterval(() => {
-      fetchDynamic();
-    }, Math.max(5_000, refreshMs)) as unknown as number;
+    refreshRef.current = window.setInterval(
+      () => {
+        fetchDynamic();
+      },
+      Math.max(5_000, refreshMs),
+    ) as unknown as number;
     return () => {
       if (refreshRef.current) {
         window.clearInterval(refreshRef.current);
