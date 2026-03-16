@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S3 Upload Test</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+        max-width: 600px;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #ccc;
+        display: none;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        margin-top: 15px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Test Image Upload</h2>
+
+    <form id="uploadForm">
+      <input
+        type="file"
+        id="imageInput"
+        name="image"
+        accept="image/*"
+        required
+      />
+      <button type="submit">Upload to S3</button>
+    </form>
+
+    <div id="resultBox" class="result">
+      <p><strong>Status:</strong> <span id="statusText"></span></p>
+      <p><strong>URL:</strong> <a id="urlLink" href="#" target="_blank"></a></p>
+      <img id="previewImage" src="" alt="Uploaded preview will appear here" />
+    </div>
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const fileInput = document.getElementById("imageInput");
+          const resultBox = document.getElementById("resultBox");
+          const statusText = document.getElementById("statusText");
+
+          statusText.innerText = "Uploading...";
+          resultBox.style.display = "block";
+
+          const formData = new FormData();
+          formData.append("image", fileInput.files[0]);
+
+          try {
+            const response = await fetch("/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              statusText.innerText = "Success!";
+              document.getElementById("urlLink").href = data.url;
+              document.getElementById("urlLink").innerText = data.url;
+              document.getElementById("previewImage").src = data.url;
+            } else {
+              statusText.innerText = "Error: " + data.error;
+            }
+          } catch (err) {
+            statusText.innerText = "Network Error";
+            console.error(err);
+          }
+        });
+    </script>
+  </body>
+</html>
