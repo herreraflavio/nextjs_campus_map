@@ -1201,7 +1201,10 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
       />
 
       {viewReady && (
-        <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
+        <DynamicEventLoader
+          eventSources={mapData.eventSources ?? []}
+          refreshMs={3000}
+        />
       )}
 
       <div style={dockWrap}>
