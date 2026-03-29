@@ -29,6 +29,31 @@ export async function GET(request: NextRequest) {
           initialLatitude: 37.359848,
           initialLongitude: -120.426165,
           initialScale: 12000,
+          basemapStyle: "arcGISTopographic",
+          basemapURLTemplate: null,
+        },
+      },
+      {
+        id: "ucm-general-info",
+        title: "UC Merced General Information Map",
+        description:
+          "A simplified campus map focused on general information areas and polygon-based locations.",
+        previewImageURL:
+          "https://news.ucmerced.edu/sites/g/files/ufvvjh1306/f/news/image/campus-hero.jpg",
+        datePublished: "2026-03-29T10:00:00Z",
+        config: {
+          walkingVerticesURL: null,
+          walkingEdgesURL: null,
+          vertexMetaURL: null,
+          polygonsAPIURL: "https://campusmap.ucmercedhub.com/polygon",
+          eventsAPIURL: null,
+          mapTilesURLTemplate:
+            "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png",
+          initialLatitude: 37.359848,
+          initialLongitude: -120.426165,
+          initialScale: 12000,
+          basemapStyle: "arcGISColoredPencil",
+          basemapURLTemplate: null,
         },
       },
     ];
