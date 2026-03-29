@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
     const feed = [
       {
         id: "ucm-main-campus",
-        title: "UC Merced Main Campus",
+        title: "UC Merced Events Map",
         description:
-          "The primary campus map including academic buildings, dorms, and parking.",
+          "The primary campus events map. Click on pins scattered across the campus to learn more.",
         previewImageURL:
           "https://campusmap.ucmercedhub.com/maps/images/ucm-maps-preview-2.jpg",
         datePublished: "2026-03-28T10:00:00Z",
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         id: "ucm-general-info",
         title: "UC Merced General Information Map",
         description:
-          "A simplified campus map focused on general information areas and polygon-based locations.",
+          "A simplified campus map focused on general information. Click on buidings to learn more about them",
         previewImageURL:
           "https://news.ucmerced.edu/sites/g/files/ufvvjh1306/f/news/image/campus-hero.jpg",
         datePublished: "2026-03-29T10:00:00Z",
