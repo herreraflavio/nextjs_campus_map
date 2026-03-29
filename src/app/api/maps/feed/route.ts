@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
         title: "UC Merced Main Campus",
         description:
           "The primary campus map including academic buildings, dorms, and parking.",
-        previewImageURL: "https://ucmercedhub.com/images/ucm-preview.jpg",
+        previewImageURL:
+          "https://campusmap.ucmercedhub.com/maps/images/ucm-maps-preview-2.jpg",
         datePublished: "2026-03-28T10:00:00Z",
         config: {
           walkingVerticesURL:
