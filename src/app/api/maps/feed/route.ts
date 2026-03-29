@@ -42,9 +42,11 @@ export async function GET(request: NextRequest) {
           "https://news.ucmerced.edu/sites/g/files/ufvvjh1306/f/news/image/campus-hero.jpg",
         datePublished: "2026-03-29T10:00:00Z",
         config: {
-          walkingVerticesURL: null,
-          walkingEdgesURL: null,
-          vertexMetaURL: null,
+          walkingVerticesURL:
+            "https://mapbuilder.ucmercedhub.com/walking_vertices.json",
+          walkingEdgesURL:
+            "https://mapbuilder.ucmercedhub.com/walking_edges.json",
+          vertexMetaURL: "https://mapbuilder.ucmercedhub.com/vertex_meta.json",
           polygonsAPIURL: "https://campusmap.ucmercedhub.com/polygon",
           eventsAPIURL: null,
           mapTilesURLTemplate:
