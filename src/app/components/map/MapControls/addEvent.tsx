@@ -14,6 +14,26 @@ import {
   useLocationSearchGraph,
 } from "../../../helper/searchLocation";
 
+function getUploadUrlFromResponse(payload: any): string | null {
+  const candidates = [
+    payload?.url,
+    payload?.imageUrl,
+    payload?.location,
+    payload?.fileUrl,
+    payload?.data?.url,
+    payload?.data?.imageUrl,
+    payload?.data?.location,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  return null;
+}
+
 export default function AddEvent() {
   const [open, setOpen] = useState(false);
 
@@ -129,6 +149,25 @@ export function EventModal({
     try {
       const fd = new FormData();
       fd.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: fd,
+      });
+      if (!response.ok) {
+        throw new Error(`Upload failed (${response.status})`);
+      }
+
+      const payload = await response.json();
+      const url = getUploadUrlFromResponse(payload);
+
+      if (!url) {
+        throw new Error(
+          "Upload succeeded but no image URL was returned by /api/upload.",
+        );
+      } else {
+        setPreviewUrl(url);
+      }
 
       const res = await fetch(
         "https://uc-merced-campus-event-api-backend.onrender.com/ask",
@@ -323,7 +362,7 @@ export function EventModal({
                 style={{
                   border: "1px solid #ddd",
                   borderRadius: 8,
-                  overflow: "hidden",
+                  overflow: "scroll",
                   maxHeight: 360,
                 }}
               >
