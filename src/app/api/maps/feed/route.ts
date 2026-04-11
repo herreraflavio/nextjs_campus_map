@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
           walkingEdgesURL:
             "https://mapbuilder.ucmercedhub.com/walking_edges.json",
           vertexMetaURL: "https://mapbuilder.ucmercedhub.com/vertex_meta.json",
+          contentAPIURL: "https://campusmap.ucmercedhub.com/contentAPIURL",
           polygonsAPIURL: "https://campusmap.ucmercedhub.com/polygon",
           eventsAPIURL:
             "https://uc-merced-campus-event-api-backend.onrender.com/presence_events_ios",
