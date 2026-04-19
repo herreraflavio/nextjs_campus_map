@@ -1,0 +1,1517 @@
+{
+  "YWDC_nested_content": [
+    {
+      "title": "Monday",
+      "tabs": [
+        {
+          "title": "Lunch",
+          "sections": [
+            {
+              "header": "Rodeo Burger",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of All Beef Patty or Plant Based Impossible Burger on Max's Artisan Burger Bun with Sides of Crispy Bacon Topper, Thunder Crunch Fries and Toppings.",
+                "Calories: 830 Cal."
+              ]
+            },
+            {
+              "header": "Chicken Mole",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein Choice of Chicken Mole or Plant Based Chicken Mole Served with Corn Tortillas, Fluffy Spanish Rice Pilaf and Refried Beans and Toppings.",
+                "Calories: 580 Cal."
+              ]
+            },
+            {
+              "header": "Lemon Herb Baked Cod",
+              "bullets": [
+                "Station: Deux",
+                "Description: Choice of Baked Black Cod Citrus Herb Olive Oil Drizzle or Eggplant Roulade With Wild Rice, Roasted Red Bell Pepper, Kalamata Olives, Mushrooms, Parmesan Cheese on Max's Artisan Dinner Roll.  Sides of Creamy Polenta,  Za'atar Spiced Roasted Kale & Chickpeas, Sauteed Swiss Chard With Lemon & Fennel.",
+                "Calories: 600 Cal."
+              ]
+            },
+            {
+              "header": "Korean Bibimbap Bowl",
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Korean Gochujang Beef (4oz) or Gochujang Crispy Tofu with Sides of Sticky Sushi Rice, Fried Egg and Toppings.",
+                "Calories: 880 Cal."
+              ]
+            },
+            {
+              "header": "Mediterranean Citrus Herb Chicken",
+              "bullets": [
+                "Station: Macca",
+                "Description: Choice of Citrus Herb Chicken Thigh or Grilled Portobello Mushroom. Sides: Citrus Brown Rice & Quinoa Pilaf and, Roasted Spiced Sweet Potatoes",
+                "Calories: 570 Cal."
+              ]
+            },
+            {
+              "header": "Monday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza, Spicy Hawaiian Pizza (Cubed Ham(Pork), Pineapple & Pickled Jalapeno, Green Onion) and Veggie Lovers Pizza  (Mushroom, Peppers, Onion & Olives).",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinner",
+          "sections": [
+            {
+              "header": "Chicken Parmesan Bake",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Chicken Parmesan(4oz) or Eggplant Parmesan(4oz) on Penne Pasta; Comes with Marinara oe Alfredo Sauce (4oz), Fresh Chopped Parsley, Red Pepper Flake, Shaved Parmesan and Max's Artisan Dinner Rolls",
+                "Calories: 730 Cal."
+              ]
+            },
+            {
+              "header": "Beef Picadillo",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein Choice of Beef Picadillo orOyster Mushroom Picadillo , with sides of Fluffy Steamed Rice, Whole Tender Black Beans, Tostones, Corn Tortillas and Toppings",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Miso-Ginger Glazed Salmon",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/8826-chatgpt-image-jan-12-2026-12_25_20-pm.png"
+              ],
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein Choice of Miso Glazed Salmon\nor Garlic-Ginger Miso Glazed Sticky Tofu, Sides of Fluffy Steamed Jasmin Rice, Wilted Bok Choy, Garlic-Sesame Green Beans, and Roasted Shiitake Mushroom",
+                "Calories: 160 Cal."
+              ]
+            },
+            {
+              "header": "Garlic-Ginger Glazed Sticky Pork",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/8826-chatgpt-image-jan-12-2026-12_25_20-pm.png"
+              ],
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Garlic-Ginger Glazed Sticky Pork\nor Garlic-Ginger Glazed Sticky Tofu & Shitake, Sides of Fusion Barley & Wild Rice Pilaf or Gochujang Stir-Fried Greens  and Toppings",
+                "Calories: 330 Cal."
+              ]
+            },
+            {
+              "header": "BBQ Chicken Plate",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/5501-k_photo_recipe-ramp-up_2022-05-grilled-portabello-mushrooms_kitchnaprilkitchnapril5110-2-1.jpeg"
+              ],
+              "bullets": [
+                "Station: Maca",
+                "Description: Protein Coice of Smoked Chicken Thigh With Tangy BBQ Sauce or Portobello Mushroom With Tangy BBQ Sauce, with Brown Rice , Quinoa Pilaf  and Sweet Potato Puree",
+                "Calories: 220 Cal."
+              ]
+            },
+            {
+              "header": "Monday Pizza",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/3065-daily-pizza.png"
+              ],
+              "bullets": [
+                "Station: 𝝅 (Pizza)",
+                "Description: Pizza Choice of Pepperoni Pizza, Four Cheese Pizza or Spicy Hawaii'n  (Pineapple, Ham, Pickled Jalapeno) or Veggie Lovers  (Mushroom, Peppers, Onion & Olives)",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Late Night",
+          "sections": [
+            {
+              "header": "Chicken Wings",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Honey Garlic Chicken Wings or Plant-based Chicken Nuggets, Served with House Made Potato Chip, Steamed Asparagus, Cucumber Slices, Celery Sticks, House made Ranch.",
+                "Calories: 650 Cal."
+              ]
+            },
+            {
+              "header": "Mediterranean Escape",
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein Choice of Garlic Lemon & Rosemary Whole Branzino or Lemon Herb Couscous, Briam Vegetables. Served with Greek Salad, Marinated Mozzarella Balls, Garlic Hummus, Pita Bread.",
+                "Calories: 800 Cal."
+              ]
+            },
+            {
+              "header": "Monday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Lunch/Dinner",
+          "sections": [
+            {
+              "header": "Oil & Vinegar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Oil and Vinegar.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Dressings",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Dressings.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Pasta Salad",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/6382-salad-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads Ham Pasta, Cilantro Pesto and Potato Salads.",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Midori",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3590-veggies.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Greens and Toppings.",
+                "Calories: 50 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Late Night",
+          "sections": [
+            {
+              "header": "Salads",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads: Green Salad (Spring Mix, Halved Cherry Tomatoes, Diced Onion, Cucumbers), Ceasar Salad (Romaine, Croutons, Shaved Parmesan. Comes with Overnight Oats & Fruit.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            },
+            {
+              "header": "Deli",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Suannai",
+          "sections": [
+            {
+              "header": "Charcuterie Board",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings and Whole or Cut Fruit Options.",
+                "Calories: 70 Cal."
+              ]
+            },
+            {
+              "header": "Deli Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Baked 'n' Grams",
+          "sections": [
+            {
+              "header": "BAKED'n'GRAMS 1",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 120 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 2",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 260 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 3",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 170 Cal."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Tuesday",
+      "tabs": [
+        {
+          "title": "Lunch",
+          "sections": [
+            {
+              "header": "Carne Asada Fries",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Carne Asada or Oyster Mushroom Asada Asada, Served with Thunder Crunch Fries, House Made Cheese Sauce and Toppings.",
+                "Calories: 800 Cal."
+              ]
+            },
+            {
+              "header": "Carnitas Plate",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein Choice of Pork Shoulder Carnitas(4oz) or  Fable Mushroom Carnitas, with Sides of Spanish Rice Pilaf (Peas, Corn, Carrots) (4oz) and Refried Beans (4oz), Flour Tortillas and Toppings.",
+                "Calories: 610 Cal."
+              ]
+            },
+            {
+              "header": "Fried Catfish",
+              "bullets": [
+                "Station: Deux",
+                "Description: Max's Artisan Dinner Rolls. Protein Choice of Fresh Catfish Breaded & Fried Golden or Fried Popcorn Cauliflower, Served with Bobcat Mac & Cheese and Garlic Green Beans.",
+                "Calories: 360 Cal."
+              ]
+            },
+            {
+              "header": "Honey Chipotle Chicken Pasta",
+              "bullets": [
+                "Station: Flame",
+                "Description: Choice of Chicken Thigh or Mushrooms with Honey Chipotle Alfredo Sauce, Penne Pasta, Asparagus, Peas, Peppers & Onions.  Served with Max's Artisan Dinner Rolls",
+                "Calories: 270 Cal."
+              ]
+            },
+            {
+              "header": "Turkey Taco Salad",
+              "bullets": [
+                "Station: Maca",
+                "Description: Choice of Ground Turkey Taco Meat or Meaty Mushroom, Corn, Chickpea, Sweet Potato & Black Bean Hash. Sides of Wild West Wild Rice Pilaf, Corn Tostada.",
+                "Calories: 460 Cal."
+              ]
+            },
+            {
+              "header": "Tuesday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza, Meat Lovers Pizza (Pepperoni, Sausage (Pork), Salami, Ham) and Spicy Veggie Hawaiian Pizza (Pineapple & Pickled Jalapeno).",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinner",
+          "sections": [
+            {
+              "header": "Loaded Baked Potato Bar",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Momma's Chilli Made With Three Beans, Peppers, Onions & Chiles Comes with Sides of Fluffy Baked Potato (5cs), Chopped Smoked (Pork) Bacon, House Made Cheese Sauce and Toppings.",
+                "Calories: 580 Cal."
+              ]
+            },
+            {
+              "header": "Pork Al Pastor Tacos",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein choice of Pork Al Pastor w/ Pineapple (4oz) or Vegan Al Pastor Mushroom aw/ Pineapple (4oz), with Toppings and sides of Spanish Rice (4oz) , Pinto Beans (4oz). 4.5\" Corn Tortillas",
+                "Calories: 770 Cal."
+              ]
+            },
+            {
+              "header": "Pescado a la Veracruzana-Copy",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-6/7513-screen-shot-2023-06-20-at-110542-am.png"
+              ],
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein Choice of Cod Veracruz or Mushroom Veracruz. Comes with   Wild West Wild Rice Pilaf; Garlicy Collard Greens; Sweet Potato & Black Bean Hash",
+                "Calories: 330 Cal."
+              ]
+            },
+            {
+              "header": "Greek Chicken Pita",
+              "bullets": [
+                "Station: Flame",
+                "Description: Warmed Pita Bread, Protein Choice of Greek Chicken Thigh or Crispy Falafel Bites  Comes with  Lemon Pepper Spiced Potatoes\nRoasted Peppers, Tomatoes & Onions, Tzatziki, Hummus, Cucumber Salad (Cucumber, Tomato, Onion, Kalamata Olives, Feta cheese), Pickled Red Onion",
+                "Calories: 650 Cal."
+              ]
+            },
+            {
+              "header": "Turkey Taco Salad",
+              "bullets": [
+                "Station: Maca",
+                "Description: Ground Turkey Taco or Meaty Mushroom, Corn, Chickpea, Sweet Potato & Black Bean Hash. Side: Wild West Wild Rice Pilaf, Corn Tostada.",
+                "Calories: 250 Cal."
+              ]
+            },
+            {
+              "header": "Tuesday Pizza",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/8611-daily-pizza.png"
+              ],
+              "bullets": [
+                "Station: 𝝅 (Pizza)",
+                "Description: Pizza Choice of Pepperoni Pizza, Four Cheese Pizza or Meat Lovers (Pepperoni, Sausage (Pork), Salami, Ham) or Spicy Veggie Hawaiian (Pineapple & Pickled Jalapeno)",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Late Night",
+          "sections": [
+            {
+              "header": "Monte Cristo",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Ham & Turkey Monte Cristo Served with Fried Potatoes, Caesar Salad, Onion Maple Sauce.",
+                "Calories: 950 Cal."
+              ]
+            },
+            {
+              "header": "Mushroom Swiss Burger",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein Choice of All Beef Patty or Garden Black Bean Burger on a Cheese & Onion Burger Bun. Comes with Sides  of Saute Mushroom, Caramelized Onions, Thunder Crunch Fries and Toppings.",
+                "Calories: 800 Cal."
+              ]
+            },
+            {
+              "header": "Festa del Giardino",
+              "bullets": [
+                "Station: Deux",
+                "Description: Loaded Veggie Lasagna (Shrimp Protein Upon Request), Vegetarian Minestra Maritata (Italian Wedding Soup)Served with Sides of Mozzarella Salad, Garlic Bread, Baked Eggplant w/ Parmesan.",
+                "Calories: 670 Cal."
+              ]
+            },
+            {
+              "header": "Tuesday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Lunch/Dinner",
+          "sections": [
+            {
+              "header": "Oil & Vinegar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Oil and Vinegar.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Dressings",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Dressings.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Pasta Salad",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/6382-salad-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads Ham Pasta, Cilantro Pesto and Potato Salads.",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Midori",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3590-veggies.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Greens and Toppings.",
+                "Calories: 50 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Late Night",
+          "sections": [
+            {
+              "header": "Salads",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads: Green Salad (Spring Mix, Halved Cherry Tomatoes, Diced Onion, Cucumbers), Ceasar Salad (Romaine, Croutons, Shaved Parmesan. Comes with Overnight Oats & Fruit.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            },
+            {
+              "header": "Deli",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Suannai",
+          "sections": [
+            {
+              "header": "Charcuterie Board",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings and Whole or Cut Fruit Options.",
+                "Calories: 70 Cal."
+              ]
+            },
+            {
+              "header": "Deli Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Baked 'n' Grams",
+          "sections": [
+            {
+              "header": "BAKED'n'GRAMS 1",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 260 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 2",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 260 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 3",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 310 Cal."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Wednesday",
+      "tabs": [
+        {
+          "title": "Lunch",
+          "sections": [
+            {
+              "header": "Bobcat Party Wings",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Garlic Parmesan Party Wings or Crispy Plant Based Kick'n Tenders with sides of Thunder Crunch Fries. Choice of Sauces: BBQ Sauce, Buffalo Sauce, Mango Habanero Sauce, Celery/Carrots, House made Ranch.",
+                "Calories: 490 Cal."
+              ]
+            },
+            {
+              "header": "Quesabirria Tacos",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein Choice of Beef Quesabirria or Fable Mushroom Quesabirria on Corn Tortilla.  Served with Spanish Rice, Refired Beans, Consommé and Toppings.",
+                "Calories: 880 Cal."
+              ]
+            },
+            {
+              "header": "Honey Walnut Shrimp",
+              "bullets": [
+                "Station: Deux",
+                "Description: Choice of Honey Walnut Shrimp or Honey Walnut Crispy Tofu  with Sides of Steamed Brown Rice, Steamed Broccoli, Roasted Ginger Sweet Potatoes.",
+                "Calories: 680 Cal."
+              ]
+            },
+            {
+              "header": "String Bean Chicken",
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of String Bean Chicken or String Bean Tofu, Served with Fluffy Steamed Jasmin Rice and Toppings.",
+                "Calories: 390 Cal."
+              ]
+            },
+            {
+              "header": "Penne & Turkey Bolognese",
+              "bullets": [
+                "Station: Maca",
+                "Description: Ground Turkey Bolognese &  Penne Pasta or Prima Vera Vegetable  Pasta With Marinara . Side of Sauteed Seasonal Vegetables.",
+                "Calories: 420 Cal."
+              ]
+            },
+            {
+              "header": "Wednesday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza, Spicy Hawaiian Pizza (Cubed Ham(Pork), Pineapple & Pickled Jalapeno, Green Onion) and Veggie Lovers Pizza  (Mushroom, Peppers, Onion & Olives).",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinner",
+          "sections": [
+            {
+              "header": "Lemon Pepper Salmon",
+              "bullets": [
+                "Station: Maca",
+                "Description: Protein Choice of: Fresh Oven Roasted Lemon Pepper Salmon or Eggplant Roulade Filled With Citrus Brown Rice & Quinoa Pilaf. Sides: Roasted Spiced Sweet Potatoes , Braised Greens.",
+                "Calories: 280 Cal."
+              ]
+            },
+            {
+              "header": "Wednesday Pizza",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/3065-daily-pizza.png"
+              ],
+              "bullets": [
+                "Station: 𝝅 (Pizza)",
+                "Description: Pizza Choice of Pepperoni Pizza, Four Cheese Pizza or Spicy Hawaii'n  (Pineapple, Ham, Pickled Jalapeno) or Veggie Lovers  (Mushroom, Peppers, Onion & Olives)",
+                "Calories: 290 Cal."
+              ]
+            },
+            {
+              "header": "Cali Burger",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of All Beef Patty or Plant Based Impossible Burger on Max's Artisan Burger Buns with Toppings and Thunder Crunch Fries as Side.",
+                "Calories: 730 Cal."
+              ]
+            },
+            {
+              "header": "Chicken Fajitas",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein choice of  Chicken Thigh Fajitas With Peppers & Onions or Plant Based Chiken Fajitas With Peppers & Onions served with Flour Tortillas, toppings, Spanish Rice Pilaf and Refried Beans.",
+                "Calories: 650 Cal."
+              ]
+            },
+            {
+              "header": "Shrimp Mac'n Cheese",
+              "bullets": [
+                "Station: Deux",
+                "Description: Choice of Shrimp Mac'n Cheese or Bobcat Mac'n Cheese, sides of Roasted Balsamic Brussel Sprouts, and Max's Artisan Dinner Rolls.",
+                "Calories: 220 Cal."
+              ]
+            },
+            {
+              "header": "Beef Pho",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2025-4/7231-beef-pho.jpg"
+              ],
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Beef Pho or Umami Plant Based Pho, Side of Rice Noodles, and Toppings.",
+                "Calories: 670 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Late Night",
+          "sections": [
+            {
+              "header": "Chili Cheese Dogs",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of All Beef Franks on Max's Artisan Bun Served with Sides of Shoestring Fries, Nacho Cheese Sauce, Steamed Broccoli and Toppings.",
+                "Calories: 900 Cal."
+              ]
+            },
+            {
+              "header": "Chicken & Dumplings",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein of Chicken & Dumpling Soup or Vegetable & Dumplings Served with Cheese Crisp, House Salad, Chopped Green Onions.",
+                "Calories: 410 Cal."
+              ]
+            },
+            {
+              "header": "Fish & Chips",
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein of Fish and Chips Basket or Plant Based Tenders and Chips Served with French Fries, Steamed Broccoli and Toppings.",
+                "Calories: 570 Cal."
+              ]
+            },
+            {
+              "header": "Wednesday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Lunch/Dinner",
+          "sections": [
+            {
+              "header": "Oil & Vinegar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Oil and Vinegar.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Dressings",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Dressings.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Pasta Salad",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/6382-salad-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads Ham Pasta, Cilantro Pesto and Potato Salads.",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Midori",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3590-veggies.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Greens and Toppings.",
+                "Calories: 50 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Late Night",
+          "sections": [
+            {
+              "header": "Salads",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads: Green Salad (Spring Mix, Halved Cherry Tomatoes, Diced Onion, Cucumbers), Ceasar Salad (Romaine, Croutons, Shaved Parmesan. Comes with Overnight Oats & Fruit.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            },
+            {
+              "header": "Deli",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Suannai",
+          "sections": [
+            {
+              "header": "Charcuterie Board",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings and Whole or Cut Fruit Options.",
+                "Calories: 70 Cal."
+              ]
+            },
+            {
+              "header": "Deli Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Baked 'n' Grams",
+          "sections": [
+            {
+              "header": "BAKED'n'GRAMS 1",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 260 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 2",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 290 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 3",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 210 Cal."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Thursday",
+      "tabs": [
+        {
+          "title": "Lunch",
+          "sections": [
+            {
+              "header": "Chicken Burger",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Crispy Chicken Burger or Crispy Plant Based Kick'n Tenders, Sides: Thunder Crunch Fries, Max's Artisan Burger Buns and Toppings.",
+                "Calories: 600 Cal."
+              ]
+            },
+            {
+              "header": "Guatemalan Pepian de Pollo",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Corn Tortillas. Protein Choice of Guatemalan Chicken Pepian Thigh or Vegetable Pepian Stew With Squash, Potato & Green Beans. Comes  with Sides of Cilantro Lime Rice(4oz), Black Beans (4oz) and Toppings.",
+                "Calories: 760 Cal."
+              ]
+            },
+            {
+              "header": "Grilled Cod Fish Tacos",
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein Choice of Pan Seared Rock Cod, Mango Salsa, Shredded Cabbage, Chipotle Aioli & Crispy Taco Shell or Oyster Mushroom & Cauliflower Ceviche with Side of: House Made Tortilla Chips.",
+                "Calories: 750 Cal."
+              ]
+            },
+            {
+              "header": "Thai Basil Beef",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2025-4/3914-thai-basil-beef.png"
+              ],
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Beef Thai Basil or Thai Basil Miso Mushroom and Tofu, with side of Fluffy Steamed Jasmine Rice and Toppings.",
+                "Calories: 520 Cal."
+              ]
+            },
+            {
+              "header": "Five-Spice Smoked Chicken",
+              "bullets": [
+                "Station: Maca",
+                "Description: Proteins: Chicken Thigh Smoked With Five-Spice Maple Glaze or Five-Spice Smoked Mushroom & Sweet Potato. Sides of Fusion Wild Rice & Quinoa Pilaf, Umami Stir-Fried Seasonal Greens.",
+                "Calories: 610 Cal."
+              ]
+            },
+            {
+              "header": "Thursday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza, Meat Lovers Pizza (Pepperoni, Sausage (Pork), Salami, Ham) and Spicy Veggie Hawaiian Pizza (Pineapple & Pickled Jalapeno).",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinner",
+          "sections": [
+            {
+              "header": "Five-Spice Smoked Chicken",
+              "bullets": [
+                "Station: Maca",
+                "Description: Proteins: Chicken Thigh (Halal) Smoked With Five-Spice Maple Glazeor Five-Spice Smoked Mushroom & Sweet Potato. Sides: Fusion Wild Rice & Quinoa Pilaf, Umami Stir-Fried Seasonal Greens.",
+                "Calories: 610 Cal."
+              ]
+            },
+            {
+              "header": "Thursday Pizza",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/8611-daily-pizza.png"
+              ],
+              "bullets": [
+                "Station: 𝝅 (Pizza)",
+                "Description: Pizza Choice of Pepperoni Pizza, Four Cheese Pizza or Meat Lovers (Pepperoni, Sausage (Pork), Salami, Ham) or Spicy Veggie Hawaiian (Pineapple & Pickled Jalapeno)",
+                "Calories: 290 Cal."
+              ]
+            },
+            {
+              "header": "Bobcat Party Wings",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Garlic Parmesan Wings (Halal) or Crispy Plant Based Kick'n Tenders with sides of Thunder Crunch Fries. Sauces: BBQ Sauce, Buffalo Sauce, Mango Habanero Sauce, Celery/Carrots, House made Ranch",
+                "Calories: 420 Cal."
+              ]
+            },
+            {
+              "header": "Carne Asada Tacos",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein choice of Carne Asada or Oyster Mushroom Asada with Toppings and sides of Spanish Rice Pilaf, Refried Beans,  4.5\" Corn Tortillas",
+                "Calories: 690 Cal."
+              ]
+            },
+            {
+              "header": "Pan Seared Salmon",
+              "bullets": [
+                "Station: Deux",
+                "Description: Pretein Choice of Pan Seared Salmon w/Lemon Herb Sauce or Grilled Tofu w/Lemon Herb Sauce with Sides of Steamed Broccoli, Creamy Polenta, Garlic Cauliflower Puree, and Sauteed Swiss Chard.",
+                "Calories: 490 Cal."
+              ]
+            },
+            {
+              "header": "Char Siu Bao Buns",
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Char Siu Pork, or Char Siu Muchrooms.  Sides of Steamed Rice, Steamed Broccoli, and Toppings.",
+                "Calories: 490 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Late Night",
+          "sections": [
+            {
+              "header": "Nachos",
+              "bullets": [
+                "Station: Plancha",
+                "Description: Protein Choice of Chicken Tinga. Served with White Rice, Pinto Beans, Plancha Seared Fajitas, Nacho Cheese, House made Tortilla Chips  and Toppings.",
+                "Calories: 910 Cal."
+              ]
+            },
+            {
+              "header": "Tender Beef Cheek",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Corn Tortilla 6\"; Protein Choice of Slow Cooked & Tender Beef Cheek (4oz) or Chipotle Pulled Mushrooms (4oz). Served with Sides of Cilantro Lime Rice (4oz) and Pinto Beans ((4oz) and Toppings.",
+                "Calories: 910 Cal."
+              ]
+            },
+            {
+              "header": "Avocado Toast Brekky",
+              "bullets": [
+                "Station: Deux",
+                "Description: Max's Artisan Sourdough Bread Served with House made Avocado Spread, Shrimp protein upon request, Creamy Scrambled Egg Served with Sides of Steamed Butter Potatoes, Garbanzo Bean Salad, Sliced Cucumbers, Micro Greens.",
+                "Calories: 870 Cal."
+              ]
+            },
+            {
+              "header": "Thursday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Lunch/Dinner",
+          "sections": [
+            {
+              "header": "Oil & Vinegar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Oil and Vinegar.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Dressings",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Dressings.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Pasta Salad",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/6382-salad-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads Ham Pasta, Cilantro Pesto and Potato Salads.",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Midori",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3590-veggies.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Greens and Toppings.",
+                "Calories: 50 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Late Night",
+          "sections": [
+            {
+              "header": "Salads",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads: Green Salad (Spring Mix, Halved Cherry Tomatoes, Diced Onion, Cucumbers), Ceasar Salad (Romaine, Croutons, Shaved Parmesan. Comes with Overnight Oats & Fruit.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            },
+            {
+              "header": "Deli",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Suannai",
+          "sections": [
+            {
+              "header": "Charcuterie Board",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings and Whole or Cut Fruit Options.",
+                "Calories: 70 Cal."
+              ]
+            },
+            {
+              "header": "Deli Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Baked 'n' Grams",
+          "sections": [
+            {
+              "header": "BAKED'n'GRAMS 1",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 2",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 290 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 3",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 130 Cal."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Friday",
+      "tabs": [
+        {
+          "title": "Lunch",
+          "sections": [
+            {
+              "header": "Shrimp Enchiladas Verde",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein choice of Shrimp Enchiladas or Chile Rellenos with Toppings and Sides of Spanish Rice, and Refried Beans.",
+                "Calories: 570 Cal."
+              ]
+            },
+            {
+              "header": "Baked Salmon",
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein Choice of Baked Salmon  (4oz) or Grilled Egg Plant Steaks (4oz). Served with Creamy Mashed Potatoes, Roasted Seasonal Vegetables, Corn Succotash.",
+                "Calories: 470 Cal."
+              ]
+            },
+            {
+              "header": "Tonkotsu Ramen",
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Pork Belly or Miso Shitake Mushroom Ramen, with Sides of Yakisoba Noodle, Marinated Hardboiled Eggs, Bean Sprout, Green Onions, Seaweed Salad, Sauteed Mushrooms, Roasted Corn.",
+                "Calories: 820 Cal."
+              ]
+            },
+            {
+              "header": "Lemon Pepper Salmon",
+              "bullets": [
+                "Station: Maca",
+                "Description: Protein Choice of: Fresh Oven Roasted Lemon Pepper Salmon or Eggplant Roulade Filled With Citrus Brown Rice & Quinoa Pilaf. Sides: Roasted Spiced Sweet Potatoes , Braised Greens.",
+                "Calories: 360 Cal."
+              ]
+            },
+            {
+              "header": "Friday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza, Spicy Hawaiian Pizza (Cubed Ham(Pork), Pineapple & Pickled Jalapeno, Green Onion) and Veggie Lovers Pizza  (Mushroom, Peppers, Onion & Olives).",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinner",
+          "sections": [
+            {
+              "header": "The Cooks Corner",
+              "bullets": [
+                "Station: Plancha",
+                "Description: The Cooks Corner, Cooks Special Of The Day",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Crispy Baja Fish Tacos",
+              "bullets": [
+                "Station: CASCABEL",
+                "Description: Protein choice of Battered Pub Style Cod (4oz) or Cauliflower & Mushroom Ceviche (4oz) Comes with Thunder Crunch Fries, Fresh Made Tortilla Chips, Toppings and Corn Tortillas.",
+                "Calories: 830 Cal."
+              ]
+            },
+            {
+              "header": "Salmon Sushi Bake",
+              "bullets": [
+                "Station: Deux",
+                "Description: Protein Choice of Salmon Sushi Bake or Avocado Cucumber Bake.",
+                "Calories: 420 Cal."
+              ]
+            },
+            {
+              "header": "Huli Huli Chicken",
+              "bullets": [
+                "Station: Flame",
+                "Description: Max's Artisan Hawaiian Sweet Rolls.  Protein Choice of Huli Huli Chicken With Grilled Pineapple or Huli Huli Plant Based Chicken With Grilled Pineapple, Served with Steamed Coconut Rice, Hawaiian Mac Salad and Toppings.",
+                "Calories: 970 Cal."
+              ]
+            },
+            {
+              "header": "Oatly Chicken Pesto Alfredo",
+              "bullets": [
+                "Station: Maca",
+                "Description: Protein Choice of Chicken or Primavera Vegetables with Penne Pasta (GF) In a Creamy Plant Based Pesto Alfredo Sauce.  Served with Sauteed Seasonal Vegetables",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Friday Pizza",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2026-1/3065-daily-pizza.png"
+              ],
+              "bullets": [
+                "Station: 𝝅 (Pizza)",
+                "Description: Pizza Choice of Pepperoni Pizza, Four Cheese Pizza or Spicy Hawaii'n  (Pineapple, Ham, Pickled Jalapeno) or Veggie Lovers  (Mushroom, Peppers, Onion & Olives)",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Late Night",
+          "sections": [
+            {
+              "header": "Hibachi",
+              "bullets": [
+                "Station: Carbone",
+                "Description: Protein Choice of Shrimp, Chicken or Vegetable Chow Mein, White Rice Served with Napa Cabbage, Bean Sprout, Mushroom, Bok Choy, Green Onions, Spicy Teriyaki or Plain Teriyaki Sauce, Veggie Spring Rolls.",
+                "Calories: 760 Cal."
+              ]
+            },
+            {
+              "header": "Unicorn Filet w/ Lemon Basil Pesto",
+              "bullets": [
+                "Station: Deux",
+                "Description: Pretein Choice of Herb Crusted & Grilled Unicorn Filet w/ Lemon Basil Pesto with Sides of Creamy Polenta w/ Parmesan, Roasted Garlic & Parm Seasonal Vegetables, Herb Butter Toast, Honey Roasted Carrots.",
+                "Calories: 610 Cal."
+              ]
+            },
+            {
+              "header": "Clam Chowder w/ Sourdough",
+              "bullets": [
+                "Station: Flame",
+                "Description: Protein Choice of Clam Chowder or Creamy Tomato Bisque. Sides of Oven Roasted Brussel Sprouts w/ Onions and Pecans,  on Garlic Bread On Sourdough Baguette (Max's Artisan Sourdough Baguette).",
+                "Calories: 290 Cal."
+              ]
+            },
+            {
+              "header": "Friday Pizza",
+              "bullets": [
+                "Station: Pizza",
+                "Description: Pizza Choice of Pepperoni Pizza or Four Cheese Pizza",
+                "Calories: 290 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Lunch/Dinner",
+          "sections": [
+            {
+              "header": "Oil & Vinegar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Oil and Vinegar.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Dressings",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3936-dressings.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Dressings.",
+                "Calories: 0 Cal."
+              ]
+            },
+            {
+              "header": "Pasta Salad",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/6382-salad-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads Ham Pasta, Cilantro Pesto and Potato Salads.",
+                "Calories: 230 Cal."
+              ]
+            },
+            {
+              "header": "Midori",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-1/3590-veggies.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Selection of Greens and Toppings.",
+                "Calories: 50 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Midori Late Night",
+          "sections": [
+            {
+              "header": "Salads",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Salads: Green Salad (Spring Mix, Halved Cherry Tomatoes, Diced Onion, Cucumbers), Ceasar Salad (Romaine, Croutons, Shaved Parmesan. Comes with Overnight Oats & Fruit.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            },
+            {
+              "header": "Deli",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Midori",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Suannai",
+          "sections": [
+            {
+              "header": "Charcuterie Board",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings and Whole or Cut Fruit Options.",
+                "Calories: 70 Cal."
+              ]
+            },
+            {
+              "header": "Deli Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3155-deli-bar.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Protein, with Toppings.",
+                "Calories: 100 Cal."
+              ]
+            },
+            {
+              "header": "Yogurt Bar",
+              "image_urls": [
+                "https://static.eagle.bigzpoon.com/61bd7ecd8c760e0011ac0fac/menuitem/2023-12/3578-yogurt-selections.png"
+              ],
+              "bullets": [
+                "Station: Suannai",
+                "Description: Choice of Yogurts: Straus Organic Vanilla Yogurt, Greek Yogurt, Dairy Free Oat milk Yogurt, Peach Yogurt, Strawberry Yogurt;   Comes with 2 groups of Toppings.",
+                "Calories: 170 Cal."
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Baked 'n' Grams",
+          "sections": [
+            {
+              "header": "BAKED'n'GRAMS 1",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 180 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 2",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 290 Cal."
+              ]
+            },
+            {
+              "header": "BAKED'n'GRAMS 3",
+              "bullets": [
+                "Description: Choice of Staples and Special Of The Day",
+                "Calories: 380 Cal."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "PAV_nested_content": []
+}
