@@ -1,3 +1,4 @@
+// arcgisRefs.ts
 import type {
   DrawingExport,
   EventPoint,

@@ -1,3 +1,4 @@
+//myTypes.ts
 export interface SpatialReference {
   wkid: number;
   latestWkid: number;

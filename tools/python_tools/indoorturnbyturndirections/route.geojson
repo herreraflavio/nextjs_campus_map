@@ -1,0 +1,321 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:3857"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405628.2359,
+            4490192.193499997
+          ],
+          [
+            -13405598.225499999,
+            4490218.306500003
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 1,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 1,
+        "ORIG_FID_1": 1,
+        "ORIG_SEQ_1": 1,
+        "Shape_Length": 39.780810417888496,
+        "type": null,
+        "route_seq": 1,
+        "route_from": 1,
+        "route_to": 2,
+        "route_cost_s": 30.600623398375767,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405598.225499999,
+            4490218.306500003
+          ],
+          [
+            -13405608.5537,
+            4490257.670699999
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 2,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 2,
+        "ORIG_FID_1": 2,
+        "ORIG_SEQ_1": 1,
+        "Shape_Length": 40.696584089956296,
+        "type": null,
+        "route_seq": 2,
+        "route_from": 2,
+        "route_to": 4,
+        "route_cost_s": 31.305064684581765,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 3,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405608.5537,
+            4490257.670699999
+          ],
+          [
+            -13405617.4384,
+            4490274.626199998
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 3,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 2,
+        "ORIG_FID_1": 2,
+        "ORIG_SEQ_1": 2,
+        "Shape_Length": 19.142279757615277,
+        "type": null,
+        "route_seq": 3,
+        "route_from": 4,
+        "route_to": 6,
+        "route_cost_s": 14.724830582780982,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 4,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405617.4384,
+            4490274.626199998
+          ],
+          [
+            -13405623.9836,
+            4490282.528399996
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 4,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 2,
+        "ORIG_FID_1": 2,
+        "ORIG_SEQ_1": 3,
+        "Shape_Length": 10.260819063351544,
+        "type": null,
+        "route_seq": 4,
+        "route_from": 6,
+        "route_to": 8,
+        "route_cost_s": 7.892937741039649,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 5,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405623.9836,
+            4490282.528399996
+          ],
+          [
+            -13405618.2366,
+            4490287.556999996
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 5,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 2,
+        "ORIG_FID_1": 2,
+        "ORIG_SEQ_1": 4,
+        "Shape_Length": 7.636414535159113,
+        "type": "elevator",
+        "route_seq": 5,
+        "route_from": 8,
+        "route_to": 10,
+        "route_cost_s": 35.87416502704547,
+        "route_edge_type": "elevator"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405618.2366,
+            4490287.556999996
+          ],
+          [
+            -13405602.0572,
+            4490269.4668999985
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 6,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 2,
+        "ORIG_FID_1": 2,
+        "ORIG_SEQ_1": 5,
+        "Shape_Length": 24.269831114253957,
+        "type": null,
+        "route_seq": 6,
+        "route_from": 10,
+        "route_to": 12,
+        "route_cost_s": 18.66910085711843,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 11,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405602.0572,
+            4490269.4668999985
+          ],
+          [
+            -13405590.2357,
+            4490279.301600002
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 11,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 7,
+        "ORIG_FID_1": 7,
+        "ORIG_SEQ_1": 1,
+        "Shape_Length": 15.37755462988465,
+        "type": null,
+        "route_seq": 7,
+        "route_from": 12,
+        "route_to": 22,
+        "route_cost_s": 11.828888176834345,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 14,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405590.2357,
+            4490279.301600002
+          ],
+          [
+            -13405585.0315,
+            4490283.087099999
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 14,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 10,
+        "ORIG_FID_1": 10,
+        "ORIG_SEQ_1": 1,
+        "Shape_Length": 6.43534830961998,
+        "type": null,
+        "route_seq": 8,
+        "route_from": 22,
+        "route_to": 28,
+        "route_cost_s": 4.950267930476907,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 16,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405585.0315,
+            4490283.087099999
+          ],
+          [
+            -13405588.8628,
+            4490287.397399999
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 16,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 10,
+        "ORIG_FID_1": 10,
+        "ORIG_SEQ_1": 1,
+        "Shape_Length": 5.766935562152976,
+        "type": null,
+        "route_seq": 9,
+        "route_from": 28,
+        "route_to": 29,
+        "route_cost_s": 4.436104278579212,
+        "route_edge_type": "walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 15,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13405588.8628,
+            4490287.397399999
+          ],
+          [
+            -13405581.5194,
+            4490294.421599999
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 15,
+        "ORIG_FID": 2,
+        "ORIG_SEQ": 10,
+        "ORIG_FID_1": 10,
+        "ORIG_SEQ_1": 1,
+        "Shape_Length": 10.161934323405747,
+        "type": null,
+        "route_seq": 10,
+        "route_from": 29,
+        "route_to": 30,
+        "route_cost_s": 7.816872556465959,
+        "route_edge_type": "walkway"
+      }
+    }
+  ]
+}
