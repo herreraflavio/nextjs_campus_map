@@ -1,0 +1,3996 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MapLibre Campus Map</title>
+    <link rel="stylesheet" href="/maplibre/vendor/maplibre-gl.css" />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        overflow: hidden;
+        background: #f7f7f5;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      #map {
+        position: absolute;
+        inset: 0;
+      }
+
+      #status {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        z-index: 2100;
+        max-width: min(420px, calc(100vw - 24px));
+        box-sizing: border-box;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.94);
+        color: #111827;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        padding: 9px 10px;
+        font-size: 13px;
+        backdrop-filter: blur(8px);
+      }
+
+      #status[data-hidden="true"] {
+        display: none;
+      }
+
+      #dock {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        pointer-events: auto;
+      }
+
+      .launcher {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 4px solid #000;
+        background: #fff;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .launcher + .launcher {
+        margin-top: 11px;
+      }
+
+      .launcher.active {
+        border-color: #2775ff;
+        box-shadow:
+          0 0 0 3px rgba(39, 117, 255, 0.25),
+          0 8px 22px rgba(0, 0, 0, 0.22);
+      }
+
+      .panel {
+        position: absolute;
+        top: 5px;
+        left: 55px;
+        z-index: 1000;
+        width: 280px;
+        box-sizing: border-box;
+        background: #fff;
+        border: 4px solid #000;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        pointer-events: auto;
+        color: #111827;
+      }
+
+      #turnPanel {
+        width: 270px;
+        padding: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .icon-btn {
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 4px 8px;
+        font-weight: 800;
+        font-size: 16px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .wrap {
+        flex-wrap: wrap;
+      }
+
+      label,
+      .small-label {
+        font-size: 12px;
+        color: #444;
+      }
+
+      input,
+      select {
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        background: #fff;
+      }
+
+      input[type="date"],
+      input[type="number"],
+      select {
+        width: 100%;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        padding: 0;
+      }
+
+      .btn,
+      .btn-primary {
+        padding: 8px 10px;
+        font-weight: 700;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background: #f6f6f6;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        font-weight: 800;
+        border-color: #222;
+        background: #ffd166;
+      }
+
+      .route-input {
+        width: 100%;
+        margin: 4px 0 0;
+      }
+
+      .route-input.pick-active {
+        border-color: #0a6cff;
+        box-shadow: 0 0 0 2px rgba(10, 108, 255, 0.18);
+      }
+
+      #routeSteps {
+        padding-left: 18px;
+        margin: 0;
+        max-height: 180px;
+        overflow: auto;
+        font-size: 12px;
+      }
+
+      .route-field {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      #sprite,
+      .map-sprite {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 1200;
+        width: 42px;
+        height: 42px;
+        pointer-events: auto;
+        will-change: transform;
+        transform: translate(-9999px, -9999px);
+        filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.28));
+      }
+
+      .map-sprite {
+        cursor: pointer;
+        pointer-events: auto;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      .map-sprite.is-dragging {
+        cursor: grabbing;
+      }
+
+      .map-sprite img {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .map-sprite-outline {
+        opacity: 0;
+        transform: translateY(0px) scale(1);
+        transform-origin: center bottom;
+        transition: opacity 120ms ease;
+        z-index: 0;
+      }
+
+      .map-sprite-image {
+        z-index: 1;
+      }
+
+      /* .map-sprite:hover .map-sprite-outline, */
+      .map-sprite:focus-visible .map-sprite-outline,
+      .map-sprite.is-selected .map-sprite-outline {
+        opacity: 1;
+      }
+
+      .map-sprite:focus-visible {
+        outline: none;
+      }
+
+      #spriteHighlight,
+      .map-sprite-highlight {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 1199;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 3px solid #2775ff;
+        pointer-events: none;
+        transform: translate(-9999px, -9999px);
+        display: none;
+      }
+
+      .selected-event-marker {
+        position: relative;
+        width: 44px;
+        height: 62px;
+        overflow: visible;
+        pointer-events: none;
+        z-index: 1250;
+      }
+
+      .selected-event-marker img {
+        position: absolute;
+        left: 50%;
+        display: block;
+        height: auto;
+        pointer-events: none;
+        user-select: none;
+        transform: translateX(-50%);
+      }
+
+      .selected-event-marker-outline {
+        bottom: -5px;
+        z-index: 0;
+        width: 28.25px;
+      }
+
+      .selected-event-marker-pin {
+        bottom: 0;
+        z-index: 1;
+        width: 28px;
+      }
+
+      .maplibregl-popup {
+        z-index: 1600;
+      }
+
+      .maplibregl-popup-content {
+        box-sizing: border-box;
+        z-index: 1601;
+        width: min(340px, calc(100vw - 48px));
+        height: 260px;
+        max-height: min(260px, calc(100vh - 80px));
+        overflow-y: hidden;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        scroll-behavior: auto;
+        padding: 20px 18px 14px;
+        border-radius: 6px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+      }
+
+      .maplibregl-popup-close-button {
+        display: none;
+      }
+
+      .popup-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .popup-shell,
+      .popup-shell * {
+        box-sizing: border-box;
+      }
+
+      .popup-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-width: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 2px;
+      }
+
+      .popup-header {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr) 30px;
+        align-items: center;
+        gap: 6px;
+        min-height: 30px;
+        margin: -9px 0 6px -10px;
+      }
+
+      .popup-header-spacer {
+        width: 32px;
+        height: 32px;
+      }
+
+      .popup-header-label {
+        min-width: 0;
+        color: #4b5563;
+        font-size: 12px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+        text-align: center;
+      }
+
+      .popup-back,
+      .popup-close {
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #111827;
+        cursor: pointer;
+        font-size: 32px;
+        font-weight: 800;
+        line-height: 28px;
+        padding: 0;
+      }
+
+      .popup-close {
+        width: 30px;
+        height: 30px;
+        font-size: 26px;
+        line-height: 26px;
+      }
+
+      .popup-back:hover,
+      .popup-back:focus-visible,
+      .popup-close:hover,
+      .popup-close:focus-visible {
+        background: rgba(17, 24, 39, 0.08);
+        outline: none;
+      }
+
+      .popup-list {
+        display: grid;
+        gap: 6px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .popup-list-button {
+        width: 100%;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 6px;
+        background: #fff;
+        color: #111827;
+        cursor: pointer;
+        padding: 8px 9px;
+        text-align: left;
+      }
+
+      .popup-list-button:hover,
+      .popup-list-button:focus-visible {
+        border-color: rgba(10, 108, 255, 0.42);
+        background: rgba(10, 108, 255, 0.06);
+        outline: none;
+      }
+
+      .popup-list-text {
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .popup-list-title {
+        display: block;
+        overflow-wrap: anywhere;
+        white-space: normal;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .popup-list-meta {
+        display: block;
+        overflow-wrap: anywhere;
+        white-space: normal;
+        margin-top: 2px;
+        color: #4b5563;
+        font-size: 11px;
+      }
+
+      .popup-list-chevron {
+        color: #111827;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .popup-title {
+        margin: 0 0 6px;
+        font-size: 14px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+
+      .popup-meta {
+        margin: 0 0 6px;
+        color: #4b5563;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .popup-body {
+        color: #111827;
+        font-size: 13px;
+        line-height: 1.45;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .popup-body * {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .popup-body img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      @media (max-width: 480px) {
+        .panel,
+        #turnPanel {
+          width: min(300px, calc(100vw - 66px));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="spriteHighlight"></div>
+    <img id="sprite" alt="" />
+
+    <div id="dock">
+      <button
+        id="calendarButton"
+        class="launcher"
+        type="button"
+        aria-label="Calendar filters"
+        title="Calendar filters"
+      >
+        📅
+      </button>
+      <button
+        id="turnButton"
+        class="launcher"
+        type="button"
+        aria-label="Turn-by-turn directions"
+        title="Turn-by-turn directions"
+      >
+        🧭
+      </button>
+    </div>
+
+    <section id="calendarPanel" class="panel hidden" aria-label="Event filters">
+      <div class="panel-header">
+        <strong>Event Filters</strong>
+        <button
+          id="calendarClose"
+          class="icon-btn"
+          type="button"
+          title="Collapse"
+        >
+          ⤫
+        </button>
+      </div>
+
+      <div class="grid">
+        <div class="row wrap">
+          <label
+            ><input type="radio" name="mode" value="all" checked /> Show
+            all</label
+          >
+          <label
+            ><input type="radio" name="mode" value="single" /> Single day</label
+          >
+          <label><input type="radio" name="mode" value="range" /> Range</label>
+          <label
+            ><input type="radio" name="mode" value="timeline" /> Timeline</label
+          >
+        </div>
+
+        <div id="singleControls" class="grid hidden">
+          <label class="small-label" for="singleDate">Date</label>
+          <input id="singleDate" type="date" />
+        </div>
+
+        <div
+          id="rangeControls"
+          class="hidden"
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"
+        >
+          <div class="grid">
+            <label class="small-label" for="rangeStart">From</label>
+            <input id="rangeStart" type="date" />
+          </div>
+          <div class="grid">
+            <label class="small-label" for="rangeEnd">To</label>
+            <input id="rangeEnd" type="date" />
+          </div>
+        </div>
+
+        <div id="timelineControls" class="grid hidden">
+          <div id="timelineDomain" style="font-size: 12px; color: #555">
+            Domain: <b>--</b>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+            <div class="grid">
+              <label class="small-label" for="intervalValue"
+                >Interval value</label
+              >
+              <input
+                id="intervalValue"
+                type="number"
+                min="1"
+                step="1"
+                value="1"
+              />
+            </div>
+            <div class="grid">
+              <label class="small-label" for="intervalUnit"
+                >Interval unit</label
+              >
+              <select id="intervalUnit">
+                <option value="minute">Minutes</option>
+                <option value="hour">Hours</option>
+                <option value="day" selected>Days</option>
+                <option value="week">Weeks</option>
+                <option value="month">Months</option>
+                <option value="year">Years</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid">
+            <label id="windowLabel" class="small-label"
+              >Window: <b>--</b></label
+            >
+            <input
+              id="timelineRange"
+              type="range"
+              min="0"
+              max="0"
+              step="1"
+              value="0"
+            />
+            <div id="timelineSteps" style="font-size: 11px; color: #666">
+              Steps: 0
+            </div>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: auto 1fr auto;
+              gap: 8px;
+              align-items: center;
+            "
+          >
+            <button id="timelinePlay" class="btn-primary" type="button">
+              Play
+            </button>
+            <div class="grid">
+              <label class="small-label" for="tickSeconds"
+                >Tick speed (seconds)</label
+              >
+              <input
+                id="tickSeconds"
+                type="number"
+                min="0.1"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="row">
+              <button id="timelinePrev" class="btn" type="button">◀</button>
+              <button id="timelineNext" class="btn" type="button">▶</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="showAllButton" class="btn-primary" type="button">
+            Show all
+          </button>
+          <button id="applyFilterButton" class="btn hidden" type="button">
+            Apply
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="turnPanel"
+      class="panel hidden"
+      aria-label="Turn-by-turn directions"
+    >
+      <div class="panel-header">
+        <strong>Turn-by-Turn (GeoJSON graph)</strong>
+        <button id="turnClose" class="icon-btn" type="button" title="Close">
+          ⤫
+        </button>
+      </div>
+      <div id="routeStatus" style="font-size: 12px; color: #666">
+        Loading vertices/edges from <code>/public</code>...
+      </div>
+      <div id="routeControls" class="hidden">
+        <label class="small-label" for="originInput">Origin</label>
+        <div class="route-field">
+          <input
+            id="originInput"
+            class="route-input"
+            list="locationOptions"
+            autocomplete="off"
+          />
+          <button id="originPick" class="btn" type="button">Pick</button>
+        </div>
+
+        <label class="small-label" for="destInput">Destination</label>
+        <div class="route-field">
+          <input
+            id="destInput"
+            class="route-input"
+            list="locationOptions"
+            autocomplete="off"
+          />
+          <button id="destPick" class="btn" type="button">Pick</button>
+        </div>
+        <datalist id="locationOptions"></datalist>
+
+        <div class="row" style="margin-top: 10px">
+          <button id="swapRoute" class="btn" type="button">Swap</button>
+          <button
+            id="routeButton"
+            class="btn"
+            type="button"
+            style="
+              flex: 1;
+              border-color: #0a6cff;
+              background: #0a6cff;
+              color: #fff;
+            "
+          >
+            Route
+          </button>
+          <button id="clearRoute" class="btn" type="button">Clear</button>
+        </div>
+        <div
+          id="routeSummary"
+          style="margin-top: 10px; font-size: 12px; color: #333"
+        >
+          Pick a start and destination, then Route.
+        </div>
+        <ol id="routeSteps"></ol>
+      </div>
+    </section>
+
+    <div id="status">Loading map...</div>
+
+    <script type="module">
+      import("/maplibre/vendor/maplibre-gl.mjs")
+        .then((module) => {
+          window.maplibregl = module.default || module;
+          if (typeof window.maplibregl.setWorkerUrl === "function") {
+            window.maplibregl.setWorkerUrl(
+              "/maplibre/vendor/maplibre-gl-worker.mjs",
+            );
+          }
+          window.dispatchEvent(new Event("maplibre-gl-ready"));
+        })
+        .catch((error) => {
+          console.error("Failed to load local MapLibre assets.", error);
+          window.dispatchEvent(new Event("maplibre-gl-error"));
+        });
+    </script>
+    <script>
+      (function () {
+        const DEFAULT_CENTER = [-120.422045, 37.368169];
+        const DEFAULT_ZOOM = 15;
+        const DEFAULT_TILE_URL =
+          "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png";
+        const OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+        const EVENT_PIN_IMAGE = "/icons/event-pin.png";
+        const EVENT_PIN_SELECTED_IMAGE =
+          "/icons/event-pin-selected-outline.png";
+        const EVENT_PIN_ICON_SIZE = 0.045;
+        const EVENT_PIN_SELECTED_OUTLINE_OFFSET = [0, 3];
+        const EVENT_PIN_POPUP_OFFSET_PX =
+          Math.ceil(922 * EVENT_PIN_ICON_SIZE) + 10;
+        const EVENT_PIN_SELECTED_ZOOM = 17;
+        const SPRITE_OUTLINE_COLOR = "#00d9ff";
+        const SPRITE_OUTLINE_RADIUS_PX = 8;
+        const CAMERA_PIXEL_EPSILON = 12;
+        const CAMERA_ZOOM_EPSILON = 0.03;
+        const SPRITE_BASE_SIZE_PX = 42;
+        const SPRITE_SIZE_REFERENCE_ZOOM = DEFAULT_ZOOM;
+        const SPRITE_DRAG_CLICK_TOLERANCE_PX = 4;
+        const SPRITE_CLICK_SUPPRESS_MS = 180;
+        const TURN_THRESHOLD = 28;
+        const UTURN_THRESHOLD = 150;
+        const R = 6378137;
+
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id") || mapIdFromPath();
+        const endpoint =
+          params.get("endpoint") ||
+          (id ? `/api/maps/${encodeURIComponent(id)}/lite` : "");
+
+        const state = {
+          map: null,
+          payload: null,
+          mode: "all",
+          singleDate: "",
+          rangeStart: "",
+          rangeEnd: "",
+          intervalValue: 1,
+          intervalUnit: "day",
+          tickSeconds: 1,
+          playState: "paused",
+          minDate: null,
+          maxDate: null,
+          steps: [],
+          stepIndex: 0,
+          ticker: null,
+          routeGraph: {
+            loaded: false,
+            nodes: [],
+            edges: [],
+            metaById: {},
+            publicNodes: [],
+            searchOptions: [],
+          },
+          route: {
+            originId: "",
+            destId: "",
+            picking: null,
+          },
+          eventPinsReady: false,
+          selectedEventId: "",
+          selectedEventMarker: null,
+          selectedSpriteId: "",
+          activePopup: null,
+          embeddedEventFeatures: [],
+          dynamicEventFeatures: [],
+          sprite: {
+            items: [],
+            raf: null,
+            pinch: null,
+          },
+        };
+
+        const els = {
+          status: document.getElementById("status"),
+          calendarButton: document.getElementById("calendarButton"),
+          turnButton: document.getElementById("turnButton"),
+          calendarPanel: document.getElementById("calendarPanel"),
+          turnPanel: document.getElementById("turnPanel"),
+          calendarClose: document.getElementById("calendarClose"),
+          turnClose: document.getElementById("turnClose"),
+          singleControls: document.getElementById("singleControls"),
+          rangeControls: document.getElementById("rangeControls"),
+          timelineControls: document.getElementById("timelineControls"),
+          singleDate: document.getElementById("singleDate"),
+          rangeStart: document.getElementById("rangeStart"),
+          rangeEnd: document.getElementById("rangeEnd"),
+          intervalValue: document.getElementById("intervalValue"),
+          intervalUnit: document.getElementById("intervalUnit"),
+          tickSeconds: document.getElementById("tickSeconds"),
+          timelineRange: document.getElementById("timelineRange"),
+          timelinePlay: document.getElementById("timelinePlay"),
+          timelinePrev: document.getElementById("timelinePrev"),
+          timelineNext: document.getElementById("timelineNext"),
+          timelineDomain: document.getElementById("timelineDomain"),
+          timelineSteps: document.getElementById("timelineSteps"),
+          windowLabel: document.getElementById("windowLabel"),
+          showAllButton: document.getElementById("showAllButton"),
+          applyFilterButton: document.getElementById("applyFilterButton"),
+          routeStatus: document.getElementById("routeStatus"),
+          routeControls: document.getElementById("routeControls"),
+          originInput: document.getElementById("originInput"),
+          destInput: document.getElementById("destInput"),
+          originPick: document.getElementById("originPick"),
+          destPick: document.getElementById("destPick"),
+          locationOptions: document.getElementById("locationOptions"),
+          swapRoute: document.getElementById("swapRoute"),
+          routeButton: document.getElementById("routeButton"),
+          clearRoute: document.getElementById("clearRoute"),
+          routeSummary: document.getElementById("routeSummary"),
+          routeSteps: document.getElementById("routeSteps"),
+          sprite: document.getElementById("sprite"),
+          spriteHighlight: document.getElementById("spriteHighlight"),
+        };
+        const spriteOutlineCache = new Map();
+
+        function setStatus(message, isError) {
+          els.status.textContent = message;
+          els.status.style.color = isError ? "#b91c1c" : "#111827";
+          els.status.dataset.hidden = message ? "false" : "true";
+        }
+
+        function mapIdFromPath() {
+          const parts = window.location.pathname.split("/").filter(Boolean);
+          const index = parts.indexOf("maplibre");
+          if (
+            index >= 0 &&
+            parts[index + 1] &&
+            parts[index + 1] !== "index.html"
+          ) {
+            return parts[index + 1];
+          }
+          return "";
+        }
+
+        function tileUrl(template) {
+          if (!template || typeof template !== "string") return null;
+          return template
+            .replace(/\{level\}/g, "{z}")
+            .replace(/\{col\}/g, "{x}")
+            .replace(/\{row\}/g, "{y}");
+        }
+
+        function makeStyle(tileTemplate) {
+          const campusRasterUrl = tileUrl(tileTemplate || DEFAULT_TILE_URL);
+          const sources = {
+            osm: {
+              type: "raster",
+              tiles: [OSM_TILES],
+              tileSize: 256,
+              maxzoom: 19,
+              attribution: "OpenStreetMap contributors",
+            },
+          };
+          const layers = [
+            {
+              id: "background",
+              type: "background",
+              paint: { "background-color": "#f4f2eb" },
+            },
+            {
+              id: "osm",
+              type: "raster",
+              source: "osm",
+            },
+          ];
+
+          if (campusRasterUrl) {
+            sources.campusRaster = {
+              type: "raster",
+              tiles: [campusRasterUrl],
+              tileSize: 256,
+              attribution: "Campus map tiles",
+            };
+            layers.push({
+              id: "campus-raster",
+              type: "raster",
+              source: "campusRaster",
+            });
+          }
+
+          return {
+            version: 8,
+            glyphs:
+              "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+            sources,
+            layers,
+          };
+        }
+
+        function escapeHtml(value) {
+          return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        function cleanDescription(value) {
+          return String(value ?? "")
+            .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+            .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+        }
+
+        function popupTitle(properties) {
+          return (
+            properties.event_name ||
+            properties.name ||
+            properties.text ||
+            properties.id ||
+            "Map item"
+          );
+        }
+
+        function popupMetaHtml(properties) {
+          return [
+            properties.date,
+            properties.startAt,
+            properties.location || properties.locationTag,
+          ]
+            .filter(Boolean)
+            .map(escapeHtml)
+            .join(" · ");
+        }
+
+        function popupHeaderHtml(options = {}) {
+          const label = options.label ? escapeHtml(options.label) : "";
+          return [
+            `<div class="popup-header">`,
+            options.hasBack
+              ? `<button class="popup-back" type="button" aria-label="Show all items">&lsaquo;</button>`
+              : `<span class="popup-header-spacer" aria-hidden="true"></span>`,
+            `<span class="popup-header-label">${label}</span>`,
+            `<button class="popup-close" type="button" aria-label="Close popup">&times;</button>`,
+            `</div>`,
+          ].join("");
+        }
+
+        function popupDetailHtml(feature, hasList) {
+          const properties = feature?.properties || {};
+          const title = popupTitle(properties);
+          const meta = popupMetaHtml(properties);
+          const description = properties.description
+            ? cleanDescription(properties.description)
+            : "";
+
+          return [
+            `<div class="popup-shell" data-popup-view="detail">`,
+            popupHeaderHtml({ hasBack: hasList }),
+            `<div class="popup-scroll">`,
+            `<h3 class="popup-title">${escapeHtml(title)}</h3>`,
+            meta ? `<p class="popup-meta">${meta}</p>` : "",
+            description ? `<div class="popup-body">${description}</div>` : "",
+            `</div>`,
+            `</div>`,
+          ].join("");
+        }
+
+        function popupHtml(properties) {
+          return popupDetailHtml({ properties }, false);
+        }
+
+        function popupListHtml(features) {
+          const rows = features.map((feature, index) => {
+            const properties = feature?.properties || {};
+            const title = popupTitle(properties);
+            const meta = popupMetaHtml(properties);
+            return [
+              `<li>`,
+              `<button class="popup-list-button" type="button" data-popup-index="${index}" aria-label="Open ${escapeHtml(title)}">`,
+              `<span class="popup-list-text">`,
+              `<span class="popup-list-title">${escapeHtml(title)}</span>`,
+              meta ? `<span class="popup-list-meta">${meta}</span>` : "",
+              `</span>`,
+              `<span class="popup-list-chevron" aria-hidden="true">&rsaquo;</span>`,
+              `</button>`,
+              `</li>`,
+            ].join("");
+          });
+          const itemLabel =
+            features.length === 1 ? "1 item" : `${features.length} items`;
+          return [
+            `<div class="popup-shell" data-popup-view="list">`,
+            popupHeaderHtml({ label: itemLabel }),
+            `<div class="popup-scroll">`,
+            `<ul class="popup-list">${rows.join("")}</ul>`,
+            `</div>`,
+            `</div>`,
+          ].join("");
+        }
+
+        function coordinateKey(coordinates) {
+          if (!Array.isArray(coordinates) || coordinates.length < 2) return "";
+          const lon = Number(coordinates[0]);
+          const lat = Number(coordinates[1]);
+          if (!Number.isFinite(lon) || !Number.isFinite(lat)) return "";
+          return `${lon.toFixed(7)},${lat.toFixed(7)}`;
+        }
+
+        function samePointFeature(a, b) {
+          return (
+            a?.geometry?.type === "Point" &&
+            b?.geometry?.type === "Point" &&
+            coordinateKey(a.geometry.coordinates) ===
+              coordinateKey(b.geometry.coordinates)
+          );
+        }
+
+        function popupFeatureIdentity(feature, fallbackIndex) {
+          const properties = feature?.properties || {};
+          const id = properties.id ?? feature?.id;
+          const source = feature?.source || feature?.layer?.source || "";
+          const layer = feature?.layer?.id || properties.kind || "";
+          if (id !== undefined && id !== null && String(id) !== "") {
+            return `${source}:${layer}:${String(id)}`;
+          }
+          const geometryType = feature?.geometry?.type || "";
+          const coordinates =
+            geometryType === "Point"
+              ? coordinateKey(feature.geometry.coordinates)
+              : JSON.stringify(feature?.geometry?.coordinates || "").slice(
+                  0,
+                  180,
+                );
+          return `${source}:${layer}:${geometryType}:${popupTitle(properties)}:${coordinates || fallbackIndex}`;
+        }
+
+        function dedupePopupFeatures(features) {
+          const seen = new Set();
+          const deduped = [];
+          features.filter(Boolean).forEach((feature, index) => {
+            const key = popupFeatureIdentity(feature, index);
+            if (seen.has(key)) return;
+            seen.add(key);
+            deduped.push(feature);
+          });
+          return deduped;
+        }
+
+        function popupCollectionForLayer(layerId) {
+          if (layerId === "events-points") {
+            return state.payload?.events?.features || [];
+          }
+          return state.payload?.drawings?.features || [];
+        }
+
+        function popupSourceOrder(layerId, feature) {
+          const collection = popupCollectionForLayer(layerId);
+          const id = featureKey(feature);
+          if (id) {
+            const index = collection.findIndex(
+              (item) => featureKey(item) === id,
+            );
+            if (index >= 0) return index;
+          }
+
+          const properties = feature?.properties || {};
+          const title = popupTitle(properties);
+          const type = feature?.geometry?.type || "";
+          const pointKey =
+            type === "Point" ? coordinateKey(feature.geometry.coordinates) : "";
+          const index = collection.findIndex((item) => {
+            if (popupTitle(item.properties || {}) !== title) return false;
+            if (type && item.geometry?.type !== type) return false;
+            if (pointKey)
+              return coordinateKey(item.geometry?.coordinates) === pointKey;
+            return true;
+          });
+          return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
+        }
+
+        function sortPopupFeatures(layerId, features) {
+          return features
+            .map((feature, index) => ({
+              feature,
+              index,
+              order: popupSourceOrder(layerId, feature),
+            }))
+            .sort((a, b) => a.order - b.order || a.index - b.index)
+            .map((item) => item.feature);
+        }
+
+        function popupFeaturesForEvent(map, layerId, event) {
+          const base = event.features && event.features[0];
+          let candidates = [];
+          try {
+            candidates = map.queryRenderedFeatures(event.point, {
+              layers: [layerId],
+            });
+          } catch (error) {
+            candidates = [];
+          }
+          if (!candidates.length && event.features)
+            candidates = Array.from(event.features);
+          if (base) candidates = [base].concat(candidates);
+          if (base?.geometry?.type === "Point") {
+            candidates = candidates.filter((feature) =>
+              samePointFeature(feature, base),
+            );
+          }
+          return sortPopupFeatures(layerId, dedupePopupFeatures(candidates));
+        }
+
+        function popupLngLatForFeature(feature, fallback) {
+          if (feature?.geometry?.type !== "Point") return fallback;
+          const coordinates = feature.geometry.coordinates;
+          if (!Array.isArray(coordinates) || coordinates.length < 2)
+            return fallback;
+          const lon = Number(coordinates[0]);
+          const lat = Number(coordinates[1]);
+          if (!Number.isFinite(lon) || !Number.isFinite(lat)) return fallback;
+          return [lon, lat];
+        }
+
+        function resetPopupScroll(popup) {
+          const setTop = () => {
+            const element = popup.getElement();
+            const content =
+              element?.querySelector(".popup-scroll") ||
+              element?.querySelector(".maplibregl-popup-content");
+            if (content) content.scrollTop = 0;
+          };
+          setTop();
+          window.requestAnimationFrame(setTop);
+        }
+
+        function selectPopupFeature(feature, layerId, fallbackLngLat) {
+          if (layerId === "drawings-fill") {
+            clearSelectedEvent();
+            clearSelectedSprite();
+            selectPolygon(feature);
+          } else if (layerId === "events-points") {
+            clearSelectedPolygon();
+            clearSelectedSprite();
+            selectEvent(feature, fallbackLngLat);
+          } else if (layerId === "drawings-lines") {
+            clearSelectedEvent();
+            selectLine(feature);
+          } else {
+            clearMapSelection();
+          }
+        }
+
+        function wirePopupControls(popup, renderDetail, renderList) {
+          const element = popup.getElement();
+          if (!element) return;
+          if (!element.dataset.popupStopWired) {
+            element.addEventListener("click", (event) =>
+              event.stopPropagation(),
+            );
+            element.dataset.popupStopWired = "true";
+          }
+
+          const back = element.querySelector(".popup-back");
+          if (back) {
+            back.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              renderList();
+            });
+          }
+
+          const close = element.querySelector(".popup-close");
+          if (close) {
+            close.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              closeActivePopup();
+            });
+          }
+
+          element.querySelectorAll(".popup-list-button").forEach((button) => {
+            button.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const index = Number(button.getAttribute("data-popup-index"));
+              if (Number.isInteger(index)) renderDetail(index);
+            });
+          });
+        }
+
+        function popupOptionsForLayer(layerId) {
+          const options = {
+            closeButton: false,
+            closeOnClick: false,
+            focusAfterOpen: false,
+            maxWidth: "340px",
+            subpixelPositioning: true,
+          };
+          if (layerId === "events-points") {
+            options.anchor = "bottom";
+            options.offset = [0, -EVENT_PIN_POPUP_OFFSET_PX];
+          }
+          return options;
+        }
+
+        function openFeaturePopup(map, lngLat, features, layerId) {
+          const items = sortPopupFeatures(
+            layerId,
+            dedupePopupFeatures(features),
+          );
+          if (!items.length) return null;
+          closeActivePopup();
+
+          const popup = new maplibregl.Popup(popupOptionsForLayer(layerId));
+          state.activePopup = popup;
+          popup.on("close", () => {
+            if (state.activePopup !== popup) return;
+            state.activePopup = null;
+            clearMapSelection();
+          });
+          let mounted = false;
+
+          const afterRender = () => {
+            if (!mounted) return;
+            wirePopupControls(popup, renderDetail, renderList);
+            resetPopupScroll(popup);
+          };
+
+          const renderDetail = (requestedIndex) => {
+            const index = Math.max(
+              0,
+              Math.min(items.length - 1, Number(requestedIndex) || 0),
+            );
+            const feature = items[index];
+            const popupLngLat = popupLngLatForFeature(feature, lngLat);
+            selectPopupFeature(feature, layerId, popupLngLat);
+            popup
+              .setLngLat(popupLngLat)
+              .setHTML(popupDetailHtml(feature, items.length > 1));
+            afterRender();
+          };
+
+          const renderList = () => {
+            popup.setHTML(popupListHtml(items));
+            afterRender();
+          };
+
+          renderDetail(0);
+          popup.addTo(map);
+          mounted = true;
+          afterRender();
+          return popup;
+        }
+
+        function popupHitLayers(map) {
+          return [
+            "drawings-fill",
+            "drawings-lines",
+            "drawings-points",
+            "events-points",
+          ].filter((layerId) => map.getLayer(layerId));
+        }
+
+        function wirePopupMapDismissal(map) {
+          map.on("click", (event) => {
+            if (!state.activePopup) return;
+            const layers = popupHitLayers(map);
+            let hitFeatures = [];
+            if (layers.length) {
+              try {
+                hitFeatures = map.queryRenderedFeatures(event.point, {
+                  layers,
+                });
+              } catch (error) {
+                hitFeatures = [];
+              }
+            }
+            if (hitFeatures.length) return;
+            closeActivePopup();
+          });
+        }
+
+        function pad2(value) {
+          return String(value).padStart(2, "0");
+        }
+
+        function normalizeTimeString(value) {
+          if (typeof value !== "string" || !value.trim()) return "";
+          const trimmed = value.trim();
+          if (trimmed.includes(":")) {
+            const [hourRaw, minuteRaw = "0"] = trimmed.split(":", 2);
+            const hour = Number(hourRaw);
+            const minute = Number(minuteRaw);
+            if (Number.isFinite(hour) && Number.isFinite(minute)) {
+              return `${pad2(hour)}:${pad2(minute)}`;
+            }
+          }
+          const hour = Number(trimmed);
+          if (Number.isFinite(hour)) return `${pad2(hour)}:00`;
+          return trimmed;
+        }
+
+        function dateToISODate(date) {
+          return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
+            date.getDate(),
+          )}`;
+        }
+
+        function sourceUrls(payload) {
+          const candidates = []
+            .concat(payload?.eventSources || [])
+            .concat(payload?.settings?.apiSources || [])
+            .concat(payload?.settings?.eventsAPIURL || [])
+            .concat(payload?.config?.eventsAPIURL || [])
+            .concat(payload?.eventsAPIURL || []);
+          return Array.from(
+            new Set(
+              candidates
+                .filter(
+                  (url) =>
+                    typeof url === "string" && /^https?:\/\//i.test(url.trim()),
+                )
+                .map((url) => url.trim()),
+            ),
+          );
+        }
+
+        function eventListFromPayload(payload) {
+          if (Array.isArray(payload?.events)) return payload.events;
+          if (Array.isArray(payload)) return payload;
+          return [];
+        }
+
+        function coordinateFromEvent(event) {
+          const directLon =
+            event.lon ??
+            event.lng ??
+            event.long ??
+            event.longitude ??
+            (typeof event.x === "number" ? event.x : null);
+          const directLat =
+            event.lat ??
+            event.latitude ??
+            (typeof event.y === "number" ? event.y : null);
+
+          if (typeof directLon === "number" && typeof directLat === "number") {
+            return webMercatorToLonLat(directLon, directLat);
+          }
+
+          const geometry = event.geometry || {};
+          if (
+            Array.isArray(geometry.coordinates) &&
+            geometry.coordinates.length >= 2
+          ) {
+            return webMercatorToLonLat(
+              Number(geometry.coordinates[0]),
+              Number(geometry.coordinates[1]),
+            );
+          }
+          if (
+            typeof geometry.x === "number" &&
+            typeof geometry.y === "number"
+          ) {
+            return webMercatorToLonLat(geometry.x, geometry.y);
+          }
+
+          const locationCandidates = [
+            event.location_at,
+            event.fullLocationTag,
+            event.locationTag,
+            event.location,
+            event.venue,
+            event.place,
+          ].filter((value) => typeof value === "string" && value.trim());
+
+          for (const location of locationCandidates) {
+            const id = findBestLocationMatchId(location);
+            const node = state.routeGraph.nodes.find((item) => item.id === id);
+            if (node) return [node.lon, node.lat];
+          }
+
+          return null;
+        }
+
+        function eventFeatureFromApi(event, sourceIndex, eventIndex) {
+          const coordinates = coordinateFromEvent(event);
+          if (!coordinates) return null;
+
+          let start = null;
+          if (typeof event.start_dt === "string" && event.start_dt) {
+            const candidate = new Date(event.start_dt);
+            if (!Number.isNaN(candidate.getTime())) start = candidate;
+          }
+          if (!start && typeof event.start === "string") {
+            const candidate = new Date(event.start);
+            if (!Number.isNaN(candidate.getTime())) start = candidate;
+          }
+          if (!start && typeof event.starts_at === "string") {
+            const candidate = new Date(event.starts_at);
+            if (!Number.isNaN(candidate.getTime())) start = candidate;
+          }
+
+          const title =
+            event.title ?? event.name ?? event.event_name ?? "Event";
+          const startAt = normalizeTimeString(
+            event.start_at ?? event.startAt ?? event.time ?? "",
+          );
+          const endAt = normalizeTimeString(event.end_at ?? event.endAt ?? "");
+          const date =
+            typeof event.date === "string" && event.date
+              ? event.date
+              : start
+                ? dateToISODate(start)
+                : null;
+          const id = String(
+            event.id ??
+              event.uuid ??
+              event._id ??
+              `api-${sourceIndex}-${eventIndex}`,
+          );
+
+          return {
+            type: "Feature",
+            geometry: { type: "Point", coordinates },
+            properties: {
+              id,
+              kind: "event",
+              name: String(title),
+              event_name: String(title),
+              description:
+                typeof event.description === "string" ? event.description : "",
+              date,
+              startAt:
+                startAt ||
+                (start
+                  ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}`
+                  : null),
+              endAt: endAt || null,
+              location: event.location ?? null,
+              location_at: event.location_at ?? null,
+              locationTag: event.location ?? null,
+              fullLocationTag: event.location_at ?? null,
+              poster_url: event.poster_url ?? null,
+              names: event.host ?? null,
+              pointColor: "rgb(220, 38, 38)",
+              pointOpacity: 1,
+              pointRadius: 7,
+              strokeColor: "rgb(255, 255, 255)",
+              strokeWidth: 2,
+            },
+          };
+        }
+
+        function syncEventsSource() {
+          if (!state.payload) return;
+          const features = state.embeddedEventFeatures.concat(
+            state.dynamicEventFeatures,
+          );
+          state.payload.events = { type: "FeatureCollection", features };
+          if (state.map?.getSource("events")) {
+            state.map.getSource("events").setData(state.payload.events);
+          }
+          recomputeCalendarDomain();
+          applyEventFilter();
+        }
+
+        async function loadDynamicEvents(payload) {
+          const urls = sourceUrls(payload);
+          if (!urls.length) return;
+
+          const settled = await Promise.allSettled(
+            urls.map(async (url) => {
+              const response = await fetch(url, {
+                headers: { Accept: "application/json" },
+              });
+              if (!response.ok) {
+                throw new Error(`${url} returned ${response.status}`);
+              }
+              return response.json();
+            }),
+          );
+
+          const seen = new Set(
+            state.embeddedEventFeatures.map((feature) =>
+              String(feature.properties?.id),
+            ),
+          );
+          const dynamic = [];
+          settled.forEach((result, sourceIndex) => {
+            if (result.status !== "fulfilled") {
+              console.warn(
+                "MapLibre event source failed:",
+                urls[sourceIndex],
+                result.reason,
+              );
+              return;
+            }
+            eventListFromPayload(result.value).forEach((event, eventIndex) => {
+              const feature = eventFeatureFromApi(
+                event,
+                sourceIndex,
+                eventIndex,
+              );
+              const id = String(feature?.properties?.id || "");
+              if (!feature || seen.has(id)) return;
+              seen.add(id);
+              dynamic.push(feature);
+            });
+          });
+
+          state.dynamicEventFeatures = dynamic;
+          syncEventsSource();
+        }
+
+        function parseLocalDate(dateStr, timeStr) {
+          if (typeof dateStr !== "string") return null;
+          const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+          if (!match) return null;
+
+          let hour = 0;
+          let minute = 0;
+          if (typeof timeStr === "string" && /^\d{1,2}:\d{2}/.test(timeStr)) {
+            const parts = timeStr.split(":", 2);
+            hour = Number(parts[0]) || 0;
+            minute = Number(parts[1]) || 0;
+          }
+
+          return new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3]),
+            hour,
+            minute,
+            0,
+            0,
+          );
+        }
+
+        function addInterval(date, count, unit) {
+          const next = new Date(date.getTime());
+          if (unit === "minute") next.setMinutes(next.getMinutes() + count);
+          else if (unit === "hour") next.setHours(next.getHours() + count);
+          else if (unit === "day") next.setDate(next.getDate() + count);
+          else if (unit === "week") next.setDate(next.getDate() + 7 * count);
+          else if (unit === "month") next.setMonth(next.getMonth() + count);
+          else if (unit === "year")
+            next.setFullYear(next.getFullYear() + count);
+          return next;
+        }
+
+        function formatDateTime(date) {
+          if (!date) return "--";
+          const pad = (n) => String(n).padStart(2, "0");
+          return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+            date.getDate(),
+          )} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        function eventDate(feature) {
+          const p = feature && feature.properties ? feature.properties : {};
+          return parseLocalDate(
+            p.date || p.event_date,
+            p.startAt || p.start_at || p.start || p.starts_at || p.time,
+          );
+        }
+
+        function buildTimelineSteps(start, end, value, unit) {
+          const out = [];
+          if (!start || !end || value <= 0) return out;
+          let cur = new Date(start.getTime());
+          while (cur <= end) {
+            out.push(new Date(cur.getTime()));
+            cur = addInterval(cur, value, unit);
+          }
+          if (out.length === 0) out.push(new Date(start.getTime()));
+          return out;
+        }
+
+        function recomputeCalendarDomain() {
+          const features = state.payload?.events?.features || [];
+          let minTime = Infinity;
+          let maxTime = -Infinity;
+          for (const feature of features) {
+            const dt = eventDate(feature);
+            if (!dt) continue;
+            const t = dt.getTime();
+            if (t < minTime) minTime = t;
+            if (t > maxTime) maxTime = t;
+          }
+
+          state.minDate = Number.isFinite(minTime) ? new Date(minTime) : null;
+          state.maxDate = Number.isFinite(maxTime) ? new Date(maxTime) : null;
+          state.steps = buildTimelineSteps(
+            state.minDate,
+            state.maxDate,
+            state.intervalValue,
+            state.intervalUnit,
+          );
+          state.stepIndex = Math.min(
+            state.stepIndex,
+            Math.max(0, state.steps.length - 1),
+          );
+          renderTimelineControls();
+        }
+
+        function visibleEventIds() {
+          const features = state.payload?.events?.features || [];
+          if (state.mode === "all") {
+            return new Set(
+              features.map((feature) => String(feature.properties.id)),
+            );
+          }
+
+          const ids = new Set();
+          for (const feature of features) {
+            const p = feature.properties || {};
+            const dt = eventDate(feature);
+            let visible = false;
+
+            if (state.mode === "single") {
+              if (state.singleDate && dt) {
+                const iso = `${dt.getFullYear()}-${String(
+                  dt.getMonth() + 1,
+                ).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+                visible = iso === state.singleDate;
+              }
+            } else if (state.mode === "range") {
+              const startValue = state.rangeStart || state.rangeEnd;
+              const endValue = state.rangeEnd || state.rangeStart;
+              if (startValue && endValue && dt) {
+                const start = parseLocalDate(startValue);
+                const end = addInterval(parseLocalDate(endValue), 1, "day");
+                visible = dt >= start && dt < end;
+              }
+            } else if (state.mode === "timeline") {
+              const start = state.steps[state.stepIndex];
+              if (!start || !dt) {
+                visible = !start;
+              } else {
+                const end = addInterval(
+                  start,
+                  state.intervalValue,
+                  state.intervalUnit,
+                );
+                visible = dt >= start && dt < end;
+              }
+            }
+
+            if (visible) ids.add(String(p.id));
+          }
+
+          return ids;
+        }
+
+        function applyEventFilter() {
+          if (!state.map || !state.map.getLayer("events-points")) return;
+          const ids = Array.from(visibleEventIds());
+          const filter =
+            state.mode === "all"
+              ? null
+              : ["match", ["to-string", ["get", "id"]], ids, true, false];
+          state.map.setFilter("events-points", filter);
+          if (
+            state.mode !== "all" &&
+            state.selectedEventId &&
+            !ids.includes(state.selectedEventId)
+          ) {
+            clearSelectedEvent();
+          }
+        }
+
+        function setActivePanel(panel) {
+          const calendarOpen = panel === "calendar";
+          const turnOpen = panel === "turn";
+          els.calendarPanel.classList.toggle("hidden", !calendarOpen);
+          els.turnPanel.classList.toggle("hidden", !turnOpen);
+          els.calendarButton.classList.toggle("active", calendarOpen);
+          els.turnButton.classList.toggle("active", turnOpen);
+        }
+
+        function renderCalendarControls() {
+          els.singleControls.classList.toggle(
+            "hidden",
+            state.mode !== "single",
+          );
+          els.rangeControls.classList.toggle("hidden", state.mode !== "range");
+          els.timelineControls.classList.toggle(
+            "hidden",
+            state.mode !== "timeline",
+          );
+          els.applyFilterButton.classList.toggle(
+            "hidden",
+            !(state.mode === "single" || state.mode === "range"),
+          );
+          renderTimelineControls();
+        }
+
+        function renderTimelineControls() {
+          const domain =
+            state.minDate && state.maxDate
+              ? `Domain: <b>${formatDateTime(state.minDate)}</b> -> <b>${formatDateTime(
+                  state.maxDate,
+                )}</b>`
+              : "Domain: <b>--</b>";
+          els.timelineDomain.innerHTML = domain;
+          els.timelineRange.max = String(Math.max(0, state.steps.length - 1));
+          els.timelineRange.value = String(
+            Math.min(state.stepIndex, Math.max(0, state.steps.length - 1)),
+          );
+          const start = state.steps[state.stepIndex] || null;
+          const end = start
+            ? addInterval(start, state.intervalValue, state.intervalUnit)
+            : null;
+          els.windowLabel.innerHTML = `Window: <b>${formatDateTime(start)}</b> -> <b>${formatDateTime(end)}</b>`;
+          els.timelineSteps.textContent = `Steps: ${state.steps.length || 0}`;
+          els.timelinePlay.textContent =
+            state.playState === "playing"
+              ? "Pause"
+              : state.playState === "ended"
+                ? "Replay"
+                : "Play";
+        }
+
+        function stopTimeline() {
+          if (state.ticker) {
+            window.clearInterval(state.ticker);
+            state.ticker = null;
+          }
+        }
+
+        function setPlayState(next) {
+          state.playState = next;
+          stopTimeline();
+          if (
+            next === "playing" &&
+            state.steps.length > 0 &&
+            state.tickSeconds > 0
+          ) {
+            state.ticker = window.setInterval(
+              () => {
+                const last = state.steps.length - 1;
+                if (state.stepIndex >= last) {
+                  state.playState = "ended";
+                  stopTimeline();
+                } else {
+                  state.stepIndex += 1;
+                }
+                renderTimelineControls();
+                applyEventFilter();
+              },
+              Math.max(100, state.tickSeconds * 1000),
+            );
+          }
+          renderTimelineControls();
+        }
+
+        function wireCalendar() {
+          els.calendarButton.addEventListener("click", () => {
+            setActivePanel(
+              els.calendarPanel.classList.contains("hidden")
+                ? "calendar"
+                : null,
+            );
+          });
+          els.calendarClose.addEventListener("click", () =>
+            setActivePanel(null),
+          );
+
+          document.querySelectorAll('input[name="mode"]').forEach((input) => {
+            input.addEventListener("change", () => {
+              state.mode = input.value;
+              if (state.mode !== "timeline") setPlayState("paused");
+              renderCalendarControls();
+              applyEventFilter();
+            });
+          });
+
+          els.singleDate.addEventListener("change", () => {
+            state.singleDate = els.singleDate.value;
+            applyEventFilter();
+          });
+          els.rangeStart.addEventListener("change", () => {
+            state.rangeStart = els.rangeStart.value;
+            applyEventFilter();
+          });
+          els.rangeEnd.addEventListener("change", () => {
+            state.rangeEnd = els.rangeEnd.value;
+            applyEventFilter();
+          });
+          els.intervalValue.addEventListener("change", () => {
+            state.intervalValue = Math.max(
+              1,
+              Number(els.intervalValue.value || 1),
+            );
+            setPlayState("paused");
+            recomputeCalendarDomain();
+            applyEventFilter();
+          });
+          els.intervalUnit.addEventListener("change", () => {
+            state.intervalUnit = els.intervalUnit.value;
+            setPlayState("paused");
+            recomputeCalendarDomain();
+            applyEventFilter();
+          });
+          els.tickSeconds.addEventListener("change", () => {
+            state.tickSeconds = Math.max(
+              0.1,
+              Number(els.tickSeconds.value || 1),
+            );
+            if (state.playState === "playing") setPlayState("playing");
+          });
+          els.timelineRange.addEventListener("input", () => {
+            state.stepIndex = Number(els.timelineRange.value || 0);
+            if (state.stepIndex >= state.steps.length - 1)
+              state.playState = "ended";
+            else if (state.playState === "ended") state.playState = "paused";
+            renderTimelineControls();
+            applyEventFilter();
+          });
+          els.timelinePlay.addEventListener("click", () => {
+            if (state.steps.length === 0) return;
+            if (state.playState === "playing") {
+              setPlayState("paused");
+            } else if (state.playState === "ended") {
+              state.stepIndex = 0;
+              setPlayState("playing");
+            } else {
+              if (state.stepIndex >= state.steps.length - 1)
+                state.stepIndex = 0;
+              setPlayState("playing");
+            }
+            applyEventFilter();
+          });
+          els.timelinePrev.addEventListener("click", () => {
+            state.stepIndex = Math.max(0, state.stepIndex - 1);
+            if (
+              state.playState === "ended" &&
+              state.stepIndex < state.steps.length - 1
+            ) {
+              state.playState = "paused";
+            }
+            renderTimelineControls();
+            applyEventFilter();
+          });
+          els.timelineNext.addEventListener("click", () => {
+            if (state.steps.length === 0) return;
+            const last = state.steps.length - 1;
+            state.stepIndex = Math.min(last, state.stepIndex + 1);
+            if (state.stepIndex >= last) state.playState = "ended";
+            renderTimelineControls();
+            applyEventFilter();
+          });
+          els.showAllButton.addEventListener("click", () => {
+            state.mode = "all";
+            state.singleDate = "";
+            state.rangeStart = "";
+            state.rangeEnd = "";
+            state.stepIndex = 0;
+            setPlayState("paused");
+            document.querySelector('input[name="mode"][value="all"]').checked =
+              true;
+            els.singleDate.value = "";
+            els.rangeStart.value = "";
+            els.rangeEnd.value = "";
+            renderCalendarControls();
+            applyEventFilter();
+          });
+          els.applyFilterButton.addEventListener("click", applyEventFilter);
+        }
+
+        function toRad(degrees) {
+          return (degrees * Math.PI) / 180;
+        }
+
+        function lonLatToWebMercator(lon, lat) {
+          return {
+            x: R * toRad(lon),
+            y: R * Math.log(Math.tan(Math.PI / 4 + toRad(lat) / 2)),
+          };
+        }
+
+        function webMercatorToLonLat(x, y) {
+          if (Math.abs(x) <= 180 && Math.abs(y) <= 90) return [x, y];
+          const lon = (x / R) * (180 / Math.PI);
+          const lat =
+            (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * (180 / Math.PI);
+          return [lon, lat];
+        }
+
+        function distance(a, b) {
+          return Math.hypot(a.x - b.x, a.y - b.y);
+        }
+
+        function nodeIdFromFeature(feature) {
+          if (feature.id != null) return String(feature.id);
+          const p = feature.properties || {};
+          if (p.OBJECTID != null) return String(p.OBJECTID);
+          if (p.Id != null) return String(p.Id);
+          return String(feature.geometry.coordinates.join(","));
+        }
+
+        function parseMetaEntry(entry) {
+          const meta = {};
+          if (!entry || typeof entry !== "object") return meta;
+          const aliases = [];
+          const rawName = entry.name;
+          if (typeof rawName === "string" && rawName.trim())
+            aliases.push(rawName.trim());
+          if (Array.isArray(rawName)) {
+            rawName.forEach((name) => {
+              if (typeof name === "string" && name.trim())
+                aliases.push(name.trim());
+            });
+          }
+          if (Array.isArray(entry.aliases)) {
+            entry.aliases.forEach((alias) => {
+              if (typeof alias === "string" && alias.trim())
+                aliases.push(alias.trim());
+            });
+          }
+          if (aliases.length) {
+            meta.name = aliases[0];
+            meta.aliases = Array.from(new Set(aliases));
+          }
+          if (typeof entry.hidden === "boolean") meta.hidden = entry.hidden;
+          return meta;
+        }
+
+        async function loadLocationGraph() {
+          const [vtxRes, edgeRes, metaRes] = await Promise.all([
+            fetch("/walking_vertices.json"),
+            fetch("/walking_edges.json"),
+            fetch("/vertex_meta.json").catch(() => null),
+          ]);
+          if (!vtxRes.ok)
+            throw new Error(
+              `walking_vertices.json fetch failed: ${vtxRes.status}`,
+            );
+          if (!edgeRes.ok)
+            throw new Error(
+              `walking_edges.json fetch failed: ${edgeRes.status}`,
+            );
+
+          const vtx = await vtxRes.json();
+          const edgeJson = await edgeRes.json();
+          const metaById = {};
+          if (metaRes && metaRes.ok) {
+            const rawMeta = await metaRes.json();
+            if (Array.isArray(rawMeta)) {
+              rawMeta.forEach((entry) => {
+                const id = String(entry.id || "");
+                if (id) metaById[id] = parseMetaEntry(entry);
+              });
+            } else if (rawMeta && typeof rawMeta === "object") {
+              Object.keys(rawMeta).forEach((key) => {
+                metaById[String(key)] = parseMetaEntry(rawMeta[key]);
+              });
+            }
+          }
+
+          const nodes = (vtx.features || []).map((feature) => {
+            const id = nodeIdFromFeature(feature);
+            const coords = feature.geometry.coordinates;
+            const wm = lonLatToWebMercator(coords[0], coords[1]);
+            const meta = metaById[id] || {};
+            return {
+              id,
+              name: meta.name || `Node ${id}`,
+              hidden: Boolean(meta.hidden),
+              lon: coords[0],
+              lat: coords[1],
+              x: wm.x,
+              y: wm.y,
+            };
+          });
+
+          const byCoord = new Map();
+          nodes.forEach((node) => {
+            byCoord.set(
+              `${node.lon.toFixed(12)},${node.lat.toFixed(12)}`,
+              node,
+            );
+          });
+
+          function findNodeFor(lon, lat) {
+            const exact = byCoord.get(`${lon.toFixed(12)},${lat.toFixed(12)}`);
+            if (exact) return exact;
+
+            const wm = lonLatToWebMercator(lon, lat);
+            let best = null;
+            let bestDistance = Infinity;
+            nodes.forEach((node) => {
+              const d = Math.hypot(node.x - wm.x, node.y - wm.y);
+              if (d < bestDistance) {
+                bestDistance = d;
+                best = node;
+              }
+            });
+
+            return bestDistance < 3 ? best : null;
+          }
+
+          const edges = [];
+          (edgeJson.features || []).forEach((feature) => {
+            const coords = feature.geometry.coordinates || [];
+            if (coords.length < 2) return;
+            const a = findNodeFor(coords[0][0], coords[0][1]);
+            const b = findNodeFor(
+              coords[coords.length - 1][0],
+              coords[coords.length - 1][1],
+            );
+            if (!a || !b) return;
+            edges.push({
+              from: a.id,
+              to: b.id,
+              weight:
+                Number(feature.properties?.Shape_Length) || distance(a, b),
+            });
+          });
+
+          const publicNodes = nodes.filter(
+            (node) => !node.hidden && metaById[node.id]?.name,
+          );
+          const searchOptions = publicNodes
+            .map((node) => {
+              const meta = metaById[node.id] || {};
+              const aliases =
+                Array.isArray(meta.aliases) && meta.aliases.length
+                  ? meta.aliases
+                  : [node.name];
+              return {
+                id: node.id,
+                label: meta.name || node.name,
+                aliases,
+              };
+            })
+            .sort((a, b) => a.label.localeCompare(b.label));
+
+          state.routeGraph = {
+            loaded: true,
+            nodes,
+            edges,
+            metaById,
+            publicNodes,
+            searchOptions,
+          };
+          renderRouteOptions();
+        }
+
+        function renderRouteOptions() {
+          els.locationOptions.innerHTML = "";
+          state.routeGraph.searchOptions.forEach((option) => {
+            const item = document.createElement("option");
+            item.value = option.label;
+            item.dataset.id = option.id;
+            els.locationOptions.appendChild(item);
+          });
+
+          if (state.routeGraph.publicNodes.length) {
+            const first = state.routeGraph.publicNodes[0];
+            const second =
+              state.routeGraph.publicNodes[
+                Math.min(1, state.routeGraph.publicNodes.length - 1)
+              ];
+            state.route.originId = first.id;
+            state.route.destId = second.id;
+            els.originInput.value = labelForNode(first.id);
+            els.destInput.value = labelForNode(second.id);
+          }
+
+          els.routeStatus.classList.add("hidden");
+          els.routeControls.classList.remove("hidden");
+        }
+
+        function normalizeSearchText(value) {
+          return String(value || "")
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, " ");
+        }
+
+        function findBestLocationMatchId(rawInput) {
+          const query = normalizeSearchText(rawInput);
+          if (!query) return "";
+          let best = null;
+          for (const option of state.routeGraph.searchOptions) {
+            const candidates = [option.id, option.label].concat(
+              option.aliases || [],
+            );
+            for (const candidate of candidates) {
+              const normalized = normalizeSearchText(candidate);
+              let score = Infinity;
+              if (
+                normalized === query ||
+                normalizeSearchText(option.id) === query
+              )
+                score = 0;
+              else if (
+                normalized.startsWith(query) ||
+                query.startsWith(normalized)
+              )
+                score = 1;
+              else {
+                const idx = normalized.indexOf(query);
+                if (idx >= 0) score = 2 + idx;
+                else if (query.includes(normalized)) score = 3;
+              }
+              if (score === Infinity) continue;
+              if (
+                !best ||
+                score < best.score ||
+                (score === best.score &&
+                  option.label.localeCompare(best.label) < 0)
+              ) {
+                best = { id: option.id, label: option.label, score };
+              }
+            }
+          }
+          return best ? best.id : "";
+        }
+
+        function labelForNode(id) {
+          const meta = state.routeGraph.metaById[id];
+          const node = state.routeGraph.nodes.find((item) => item.id === id);
+          return meta?.name || node?.name || id;
+        }
+
+        function dijkstra(nodes, edges, startId, endId) {
+          const byId = new Map(nodes.map((node) => [node.id, node]));
+          const adj = new Map();
+          edges.forEach((edge) => {
+            if (!byId.has(edge.from) || !byId.has(edge.to)) return;
+            if (!adj.has(edge.from)) adj.set(edge.from, []);
+            if (!adj.has(edge.to)) adj.set(edge.to, []);
+            adj.get(edge.from).push({ id: edge.to, w: edge.weight });
+            adj.get(edge.to).push({ id: edge.from, w: edge.weight });
+          });
+
+          const q = new Set(nodes.map((node) => node.id));
+          const d = new Map(nodes.map((node) => [node.id, Infinity]));
+          const p = new Map(nodes.map((node) => [node.id, null]));
+          if (!q.has(startId) || !q.has(endId)) return { path: [], total: 0 };
+          d.set(startId, 0);
+
+          while (q.size) {
+            let u = null;
+            let best = Infinity;
+            q.forEach((id) => {
+              const value = d.get(id);
+              if (value < best) {
+                best = value;
+                u = id;
+              }
+            });
+            if (u == null) break;
+            q.delete(u);
+            if (u === endId) break;
+            (adj.get(u) || []).forEach((neighbor) => {
+              if (!q.has(neighbor.id)) return;
+              const alt = d.get(u) + neighbor.w;
+              if (alt < d.get(neighbor.id)) {
+                d.set(neighbor.id, alt);
+                p.set(neighbor.id, u);
+              }
+            });
+          }
+
+          const pathIds = [];
+          let cur = endId;
+          while (cur) {
+            pathIds.unshift(cur);
+            cur = p.get(cur) || null;
+          }
+          if (pathIds[0] !== startId) return { path: [], total: 0 };
+          return {
+            path: pathIds.map((id) => byId.get(id)),
+            total: d.get(endId),
+          };
+        }
+
+        function signedTurnAngleDeg(a, b, c) {
+          const v1x = b.x - a.x;
+          const v1y = b.y - a.y;
+          const v2x = c.x - b.x;
+          const v2y = c.y - b.y;
+          const cross = v1x * v2y - v1y * v2x;
+          const dot = v1x * v2x + v1y * v2y;
+          return (Math.atan2(cross, dot) * 180) / Math.PI;
+        }
+
+        function classifyTurn(angleDeg) {
+          const abs = Math.abs(angleDeg);
+          if (abs >= UTURN_THRESHOLD) return "uturn";
+          if (abs >= TURN_THRESHOLD) return angleDeg > 0 ? "left" : "right";
+          return "straight";
+        }
+
+        function isSignificant(node) {
+          return Boolean(
+            state.routeGraph.metaById[node.id]?.name && !node.hidden,
+          );
+        }
+
+        function buildSteps(path) {
+          if (path.length < 2) return [];
+          const out = [{ instruction: `Start at ${path[0].name}`, meters: 0 }];
+          let acc = 0;
+          for (let i = 1; i < path.length; i++) {
+            acc += distance(path[i - 1], path[i]);
+            if (i < path.length - 1) {
+              const kind = classifyTurn(
+                signedTurnAngleDeg(path[i - 1], path[i], path[i + 1]),
+              );
+              if (kind !== "straight" && isSignificant(path[i])) {
+                out.push({
+                  instruction:
+                    kind === "uturn"
+                      ? `Make a U-turn at ${path[i].name}`
+                      : `Turn ${kind} at ${path[i].name}`,
+                  meters: Math.round(acc),
+                });
+                acc = 0;
+              }
+            }
+          }
+          const dest = path[path.length - 1];
+          if (acc > 0) {
+            out.push({
+              instruction: `Continue for ${acc >= 1000 ? `${(acc / 1000).toFixed(2)} km` : `${Math.round(acc)} m`}`,
+              meters: acc,
+            });
+          }
+          out.push({ instruction: `Arrive at ${dest.name}`, meters: 0 });
+          return out;
+        }
+
+        function drawRoute(path, total) {
+          if (!state.map) return;
+          const line = {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: path.map((node) => [node.lon, node.lat]),
+                },
+                properties: {},
+              },
+            ],
+          };
+          const points = {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                geometry: {
+                  type: "Point",
+                  coordinates: [path[0].lon, path[0].lat],
+                },
+                properties: { role: "start" },
+              },
+              {
+                type: "Feature",
+                geometry: {
+                  type: "Point",
+                  coordinates: [
+                    path[path.length - 1].lon,
+                    path[path.length - 1].lat,
+                  ],
+                },
+                properties: { role: "end" },
+              },
+            ],
+          };
+
+          state.map.getSource("route-line").setData(line);
+          state.map.getSource("route-points").setData(points);
+
+          const bounds = new maplibregl.LngLatBounds();
+          path.forEach((node) => bounds.extend([node.lon, node.lat]));
+          state.map.fitBounds(bounds, {
+            padding: 80,
+            maxZoom: 18,
+            duration: 500,
+          });
+
+          els.routeSummary.innerHTML = `<strong>Total:</strong> ${
+            total >= 1000
+              ? `${(total / 1000).toFixed(2)} km`
+              : `${Math.round(total)} m`
+          }`;
+          const routeSteps = buildSteps(path);
+          els.routeSteps.innerHTML = "";
+          routeSteps.forEach((step) => {
+            const li = document.createElement("li");
+            li.textContent =
+              step.instruction +
+              (step.meters > 0
+                ? ` - ${step.meters >= 1000 ? `${(step.meters / 1000).toFixed(2)} km` : `${Math.round(step.meters)} m`}`
+                : "");
+            els.routeSteps.appendChild(li);
+          });
+        }
+
+        function clearRoute() {
+          if (!state.map) return;
+          state.map
+            .getSource("route-line")
+            ?.setData({ type: "FeatureCollection", features: [] });
+          state.map
+            .getSource("route-points")
+            ?.setData({ type: "FeatureCollection", features: [] });
+          els.routeSummary.textContent =
+            "Pick a start and destination, then Route.";
+          els.routeSteps.innerHTML = "";
+        }
+
+        function syncRouteIdsFromInputs() {
+          const origin = findBestLocationMatchId(els.originInput.value);
+          const dest = findBestLocationMatchId(els.destInput.value);
+          if (origin) {
+            state.route.originId = origin;
+            els.originInput.value = labelForNode(origin);
+          }
+          if (dest) {
+            state.route.destId = dest;
+            els.destInput.value = labelForNode(dest);
+          }
+        }
+
+        function wireTurnByTurn() {
+          els.turnButton.addEventListener("click", () => {
+            setActivePanel(
+              els.turnPanel.classList.contains("hidden") ? "turn" : null,
+            );
+          });
+          els.turnClose.addEventListener("click", () => setActivePanel(null));
+          els.originInput.addEventListener("change", syncRouteIdsFromInputs);
+          els.destInput.addEventListener("change", syncRouteIdsFromInputs);
+          els.originPick.addEventListener("click", () => {
+            state.route.picking =
+              state.route.picking === "origin" ? null : "origin";
+            els.originInput.classList.toggle(
+              "pick-active",
+              state.route.picking === "origin",
+            );
+            els.destInput.classList.remove("pick-active");
+            els.originPick.textContent =
+              state.route.picking === "origin" ? "Picking..." : "Pick";
+            els.destPick.textContent = "Pick";
+          });
+          els.destPick.addEventListener("click", () => {
+            state.route.picking =
+              state.route.picking === "dest" ? null : "dest";
+            els.destInput.classList.toggle(
+              "pick-active",
+              state.route.picking === "dest",
+            );
+            els.originInput.classList.remove("pick-active");
+            els.destPick.textContent =
+              state.route.picking === "dest" ? "Picking..." : "Pick";
+            els.originPick.textContent = "Pick";
+          });
+          els.swapRoute.addEventListener("click", () => {
+            const origin = state.route.originId;
+            state.route.originId = state.route.destId;
+            state.route.destId = origin;
+            els.originInput.value = labelForNode(state.route.originId);
+            els.destInput.value = labelForNode(state.route.destId);
+          });
+          els.routeButton.addEventListener("click", () => {
+            syncRouteIdsFromInputs();
+            const result = dijkstra(
+              state.routeGraph.nodes,
+              state.routeGraph.edges,
+              state.route.originId,
+              state.route.destId,
+            );
+            if (result.path.length < 2) {
+              els.routeSummary.textContent = "No route found.";
+              els.routeSteps.innerHTML = "";
+              return;
+            }
+            drawRoute(result.path, result.total);
+          });
+          els.clearRoute.addEventListener("click", clearRoute);
+        }
+
+        function wireRoutePicker(map) {
+          if (!map) return;
+          map.on("click", (event) => {
+            if (!state.route.picking || !state.routeGraph.publicNodes.length)
+              return;
+            const wm = lonLatToWebMercator(event.lngLat.lng, event.lngLat.lat);
+            let best = state.routeGraph.publicNodes[0];
+            let bestDistance = Infinity;
+            state.routeGraph.publicNodes.forEach((node) => {
+              const d = Math.hypot(node.x - wm.x, node.y - wm.y);
+              if (d < bestDistance) {
+                bestDistance = d;
+                best = node;
+              }
+            });
+            if (state.route.picking === "origin") {
+              state.route.originId = best.id;
+              els.originInput.value = labelForNode(best.id);
+            } else {
+              state.route.destId = best.id;
+              els.destInput.value = labelForNode(best.id);
+            }
+            state.route.picking = null;
+            els.originInput.classList.remove("pick-active");
+            els.destInput.classList.remove("pick-active");
+            els.originPick.textContent = "Pick";
+            els.destPick.textContent = "Pick";
+          });
+        }
+
+        function getFacing(a, b) {
+          const dx = b[0] - a[0];
+          const dy = b[1] - a[1];
+          if (Math.abs(dx) > Math.abs(dy)) return dx >= 0 ? "right" : "left";
+          return dy >= 0 ? "up" : "down";
+        }
+
+        function normalizeAnimation(value) {
+          const defaults = {
+            enabled: false,
+            motion: {
+              durationMs: 20000,
+              loop: true,
+              reverse: false,
+              autoPlay: true,
+              startProgress: 0,
+            },
+            sprite: {
+              frameMs: 120,
+              scale: 1,
+              offsetPxX: 0,
+              offsetPxY: 0,
+              anchor: "bottom",
+              directionalFrames: {
+                up: [
+                  "/sprites/bobcat/up/up-1.png",
+                  "/sprites/bobcat/up/up-2.png",
+                  "/sprites/bobcat/up/up-3.png",
+                  "/sprites/bobcat/up/up-4.png",
+                ],
+                down: [
+                  "/sprites/bobcat/down/down-1.png",
+                  "/sprites/bobcat/down/down-2.png",
+                  "/sprites/bobcat/down/down-3.png",
+                  "/sprites/bobcat/down/down-4.png",
+                ],
+                left: [
+                  "/sprites/bobcat/left/left-1.png",
+                  "/sprites/bobcat/left/left-2.png",
+                  "/sprites/bobcat/left/left-3.png",
+                  "/sprites/bobcat/left/left-4.png",
+                ],
+                right: [
+                  "/sprites/bobcat/right/right-1.png",
+                  "/sprites/bobcat/right/right-2.png",
+                  "/sprites/bobcat/right/right-3.png",
+                  "/sprites/bobcat/right/right-4.png",
+                ],
+              },
+            },
+            behavior: { hiddenSegments: [], vertexPauses: [] },
+          };
+          if (!value || typeof value !== "object") return defaults;
+          return {
+            enabled:
+              typeof value.enabled === "boolean"
+                ? value.enabled
+                : defaults.enabled,
+            motion: Object.assign({}, defaults.motion, value.motion || {}),
+            sprite: Object.assign({}, defaults.sprite, value.sprite || {}, {
+              directionalFrames: Object.assign(
+                {},
+                defaults.sprite.directionalFrames,
+                value.sprite?.directionalFrames || {},
+              ),
+            }),
+            behavior: Object.assign(
+              {},
+              defaults.behavior,
+              value.behavior || {},
+            ),
+          };
+        }
+
+        function framesFor(animation, facing) {
+          const frames = animation.sprite.directionalFrames || {};
+          const primary = frames[facing];
+          if (Array.isArray(primary) && primary.length) return primary;
+          return (
+            [frames.down, frames.up, frames.left, frames.right].find(
+              (list) => Array.isArray(list) && list.length,
+            ) || []
+          );
+        }
+
+        function clampNumber(value, min, max) {
+          return Math.min(max, Math.max(min, value));
+        }
+
+        function spriteMapScale() {
+          if (!state.map) return 1;
+          return 2 ** (state.map.getZoom() - SPRITE_SIZE_REFERENCE_ZOOM);
+        }
+
+        function spriteVisualMetrics(animation) {
+          const baseSize = Math.max(
+            1,
+            SPRITE_BASE_SIZE_PX * animation.sprite.scale,
+          );
+          const scaledSize = baseSize * spriteMapScale();
+          const size = Number.isFinite(scaledSize)
+            ? Math.max(0.01, scaledSize)
+            : baseSize;
+          return {
+            size,
+            offsetScale: size / baseSize,
+          };
+        }
+
+        function isHiddenSegment(index, animation) {
+          return (animation.behavior.hiddenSegments || []).some(
+            (range) =>
+              index >= range.startSegmentIndex &&
+              index <= range.endSegmentIndex,
+          );
+        }
+
+        function animationPathsForFeature(feature) {
+          const geometry = feature?.geometry;
+          if (geometry?.type === "LineString") {
+            return [geometry.coordinates];
+          }
+          if (geometry?.type === "MultiLineString") {
+            return geometry.coordinates || [];
+          }
+          return [];
+        }
+
+        function buildSpriteRuntimeForPath(
+          feature,
+          animation,
+          coords,
+          pathIndex,
+        ) {
+          const path = Array.isArray(coords)
+            ? coords.map((coord) => normalizedLngLat(coord)).filter(Boolean)
+            : [];
+          if (path.length < 2) return null;
+
+          const originalNodes = path.map((coord) => ({
+            lonLat: coord,
+            wm: lonLatToWebMercator(coord[0], coord[1]),
+          }));
+          const reversed = animation.motion.reverse === true;
+          const displayNodes = reversed
+            ? originalNodes
+                .slice()
+                .reverse()
+                .map((node, index) => ({
+                  node,
+                  originalVertexIndex: originalNodes.length - 1 - index,
+                }))
+            : originalNodes.map((node, index) => ({
+                node,
+                originalVertexIndex: index,
+              }));
+
+          const segmentLengths = [];
+          let totalLength = 0;
+          for (let i = 0; i < displayNodes.length - 1; i++) {
+            const a = displayNodes[i].node.wm;
+            const b = displayNodes[i + 1].node.wm;
+            const len = Math.hypot(b.x - a.x, b.y - a.y);
+            segmentLengths.push(len);
+            totalLength += len;
+          }
+          if (totalLength <= 0) return null;
+
+          const pauseByVertex = new Map();
+          (animation.behavior.vertexPauses || []).forEach((pause) => {
+            pauseByVertex.set(
+              pause.vertexIndex,
+              (pauseByVertex.get(pause.vertexIndex) || 0) +
+                Math.max(0, pause.durationMs || 0),
+            );
+          });
+
+          const schedule = [];
+          const initialFacing = getFacing(
+            displayNodes[0].node.lonLat,
+            displayNodes[1].node.lonLat,
+          );
+          const initialPause =
+            pauseByVertex.get(displayNodes[0].originalVertexIndex) || 0;
+          if (initialPause > 0) {
+            schedule.push({
+              kind: "pause",
+              durationMs: initialPause,
+              point: displayNodes[0].node.lonLat,
+              facing: initialFacing,
+              originalVertexIndex: displayNodes[0].originalVertexIndex,
+            });
+          }
+
+          const motionDurationMs = Math.max(
+            0,
+            Number(animation.motion.durationMs) || 0,
+          );
+          for (let i = 0; i < displayNodes.length - 1; i++) {
+            const from = displayNodes[i];
+            const to = displayNodes[i + 1];
+            const originalSegmentIndex = reversed
+              ? originalNodes.length - 2 - i
+              : i;
+            const facing = getFacing(from.node.lonLat, to.node.lonLat);
+            schedule.push({
+              kind: "move",
+              durationMs: (motionDurationMs * segmentLengths[i]) / totalLength,
+              from: from.node.lonLat,
+              to: to.node.lonLat,
+              facing,
+              originalSegmentIndex,
+            });
+            const pauseAfter = pauseByVertex.get(to.originalVertexIndex) || 0;
+            if (pauseAfter > 0) {
+              schedule.push({
+                kind: "pause",
+                durationMs: pauseAfter,
+                point: to.node.lonLat,
+                facing,
+                originalVertexIndex: to.originalVertexIndex,
+              });
+            }
+          }
+
+          const cycleDurationMs = schedule.reduce(
+            (sum, item) => sum + Math.max(0, item.durationMs),
+            0,
+          );
+          if (!schedule.length) return null;
+          const initialFrames = framesFor(animation, initialFacing);
+          if (!initialFrames.length) return null;
+
+          return {
+            id: `${featureKey(feature) || "animated-line"}:${pathIndex}`,
+            feature,
+            animation,
+            schedule,
+            cycleDurationMs,
+            cycleOffsetMs:
+              Math.min(
+                1,
+                Math.max(0, Number(animation.motion.startProgress) || 0),
+              ) * Math.max(0, cycleDurationMs),
+            lastUrl: initialFrames[0],
+            element: null,
+            imageElement: null,
+            outlineElement: null,
+            currentPoint: displayNodes[0].node.lonLat,
+            suppressClick: false,
+            suppressTimer: 0,
+            drag: null,
+            startedAt: 0,
+          };
+        }
+
+        function buildSpriteRuntimes(payload) {
+          const features = payload.drawings?.features || [];
+          const runtimes = [];
+
+          features.forEach((feature) => {
+            if (!feature?.properties?.animation) return;
+            const paths = animationPathsForFeature(feature);
+            if (!paths.length) return;
+
+            const animation = normalizeAnimation(feature.properties.animation);
+            if (!animation.enabled || animation.motion.autoPlay === false)
+              return;
+
+            paths.forEach((coords, pathIndex) => {
+              const runtime = buildSpriteRuntimeForPath(
+                feature,
+                animation,
+                coords,
+                pathIndex,
+              );
+              if (runtime) runtimes.push(runtime);
+            });
+          });
+
+          return runtimes;
+        }
+
+        function resolveSpriteState(runtime, elapsedMs) {
+          const cycleDurationMs = Math.max(0, runtime.cycleDurationMs);
+          const rawTime = Math.max(0, elapsedMs + runtime.cycleOffsetMs);
+          let timelineMs = rawTime;
+          let finished = false;
+          if (runtime.animation.motion.loop) {
+            timelineMs = cycleDurationMs > 0 ? rawTime % cycleDurationMs : 0;
+          } else if (rawTime >= cycleDurationMs) {
+            timelineMs = cycleDurationMs;
+            finished = true;
+          }
+
+          if (cycleDurationMs === 0) {
+            const first = runtime.schedule[0];
+            return first.kind === "pause"
+              ? {
+                  point: first.point,
+                  facing: first.facing,
+                  visible: true,
+                  finished,
+                }
+              : {
+                  point: first.to,
+                  facing: first.facing,
+                  visible: !isHiddenSegment(
+                    first.originalSegmentIndex,
+                    runtime.animation,
+                  ),
+                  finished,
+                };
+          }
+
+          let remaining = timelineMs;
+          for (let i = 0; i < runtime.schedule.length; i++) {
+            const item = runtime.schedule[i];
+            const isLast = i === runtime.schedule.length - 1;
+            if (remaining <= item.durationMs || isLast) {
+              if (item.kind === "pause") {
+                return {
+                  point: item.point,
+                  facing: item.facing,
+                  visible: true,
+                  finished,
+                };
+              }
+              const t =
+                item.durationMs <= 0
+                  ? 1
+                  : Math.max(0, Math.min(1, remaining / item.durationMs));
+              return {
+                point: [
+                  item.from[0] + (item.to[0] - item.from[0]) * t,
+                  item.from[1] + (item.to[1] - item.from[1]) * t,
+                ],
+                facing: item.facing,
+                visible: !isHiddenSegment(
+                  item.originalSegmentIndex,
+                  runtime.animation,
+                ),
+                finished,
+              };
+            }
+            remaining -= item.durationMs;
+          }
+
+          const last = runtime.schedule[runtime.schedule.length - 1];
+          return last.kind === "pause"
+            ? {
+                point: last.point,
+                facing: last.facing,
+                visible: true,
+                finished: true,
+              }
+            : {
+                point: last.to,
+                facing: last.facing,
+                visible: !isHiddenSegment(
+                  last.originalSegmentIndex,
+                  runtime.animation,
+                ),
+                finished: true,
+              };
+        }
+
+        function loadImageForCanvas(src) {
+          return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.crossOrigin = "anonymous";
+            image.decoding = "async";
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error(`Unable to load ${src}`));
+            image.src = src;
+          });
+        }
+
+        function generatedSpriteOutlineUrl(src) {
+          const cacheKey = `${src}|${SPRITE_OUTLINE_COLOR}|${SPRITE_OUTLINE_RADIUS_PX}`;
+          if (spriteOutlineCache.has(cacheKey)) {
+            return spriteOutlineCache.get(cacheKey);
+          }
+
+          const promise = loadImageForCanvas(src).then((image) => {
+            const width = image.naturalWidth || image.width;
+            const height = image.naturalHeight || image.height;
+            if (!width || !height)
+              throw new Error(`Invalid image size: ${src}`);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("Canvas is not available.");
+
+            const radius = Math.max(1, SPRITE_OUTLINE_RADIUS_PX);
+            ctx.clearRect(0, 0, width, height);
+            for (let y = -radius; y <= radius; y++) {
+              for (let x = -radius; x <= radius; x++) {
+                if (x * x + y * y <= radius * radius) {
+                  ctx.drawImage(image, x, y, width, height);
+                }
+              }
+            }
+            ctx.globalCompositeOperation = "source-in";
+            ctx.fillStyle = SPRITE_OUTLINE_COLOR;
+            ctx.fillRect(0, 0, width, height);
+            ctx.globalCompositeOperation = "destination-out";
+            ctx.drawImage(image, 0, 0, width, height);
+            ctx.globalCompositeOperation = "source-over";
+            return canvas.toDataURL("image/png");
+          });
+
+          spriteOutlineCache.set(cacheKey, promise);
+          return promise;
+        }
+
+        function setSpriteFrame(runtime, frameUrl) {
+          if (!runtime.imageElement || !frameUrl) return;
+          runtime.imageElement.src = frameUrl;
+          if (!runtime.outlineElement) return;
+
+          runtime.outlineElement.dataset.frameUrl = frameUrl;
+          runtime.outlineElement.style.filter = "";
+          generatedSpriteOutlineUrl(frameUrl)
+            .then((outlineUrl) => {
+              if (runtime.outlineElement?.dataset.frameUrl === frameUrl) {
+                runtime.outlineElement.src = outlineUrl;
+              }
+            })
+            .catch(() => {
+              if (runtime.outlineElement?.dataset.frameUrl !== frameUrl) return;
+              runtime.outlineElement.src = frameUrl;
+              runtime.outlineElement.style.filter =
+                "brightness(0) saturate(100%)";
+            });
+        }
+
+        function selectSpriteGraphic(runtime) {
+          clearSelectedSprite();
+          if (!runtime?.element) return;
+          state.selectedSpriteId = runtime.id;
+          runtime.element.classList.add("is-selected");
+        }
+
+        function clearSelectedSprite() {
+          state.selectedSpriteId = "";
+          state.sprite.items.forEach((runtime) => {
+            runtime.element?.classList.remove("is-selected");
+          });
+        }
+
+        function suppressSpriteClick(
+          runtime,
+          delayMs = SPRITE_CLICK_SUPPRESS_MS,
+        ) {
+          if (!runtime) return;
+          runtime.suppressClick = true;
+          window.clearTimeout(runtime.suppressTimer);
+          runtime.suppressTimer = window.setTimeout(() => {
+            runtime.suppressClick = false;
+            runtime.suppressTimer = 0;
+          }, delayMs);
+        }
+
+        function touchDistance(touches) {
+          if (!touches || touches.length < 2) return 0;
+          const a = touches[0];
+          const b = touches[1];
+          return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+        }
+
+        function touchCenter(touches) {
+          if (!touches || touches.length < 2) return null;
+          return {
+            x: (touches[0].clientX + touches[1].clientX) / 2,
+            y: (touches[0].clientY + touches[1].clientY) / 2,
+          };
+        }
+
+        function clampMapZoom(zoom) {
+          if (!state.map) return zoom;
+          const minZoom =
+            typeof state.map.getMinZoom === "function"
+              ? state.map.getMinZoom()
+              : 0;
+          const maxZoom =
+            typeof state.map.getMaxZoom === "function"
+              ? state.map.getMaxZoom()
+              : 24;
+          return clampNumber(zoom, minZoom, maxZoom);
+        }
+
+        function mapAroundClientPoint(clientX, clientY) {
+          if (!state.map) return null;
+          const rect = state.map.getContainer().getBoundingClientRect();
+          return state.map.unproject([clientX - rect.left, clientY - rect.top]);
+        }
+
+        function zoomMapAround(zoom, around) {
+          if (!state.map || !around) return;
+          state.map.zoomTo(clampMapZoom(zoom), {
+            around,
+            duration: 0,
+          });
+          renderSprites(performance.now(), false);
+        }
+
+        function startSpritePinch(runtime, event) {
+          if (!state.map || event.touches.length < 2) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (runtime.drag) {
+            runtime.element?.classList.remove("is-dragging");
+            runtime.drag = null;
+          }
+
+          const distance = touchDistance(event.touches);
+          const center = touchCenter(event.touches);
+          if (!distance || !center) return;
+
+          state.sprite.pinch = {
+            runtimeId: runtime.id,
+            distance,
+            zoom: state.map.getZoom(),
+            around: mapAroundClientPoint(center.x, center.y),
+          };
+          suppressSpriteClick(runtime, 400);
+        }
+
+        function moveSpritePinch(runtime, event) {
+          const pinch = state.sprite.pinch;
+          if (!state.map || !pinch || pinch.runtimeId !== runtime.id) return;
+          if (event.touches.length < 2) return;
+          event.preventDefault();
+          event.stopPropagation();
+
+          const distance = touchDistance(event.touches);
+          if (!distance || !pinch.distance) return;
+
+          zoomMapAround(
+            pinch.zoom + Math.log2(distance / pinch.distance),
+            pinch.around,
+          );
+        }
+
+        function endSpritePinch(runtime, event) {
+          const pinch = state.sprite.pinch;
+          if (!pinch || pinch.runtimeId !== runtime.id) return;
+          if (event.touches.length >= 2) return;
+          event.preventDefault();
+          event.stopPropagation();
+          state.sprite.pinch = null;
+          suppressSpriteClick(runtime, 250);
+        }
+
+        function wheelSpriteZoom(runtime, event) {
+          if (!state.map) return;
+          event.preventDefault();
+          event.stopPropagation();
+          suppressSpriteClick(runtime, 120);
+
+          const around = mapAroundClientPoint(event.clientX, event.clientY);
+          const divisor = event.ctrlKey ? 120 : 450;
+          zoomMapAround(state.map.getZoom() - event.deltaY / divisor, around);
+        }
+
+        function startSpriteDrag(runtime, event) {
+          if (!state.map || state.sprite.pinch) return;
+          if (event.pointerType === "mouse" && event.button !== 0) return;
+          if (event.isPrimary === false) return;
+          event.stopPropagation();
+
+          runtime.drag = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            lastX: event.clientX,
+            lastY: event.clientY,
+            moved: false,
+          };
+
+          if (event.currentTarget?.setPointerCapture) {
+            try {
+              event.currentTarget.setPointerCapture(event.pointerId);
+            } catch (_error) {}
+          }
+        }
+
+        function moveSpriteDrag(runtime, event) {
+          const drag = runtime.drag;
+          if (!state.map || !drag || drag.pointerId !== event.pointerId) return;
+          if (state.sprite.pinch) return;
+          event.stopPropagation();
+
+          const totalX = event.clientX - drag.startX;
+          const totalY = event.clientY - drag.startY;
+          const hasMoved =
+            Math.hypot(totalX, totalY) > SPRITE_DRAG_CLICK_TOLERANCE_PX;
+          if (hasMoved) {
+            event.preventDefault();
+            drag.moved = true;
+            runtime.element?.classList.add("is-dragging");
+            runtime.suppressClick = true;
+          }
+
+          const dx = event.clientX - drag.lastX;
+          const dy = event.clientY - drag.lastY;
+          drag.lastX = event.clientX;
+          drag.lastY = event.clientY;
+
+          if (!drag.moved || (!dx && !dy)) return;
+          state.map.panBy([-dx, -dy], { duration: 0, noMoveStart: true });
+          renderSprites(performance.now(), false);
+        }
+
+        function endSpriteDrag(runtime, event) {
+          const drag = runtime.drag;
+          if (!drag || drag.pointerId !== event.pointerId) return;
+          event.stopPropagation();
+          if (drag.moved) event.preventDefault();
+
+          if (event.currentTarget?.hasPointerCapture?.(event.pointerId)) {
+            try {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            } catch (_error) {}
+          }
+
+          runtime.drag = null;
+          runtime.element?.classList.remove("is-dragging");
+          if (drag.moved) {
+            suppressSpriteClick(runtime);
+          } else {
+            runtime.suppressClick = false;
+          }
+        }
+
+        function openSpriteGraphicPopup(runtime, event) {
+          event?.preventDefault();
+          event?.stopPropagation();
+          if (runtime?.suppressClick) return;
+          if (!state.map || !runtime?.feature || !runtime.currentPoint) return;
+
+          openFeaturePopup(
+            state.map,
+            runtime.currentPoint,
+            [runtime.feature],
+            "drawings-lines",
+          );
+          selectSpriteGraphic(runtime);
+        }
+
+        function wireSpriteElement(runtime, element) {
+          element.addEventListener("click", (event) =>
+            openSpriteGraphicPopup(runtime, event),
+          );
+          element.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            openSpriteGraphicPopup(runtime, event);
+          });
+          element.addEventListener(
+            "touchstart",
+            (event) => startSpritePinch(runtime, event),
+            { passive: false },
+          );
+          element.addEventListener(
+            "touchmove",
+            (event) => moveSpritePinch(runtime, event),
+            { passive: false },
+          );
+          element.addEventListener(
+            "touchend",
+            (event) => endSpritePinch(runtime, event),
+            { passive: false },
+          );
+          element.addEventListener(
+            "touchcancel",
+            (event) => endSpritePinch(runtime, event),
+            { passive: false },
+          );
+          element.addEventListener(
+            "wheel",
+            (event) => wheelSpriteZoom(runtime, event),
+            { passive: false },
+          );
+          element.addEventListener("pointerdown", (event) =>
+            startSpriteDrag(runtime, event),
+          );
+          element.addEventListener("pointermove", (event) =>
+            moveSpriteDrag(runtime, event),
+          );
+          element.addEventListener("pointerup", (event) =>
+            endSpriteDrag(runtime, event),
+          );
+          element.addEventListener("pointercancel", (event) =>
+            endSpriteDrag(runtime, event),
+          );
+        }
+
+        function createSpriteElement(runtime) {
+          const element = document.createElement("div");
+          element.className = "map-sprite";
+          element.tabIndex = 0;
+          element.setAttribute("role", "button");
+          element.setAttribute(
+            "aria-label",
+            `Open ${popupTitle(runtime.feature?.properties || {})}`,
+          );
+          element.dataset.spriteId = runtime.id;
+
+          const outline = document.createElement("img");
+          outline.className = "map-sprite-outline";
+          outline.alt = "";
+          outline.setAttribute("aria-hidden", "true");
+
+          const image = document.createElement("img");
+          image.className = "map-sprite-image";
+          image.alt = "";
+          image.setAttribute("aria-hidden", "true");
+
+          runtime.outlineElement = outline;
+          runtime.imageElement = image;
+          element.append(outline, image);
+          wireSpriteElement(runtime, element);
+          setSpriteFrame(runtime, runtime.lastUrl);
+          document.body.appendChild(element);
+          return element;
+        }
+
+        function removeSpriteItems() {
+          if (state.sprite.raf) {
+            cancelAnimationFrame(state.sprite.raf);
+            state.sprite.raf = null;
+          }
+          state.sprite.pinch = null;
+          state.sprite.items.forEach((runtime) => {
+            runtime.element?.remove();
+            window.clearTimeout(runtime.suppressTimer);
+            runtime.drag = null;
+            runtime.element = null;
+            runtime.imageElement = null;
+            runtime.outlineElement = null;
+          });
+          state.sprite.items = [];
+          state.selectedSpriteId = "";
+          if (els.sprite) {
+            els.sprite.style.display = "none";
+            els.sprite.style.transform = "translate(-9999px, -9999px)";
+          }
+          if (els.spriteHighlight) {
+            els.spriteHighlight.style.transform = "translate(-9999px, -9999px)";
+          }
+        }
+
+        function positionSprite(runtime, point, visible) {
+          const element = runtime?.element;
+          const animation = runtime?.animation;
+          if (!state.map || !element || !animation || !point || !visible) {
+            if (element)
+              element.style.transform = "translate(-9999px, -9999px)";
+            return;
+          }
+          const { size, offsetScale } = spriteVisualMetrics(animation);
+          const screen = state.map.project(point);
+          const xOffset =
+            (Number(animation.sprite.offsetPxX) || 0) * offsetScale;
+          const yOffset =
+            (animation.sprite.anchor === "bottom" ? size / 2 : 0) +
+            (Number(animation.sprite.offsetPxY) || 0) * offsetScale;
+          element.style.width = `${size}px`;
+          element.style.height = `${size}px`;
+          element.style.transform = `translate(${screen.x - size / 2 + xOffset}px, ${
+            screen.y - size / 2 - yOffset
+          }px)`;
+        }
+
+        function renderSpriteRuntime(runtime, ts, updateFrame) {
+          const result = resolveSpriteState(runtime, ts - runtime.startedAt);
+          const frames = framesFor(runtime.animation, result.facing);
+          if (!frames.length) {
+            positionSprite(runtime, null, false);
+            return false;
+          }
+          if (updateFrame) {
+            const frameMs = Math.max(
+              1,
+              Number(runtime.animation.sprite.frameMs) || 120,
+            );
+            const nextUrl =
+              frames[
+                Math.floor((ts - runtime.startedAt) / frameMs) % frames.length
+              ] || frames[0];
+            if (nextUrl && nextUrl !== runtime.lastUrl) {
+              setSpriteFrame(runtime, nextUrl);
+              runtime.lastUrl = nextUrl;
+            }
+          }
+          runtime.currentPoint = result.point;
+          runtime.visible = result.visible;
+          positionSprite(runtime, result.point, result.visible);
+          return !result.finished || runtime.animation.motion.loop;
+        }
+
+        function renderSprites(ts, updateFrame) {
+          let hasActiveSprites = false;
+          state.sprite.items.forEach((runtime) => {
+            if (renderSpriteRuntime(runtime, ts, updateFrame)) {
+              hasActiveSprites = true;
+            }
+          });
+          return hasActiveSprites;
+        }
+
+        function startSprite(payload) {
+          removeSpriteItems();
+          const startedAt = performance.now();
+          state.sprite.items = buildSpriteRuntimes(payload).map((runtime) => {
+            runtime.startedAt = startedAt;
+            runtime.element = createSpriteElement(runtime);
+            return runtime;
+          });
+
+          if (!state.sprite.items.length) return;
+
+          const frame = (ts) => {
+            if (!state.sprite.items.length) return;
+            const hasActiveSprites = renderSprites(ts, true);
+            state.sprite.raf = hasActiveSprites
+              ? requestAnimationFrame(frame)
+              : null;
+          };
+
+          renderSprites(startedAt, true);
+          state.sprite.raf = requestAnimationFrame(frame);
+        }
+
+        function featureKey(feature) {
+          const properties = feature?.properties || {};
+          return String(properties.id ?? feature?.id ?? "");
+        }
+
+        function fullDrawingFeature(renderedFeature) {
+          const id = featureKey(renderedFeature);
+          const drawings = state.payload?.drawings?.features || [];
+          const match = drawings.find((feature) => featureKey(feature) === id);
+          if (match) return match;
+          return {
+            type: "Feature",
+            geometry: renderedFeature.geometry,
+            properties: renderedFeature.properties || {},
+          };
+        }
+
+        function loadMapImage(map, id, url) {
+          return new Promise((resolve, reject) => {
+            if (map.hasImage(id)) {
+              resolve();
+              return;
+            }
+            let settled = false;
+            let timeout = 0;
+            const finish = (error, image) => {
+              if (settled) return;
+              settled = true;
+              if (timeout) clearTimeout(timeout);
+              if (error || !image) {
+                reject(error || new Error(`Failed to load ${url}`));
+                return;
+              }
+              if (!map.hasImage(id)) map.addImage(id, image);
+              resolve();
+            };
+            timeout = setTimeout(() => {
+              finish(new Error(`Timed out loading ${url}`));
+            }, 2500);
+
+            try {
+              const result = map.loadImage(url, (error, image) =>
+                finish(error, image),
+              );
+              if (result && typeof result.then === "function") {
+                result
+                  .then((image) => finish(null, image?.data || image))
+                  .catch((error) => finish(error));
+              }
+            } catch (error) {
+              finish(error);
+            }
+          });
+        }
+
+        async function loadEventPinImages(map) {
+          try {
+            await Promise.all([
+              loadMapImage(map, "event-pin", EVENT_PIN_IMAGE),
+              loadMapImage(
+                map,
+                "event-pin-selected-outline",
+                EVENT_PIN_SELECTED_IMAGE,
+              ),
+            ]);
+            state.eventPinsReady = true;
+          } catch (error) {
+            state.eventPinsReady = false;
+            console.warn(
+              "MapLibre event pin images failed to load; using circle fallback.",
+              error,
+            );
+          }
+        }
+
+        function addCircleEventLayers(map, beforeId) {
+          map.addLayer(
+            {
+              id: "selected-event-outline",
+              type: "circle",
+              source: "selected-event",
+              paint: {
+                "circle-radius": 12,
+                "circle-color": "rgba(255, 255, 255, 0)",
+                "circle-stroke-color": "#0a6cff",
+                "circle-stroke-width": 4,
+                "circle-translate": EVENT_PIN_SELECTED_OUTLINE_OFFSET,
+              },
+            },
+            beforeId,
+          );
+          map.addLayer(
+            {
+              id: "events-points",
+              type: "circle",
+              source: "events",
+              paint: {
+                "circle-color": ["coalesce", ["get", "pointColor"], "#dc2626"],
+                "circle-opacity": ["coalesce", ["get", "pointOpacity"], 1],
+                "circle-radius": ["coalesce", ["get", "pointRadius"], 7],
+                "circle-stroke-color": [
+                  "coalesce",
+                  ["get", "strokeColor"],
+                  "#fff",
+                ],
+                "circle-stroke-width": ["coalesce", ["get", "strokeWidth"], 2],
+              },
+            },
+            beforeId,
+          );
+        }
+
+        function upgradeEventPinLayers(map) {
+          if (
+            !state.eventPinsReady ||
+            !map.hasImage("event-pin") ||
+            !map.hasImage("event-pin-selected-outline") ||
+            !map.getSource("events") ||
+            !map.getSource("selected-event")
+          ) {
+            return;
+          }
+
+          const beforeId = map.getLayer("labels") ? "labels" : undefined;
+          if (map.getLayer("events-points")) map.removeLayer("events-points");
+          if (map.getLayer("selected-event-pin")) {
+            map.removeLayer("selected-event-pin");
+          }
+          if (map.getLayer("selected-event-halo")) {
+            map.removeLayer("selected-event-halo");
+          }
+          if (map.getLayer("selected-event-outline")) {
+            map.removeLayer("selected-event-outline");
+          }
+
+          map.addLayer(
+            {
+              id: "events-points",
+              type: "symbol",
+              source: "events",
+              layout: {
+                "icon-image": "event-pin",
+                "icon-size": EVENT_PIN_ICON_SIZE,
+                "icon-anchor": "bottom",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "icon-overlap": "always",
+              },
+            },
+            beforeId,
+          );
+
+          applyEventFilter();
+        }
+
+        function emptyFeatureCollection() {
+          return { type: "FeatureCollection", features: [] };
+        }
+
+        function cameraChangeIsTiny(
+          map,
+          center,
+          zoom,
+          pixelThreshold = CAMERA_PIXEL_EPSILON,
+          zoomThreshold = CAMERA_ZOOM_EPSILON,
+        ) {
+          const targetCenter = normalizedLngLat(center);
+          if (!map || !targetCenter) return false;
+
+          const currentCenterPoint = map.project(map.getCenter());
+          const targetCenterPoint = map.project(targetCenter);
+          const dx = targetCenterPoint.x - currentCenterPoint.x;
+          const dy = targetCenterPoint.y - currentCenterPoint.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const targetZoom = Number(zoom);
+          const zoomDelta = Number.isFinite(targetZoom)
+            ? Math.abs(targetZoom - map.getZoom())
+            : 0;
+
+          return distance <= pixelThreshold && zoomDelta <= zoomThreshold;
+        }
+
+        function easeCameraIfNeeded(map, center, zoom, options = {}) {
+          if (cameraChangeIsTiny(map, center, zoom)) return;
+          map.easeTo({
+            center,
+            zoom,
+            ...options,
+          });
+        }
+
+        function fitBoundsIfNeeded(map, bounds, options) {
+          const targetCamera =
+            typeof map.cameraForBounds === "function"
+              ? map.cameraForBounds(bounds, options)
+              : null;
+          if (
+            targetCamera?.center &&
+            cameraChangeIsTiny(
+              map,
+              targetCamera.center,
+              targetCamera.zoom,
+              CAMERA_PIXEL_EPSILON,
+              CAMERA_ZOOM_EPSILON,
+            )
+          ) {
+            return;
+          }
+          map.fitBounds(bounds, options);
+        }
+
+        function normalizedLngLat(value) {
+          if (Array.isArray(value) && value.length >= 2) {
+            const lon = Number(value[0]);
+            const lat = Number(value[1]);
+            if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+          }
+          if (value && typeof value === "object") {
+            const lon = Number(value.lng ?? value.lon ?? value.longitude);
+            const lat = Number(value.lat ?? value.latitude);
+            if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+          }
+          return null;
+        }
+
+        function selectedEventCoordinates(feature, fallbackLngLat) {
+          return (
+            normalizedLngLat(feature?.geometry?.coordinates) ||
+            normalizedLngLat(fallbackLngLat)
+          );
+        }
+
+        function showSelectedEventMarker(coordinates) {
+          if (!state.map || !window.maplibregl) return;
+          clearSelectedEventMarker();
+
+          const element = document.createElement("div");
+          element.className = "selected-event-marker";
+
+          const outline = document.createElement("img");
+          outline.className = "selected-event-marker-outline";
+          outline.src = EVENT_PIN_SELECTED_IMAGE;
+          outline.alt = "";
+          outline.setAttribute("aria-hidden", "true");
+
+          const pin = document.createElement("img");
+          pin.className = "selected-event-marker-pin";
+          pin.src = EVENT_PIN_IMAGE;
+          pin.alt = "";
+          pin.setAttribute("aria-hidden", "true");
+
+          element.append(outline, pin);
+          state.selectedEventMarker = new maplibregl.Marker({
+            element,
+            anchor: "bottom",
+          })
+            .setLngLat(coordinates)
+            .addTo(state.map);
+        }
+
+        function clearSelectedEventMarker() {
+          if (state.selectedEventMarker) {
+            state.selectedEventMarker.remove();
+            state.selectedEventMarker = null;
+          }
+        }
+
+        function selectEvent(renderedFeature, fallbackLngLat) {
+          if (!state.map || !renderedFeature) return;
+          state.selectedEventId = featureKey(renderedFeature);
+          const coordinates = selectedEventCoordinates(
+            renderedFeature,
+            fallbackLngLat,
+          );
+          if (!coordinates) {
+            clearSelectedEvent();
+            return;
+          }
+          state.map.getSource("selected-event")?.setData({
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                geometry: {
+                  type: "Point",
+                  coordinates,
+                },
+                properties: renderedFeature.properties || {},
+              },
+            ],
+          });
+          showSelectedEventMarker(coordinates);
+          easeCameraIfNeeded(
+            state.map,
+            coordinates,
+            Math.max(state.map.getZoom(), EVENT_PIN_SELECTED_ZOOM),
+            {
+              duration: 650,
+              essential: true,
+            },
+          );
+        }
+
+        function clearSelectedEvent() {
+          state.selectedEventId = "";
+          clearSelectedEventMarker();
+          state.map
+            ?.getSource("selected-event")
+            ?.setData(emptyFeatureCollection());
+        }
+
+        function clearSelectedPolygon() {
+          state.map
+            ?.getSource("selected-polygon")
+            ?.setData(emptyFeatureCollection());
+        }
+
+        function clearMapSelection() {
+          clearSelectedEvent();
+          clearSelectedPolygon();
+          clearSelectedSprite();
+        }
+
+        function closeActivePopup() {
+          const popup = state.activePopup;
+          if (popup) {
+            state.activePopup = null;
+            popup.remove();
+          }
+          clearMapSelection();
+        }
+
+        function extendBounds(bounds, coordinates) {
+          let count = 0;
+          const visit = (value) => {
+            if (!Array.isArray(value)) return;
+            if (
+              value.length >= 2 &&
+              Number.isFinite(Number(value[0])) &&
+              Number.isFinite(Number(value[1]))
+            ) {
+              bounds.extend([Number(value[0]), Number(value[1])]);
+              count += 1;
+              return;
+            }
+            value.forEach(visit);
+          };
+          visit(coordinates);
+          return count;
+        }
+
+        function selectLine(renderedFeature) {
+          if (!state.map || !renderedFeature) return;
+          const feature = fullDrawingFeature(renderedFeature);
+          if (!feature?.geometry) return;
+
+          state.map.getSource("selected-polygon")?.setData({
+            type: "FeatureCollection",
+            features: [feature],
+          });
+        }
+
+        function selectPolygon(renderedFeature) {
+          if (!state.map || !renderedFeature) return;
+          const feature = fullDrawingFeature(renderedFeature);
+          if (!feature?.geometry) return;
+
+          state.map.getSource("selected-polygon")?.setData({
+            type: "FeatureCollection",
+            features: [feature],
+          });
+
+          const bounds = new maplibregl.LngLatBounds();
+          const pointCount = extendBounds(bounds, feature.geometry.coordinates);
+          if (pointCount > 0) {
+            fitBoundsIfNeeded(state.map, bounds, {
+              padding: 140,
+              maxZoom: 16.5,
+              duration: 650,
+            });
+          }
+        }
+
+        function addLayers(map, payload) {
+          map.addSource("drawings", {
+            type: "geojson",
+            data: payload.drawings || {
+              type: "FeatureCollection",
+              features: [],
+            },
+          });
+          map.addSource("events", {
+            type: "geojson",
+            data: payload.events || { type: "FeatureCollection", features: [] },
+          });
+          map.addSource("labels", {
+            type: "geojson",
+            data: payload.labels || { type: "FeatureCollection", features: [] },
+          });
+          map.addSource("route-line", {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: [] },
+          });
+          map.addSource("route-points", {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: [] },
+          });
+          map.addSource("selected-polygon", {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: [] },
+          });
+          map.addSource("selected-event", {
+            type: "geojson",
+            data: emptyFeatureCollection(),
+          });
+
+          map.addLayer({
+            id: "drawings-fill",
+            type: "fill",
+            source: "drawings",
+            filter: ["==", ["geometry-type"], "Polygon"],
+            paint: {
+              "fill-color": ["coalesce", ["get", "fillColor"], "#4cc9f0"],
+              "fill-opacity": ["coalesce", ["get", "fillOpacity"], 0.35],
+            },
+          });
+          map.addLayer({
+            id: "drawings-outline",
+            type: "line",
+            source: "drawings",
+            filter: ["==", ["geometry-type"], "Polygon"],
+            paint: {
+              "line-color": ["coalesce", ["get", "strokeColor"], "#2a2a2a"],
+              "line-opacity": ["coalesce", ["get", "strokeOpacity"], 1],
+              "line-width": ["coalesce", ["get", "strokeWidth"], 1],
+            },
+          });
+          map.addLayer({
+            id: "selected-polygon-halo",
+            type: "line",
+            source: "selected-polygon",
+            paint: {
+              "line-color": "#ffffff",
+              "line-opacity": 0.95,
+              "line-width": 8,
+            },
+          });
+          map.addLayer({
+            id: "selected-polygon-outline",
+            type: "line",
+            source: "selected-polygon",
+            paint: {
+              "line-color": "#0a6cff",
+              "line-opacity": 1,
+              "line-width": 4,
+            },
+          });
+          map.addLayer({
+            id: "drawings-lines",
+            type: "line",
+            source: "drawings",
+            filter: [
+              "any",
+              ["==", ["geometry-type"], "LineString"],
+              ["==", ["geometry-type"], "MultiLineString"],
+            ],
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: {
+              "line-color": ["coalesce", ["get", "lineColor"], "#2563eb"],
+              "line-opacity": ["coalesce", ["get", "lineOpacity"], 1],
+              "line-width": ["coalesce", ["get", "lineWidth"], 3],
+            },
+          });
+          map.addLayer({
+            id: "drawings-points",
+            type: "circle",
+            source: "drawings",
+            filter: ["==", ["geometry-type"], "Point"],
+            paint: {
+              "circle-color": ["coalesce", ["get", "pointColor"], "#ef4444"],
+              "circle-opacity": ["coalesce", ["get", "pointOpacity"], 1],
+              "circle-radius": ["coalesce", ["get", "pointRadius"], 6],
+              "circle-stroke-color": [
+                "coalesce",
+                ["get", "strokeColor"],
+                "#fff",
+              ],
+              "circle-stroke-width": ["coalesce", ["get", "strokeWidth"], 1],
+            },
+          });
+          map.addLayer({
+            id: "route-line",
+            type: "line",
+            source: "route-line",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": "#0078ff", "line-width": 5 },
+          });
+          map.addLayer({
+            id: "route-points",
+            type: "circle",
+            source: "route-points",
+            paint: {
+              "circle-radius": 6,
+              "circle-color": [
+                "case",
+                ["==", ["get", "role"], "start"],
+                "#00c800",
+                "#dc0000",
+              ],
+              "circle-stroke-color": "#fff",
+              "circle-stroke-width": 1,
+            },
+          });
+          addCircleEventLayers(map);
+          map.addLayer({
+            id: "labels",
+            type: "symbol",
+            source: "labels",
+            layout: {
+              "text-field": ["get", "text"],
+              "text-font": ["Open Sans Regular"],
+              "text-size": ["coalesce", ["get", "fontSize"], 12],
+              "text-anchor": "center",
+              "text-allow-overlap": false,
+            },
+            paint: {
+              "text-color": ["coalesce", ["get", "textColor"], "#111827"],
+              "text-halo-color": ["coalesce", ["get", "haloColor"], "#fff"],
+              "text-halo-width": ["coalesce", ["get", "haloWidth"], 1.5],
+            },
+          });
+
+          [
+            "drawings-fill",
+            "drawings-lines",
+            "drawings-points",
+            "events-points",
+          ].forEach((layerId) => {
+            map.on("click", layerId, (event) => {
+              const features = popupFeaturesForEvent(map, layerId, event);
+              if (!features.length) return;
+              openFeaturePopup(map, event.lngLat, features, layerId);
+            });
+            map.on("mouseenter", layerId, () => {
+              map.getCanvas().style.cursor = "pointer";
+            });
+            map.on("mouseleave", layerId, () => {
+              map.getCanvas().style.cursor = "";
+            });
+          });
+          wirePopupMapDismissal(map);
+        }
+
+        function load() {
+          if (!endpoint) {
+            setStatus("Add ?id=<map id> or ?endpoint=<json url>.", true);
+            return;
+          }
+
+          fetch(endpoint, {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`,
+                );
+              }
+              return response.json();
+            })
+            .then((payload) => {
+              state.payload = payload;
+              state.embeddedEventFeatures = payload.events?.features || [];
+              state.dynamicEventFeatures = [];
+              const center =
+                payload.settings && Array.isArray(payload.settings.center)
+                  ? payload.settings.center
+                  : DEFAULT_CENTER;
+              const zoom =
+                payload.settings && Number.isFinite(payload.settings.zoom)
+                  ? payload.settings.zoom
+                  : DEFAULT_ZOOM;
+
+              const map = new maplibregl.Map({
+                container: "map",
+                style: makeStyle(payload.settings && payload.settings.mapTile),
+                center,
+                zoom,
+                attributionControl: false,
+              });
+              state.map = map;
+              wireRoutePicker(map);
+
+              map.addControl(
+                new maplibregl.NavigationControl({ showCompass: false }),
+                "bottom-right",
+              );
+              map.addControl(
+                new maplibregl.GeolocateControl({
+                  positionOptions: { enableHighAccuracy: true },
+                  trackUserLocation: true,
+                  showUserHeading: true,
+                }),
+                "top-right",
+              );
+              map.addControl(
+                new maplibregl.AttributionControl({ compact: true }),
+              );
+
+              map.on("load", () => {
+                addLayers(map, payload);
+                recomputeCalendarDomain();
+                applyEventFilter();
+                startSprite(payload);
+                setStatus("");
+                loadEventPinImages(map).then(() => upgradeEventPinLayers(map));
+              });
+
+              map.on("move", () => {
+                if (state.sprite.items.length) {
+                  renderSprites(performance.now(), false);
+                }
+              });
+
+              loadLocationGraph()
+                .then(() => loadDynamicEvents(payload))
+                .catch((error) => {
+                  els.routeStatus.textContent = `Failed to load search graph: ${error.message}`;
+                  els.routeStatus.style.color = "#b91c1c";
+                });
+            })
+            .catch((error) => {
+              setStatus(`Failed to load map: ${error.message}`, true);
+            });
+        }
+
+        wireCalendar();
+        wireTurnByTurn();
+
+        let maplibreBooted = false;
+        function bootMapLibre() {
+          if (maplibreBooted) return;
+          if (!window.maplibregl) {
+            setStatus("MapLibre failed to load from local assets.", true);
+            return;
+          }
+          maplibreBooted = true;
+          load();
+        }
+
+        if (window.maplibregl) {
+          bootMapLibre();
+        } else {
+          setStatus("Loading MapLibre...", false);
+          window.addEventListener("maplibre-gl-ready", bootMapLibre, {
+            once: true,
+          });
+          window.addEventListener(
+            "maplibre-gl-error",
+            () => {
+              if (!maplibreBooted) {
+                setStatus("MapLibre failed to load from local assets.", true);
+              }
+            },
+            { once: true },
+          );
+          window.setTimeout(() => {
+            if (!maplibreBooted && !window.maplibregl) {
+              setStatus("MapLibre failed to load from local assets.", true);
+            }
+          }, 8000);
+        }
+      })();
+    </script>
+  </body>
+</html>

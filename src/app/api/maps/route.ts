@@ -4,6 +4,20 @@ import { auth } from "@/lib/auth";
 import { createMap, getMapById, getMapsByOwnerId } from "@/lib/mapModel";
 import { findUserByEmail, addMapToUserByEmail } from "@/lib/userModel";
 
+function toMapListItem(map: any) {
+  return {
+    _id: map._id?.toString?.() ?? String(map._id),
+    ownerId: map.ownerId?.toString?.() ?? String(map.ownerId),
+    title: map.title ?? null,
+    url: map.url ?? null,
+    description: map.description ?? null,
+    thumbnailUrl: map.thumbnailUrl ?? null,
+    createdAt: map.createdAt,
+    updatedAt: map.updatedAt,
+    isPrivate: Boolean(map.isPrivate),
+  };
+}
+
 const sampleMap = [
   {
     title: "campusmap",
@@ -678,10 +692,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return new Response(JSON.stringify(newMap), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return NextResponse.json(toMapListItem(newMap), { status: 200 });
 }
 
 export async function GET(request: NextRequest) {

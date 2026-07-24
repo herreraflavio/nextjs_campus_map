@@ -68,7 +68,21 @@ export async function getMapsByOwnerId(ownerId: string) {
   const db = client.db();
   const maps = await db
     .collection("maps")
-    .find({ ownerId: new ObjectId(ownerId) })
+    .find(
+      { ownerId: new ObjectId(ownerId) },
+      {
+        projection: {
+          ownerId: 1,
+          title: 1,
+          url: 1,
+          description: 1,
+          thumbnailUrl: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          isPrivate: 1,
+        },
+      },
+    )
     .toArray();
 
   return maps.map(({ _id, ...rest }) => ({
