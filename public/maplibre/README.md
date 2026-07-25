@@ -7,6 +7,49 @@ This directory serves the standalone MapLibre map at:
 
 The selected outlines are calibrated in `index.html` near the top of the file in the `<style>` block.
 
+## Esri basemaps
+
+By default, the static MapLibre page tries to use an Esri paid basemap style through:
+
+```text
+/api/maplibre/esri-basemap
+```
+
+That endpoint creates an ArcGIS Basemap Styles session and returns a short-lived style URL for MapLibre. It reads the API key from the first available environment variable:
+
+```text
+ARCGIS_API_KEY
+ESRI_API_KEY
+NEXT_PUBLIC_ARCGIS_API_KEY
+```
+
+The key needs the ArcGIS basemap privilege, usually `premium:user:basemaps`.
+
+Style selection order:
+
+1. `?esriStyle=<style>`
+2. `?basemapStyle=<style>`
+3. `?basemap=<style>` when it is not `osm`, `openstreetmap`, `custom`, or `raster`
+4. The saved map setting `settings.baseMap`
+5. Fallback: `arcgis/navigation`
+
+Examples:
+
+```text
+/maplibre/<id>?esriStyle=arcgis/imagery
+/maplibre/<id>?basemap=arcgis/navigation
+/maplibre?id=<id>&basemapStyle=arcgis/light-gray
+```
+
+To force the old OSM fallback path for performance comparison:
+
+```text
+/maplibre/<id>?basemap=osm
+/maplibre/<id>?basemapMode=osm
+```
+
+The custom campus raster tile layer still gets appended above the Esri basemap. If the Esri session or style request fails, the page falls back to the OSM/custom-raster style.
+
 ## Animated graphic outline
 
 Animated line graphics use a generated outline image behind the current sprite frame.

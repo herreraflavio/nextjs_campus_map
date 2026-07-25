@@ -772,6 +772,8 @@
         const DEFAULT_ZOOM = 15;
         const DEFAULT_TILE_URL =
           "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png";
+        const DEFAULT_ESRI_BASEMAP = "arcgis/navigation";
+        const ESRI_BASEMAP_CACHE_PREFIX = "maplibre-esri-basemap:";
         const OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
         const EVENT_PIN_IMAGE = "/icons/event-pin.png";
         const EVENT_PIN_SELECTED_IMAGE =
@@ -798,6 +800,17 @@
         const endpoint =
           params.get("endpoint") ||
           (id ? `/api/maps/${encodeURIComponent(id)}/lite` : "");
+        const ESRI_STYLE_ALIASES = {
+          arcgisnavigation: "arcgis/navigation",
+          arcgisstreets: "arcgis/streets",
+          arcgistopographic: "arcgis/topographic",
+          arcgisimagery: "arcgis/imagery",
+          arcgisoutdoor: "arcgis/outdoor",
+          arcgislightgray: "arcgis/light-gray",
+          arcgisdarkgray: "arcgis/dark-gray",
+          arcgiscoloredpencil: "arcgis/colored-pencil",
+          arcgisnova: "arcgis/nova",
+        };
 
         const state = {
           map: null,
@@ -910,6 +923,151 @@
             .replace(/\{level\}/g, "{z}")
             .replace(/\{col\}/g, "{x}")
             .replace(/\{row\}/g, "{y}");
+        }
+
+        function normalizeEsriBasemapStyle(value) {
+          const raw = String(value || DEFAULT_ESRI_BASEMAP).trim();
+          const alias =
+            ESRI_STYLE_ALIASES[raw.replace(/[^a-z0-9]/gi, "").toLowerCase()];
+          const style = alias || raw;
+          const parts = style.split("/");
+          if (
+            parts.length === 2 &&
+            (parts[0] === "arcgis" || parts[0] === "open") &&
+            /^[a-z0-9][a-z0-9-]*$/i.test(parts[1])
+          ) {
+            return `${parts[0]}/${parts[1]}`;
+          }
+          return DEFAULT_ESRI_BASEMAP;
+        }
+
+        function shouldUseEsriBasemap() {
+          const basemap = (params.get("basemap") || "").toLowerCase();
+          const mode = (
+            params.get("basemapMode") ||
+            params.get("basemapProvider") ||
+            ""
+          ).toLowerCase();
+          if (mode === "osm" || mode === "raster" || mode === "custom")
+            return false;
+          return basemap !== "osm" && basemap !== "openstreetmap";
+        }
+
+        function esriBasemapFromSettings(settings) {
+          const basemapParam = params.get("basemap");
+          const basemapStyleParam =
+            params.get("esriStyle") || params.get("basemapStyle");
+          const explicitBasemap =
+            basemapParam &&
+            !["osm", "openstreetmap", "custom", "raster"].includes(
+              basemapParam.toLowerCase(),
+            )
+              ? basemapParam
+              : "";
+
+          return normalizeEsriBasemapStyle(
+            basemapStyleParam ||
+              explicitBasemap ||
+              settings?.baseMap ||
+              DEFAULT_ESRI_BASEMAP,
+          );
+        }
+
+        function cachedEsriBasemap(style) {
+          try {
+            const raw = window.localStorage?.getItem(
+              `${ESRI_BASEMAP_CACHE_PREFIX}${style}`,
+            );
+            if (!raw) return null;
+            const cached = JSON.parse(raw);
+            const expiresAt = Date.parse(cached.expiresAt || "");
+            if (!cached.styleUrl || !Number.isFinite(expiresAt)) return null;
+            if (expiresAt <= Date.now() + 60_000) return null;
+            return cached;
+          } catch (_error) {
+            return null;
+          }
+        }
+
+        function cacheEsriBasemap(style, value) {
+          try {
+            if (!value?.styleUrl || !value?.expiresAt) return;
+            window.localStorage?.setItem(
+              `${ESRI_BASEMAP_CACHE_PREFIX}${style}`,
+              JSON.stringify(value),
+            );
+          } catch (_error) {}
+        }
+
+        async function loadEsriBasemapSession(style) {
+          const cached = cachedEsriBasemap(style);
+          if (cached) return cached;
+
+          const response = await fetch(
+            `/api/maplibre/esri-basemap?style=${encodeURIComponent(style)}`,
+            { cache: "no-store" },
+          );
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || !payload?.styleUrl) {
+            throw new Error(
+              payload?.error ||
+                `Unable to load Esri basemap session (${response.status})`,
+            );
+          }
+          cacheEsriBasemap(style, payload);
+          return payload;
+        }
+
+        async function loadJsonStyle(url) {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(
+              `Unable to load Esri basemap style (${response.status})`,
+            );
+          }
+          return response.json();
+        }
+
+        function addCampusRasterToStyle(style, tileTemplate) {
+          const campusRasterUrl = tileUrl(tileTemplate || DEFAULT_TILE_URL);
+          if (!campusRasterUrl) return style;
+
+          style.sources = Object.assign({}, style.sources || {});
+          style.layers = Array.isArray(style.layers) ? style.layers.slice() : [];
+
+          let sourceId = "campusRaster";
+          let index = 1;
+          while (style.sources[sourceId]) {
+            sourceId = `campusRaster${index++}`;
+          }
+
+          style.sources[sourceId] = {
+            type: "raster",
+            tiles: [campusRasterUrl],
+            tileSize: 256,
+            attribution: "Campus map tiles",
+          };
+          style.layers.push({
+            id: sourceId === "campusRaster" ? "campus-raster" : sourceId,
+            type: "raster",
+            source: sourceId,
+          });
+
+          return style;
+        }
+
+        async function makeMapStyle(settings) {
+          if (!shouldUseEsriBasemap()) return makeStyle(settings?.mapTile);
+
+          const esriStyle = esriBasemapFromSettings(settings);
+          try {
+            const session = await loadEsriBasemapSession(esriStyle);
+            const style = await loadJsonStyle(session.styleUrl);
+            return addCampusRasterToStyle(style, settings?.mapTile);
+          } catch (error) {
+            console.warn("Falling back to OSM basemap.", error);
+            return makeStyle(settings?.mapTile);
+          }
         }
 
         function makeStyle(tileTemplate) {
@@ -3888,7 +4046,7 @@
               }
               return response.json();
             })
-            .then((payload) => {
+            .then(async (payload) => {
               state.payload = payload;
               state.embeddedEventFeatures = payload.events?.features || [];
               state.dynamicEventFeatures = [];
@@ -3900,10 +4058,11 @@
                 payload.settings && Number.isFinite(payload.settings.zoom)
                   ? payload.settings.zoom
                   : DEFAULT_ZOOM;
+              const style = await makeMapStyle(payload.settings || {});
 
               const map = new maplibregl.Map({
                 container: "map",
-                style: makeStyle(payload.settings && payload.settings.mapTile),
+                style,
                 center,
                 zoom,
                 attributionControl: false,
