@@ -13,7 +13,7 @@ import {
   type CampusEvent,
   resortByZ,
 } from "./map/arcgisRefs";
-import "./ArcGISMap.css";
+import "./ArcGISMap.module.css";
 import EventCalendarOverlay from "./map/MapControls/EventCalendarOverlay";
 import DynamicEventLoader from "./map/MapControls/DynamicEventLoader";
 import TurnByTurnOverlay from "./map/MapControls/TurnByTurnOverlay";
@@ -678,13 +678,15 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
                   }),
                 )
               : new Point({ x: cx, y: cy, spatialReference: { wkid: 3857 } });
-
+          console.log("=======================");
+          console.log(mapData.settings.zoom);
           const view: __esri.MapView = new MapView({
             container: mapDiv.current as HTMLDivElement,
             map,
             spatialReference: { wkid: 3857 },
             center: centerPoint,
             zoom: mapData.settings.zoom,
+
             constraints: mapData.settings.constraints
               ? {
                   geometry: new Extent({

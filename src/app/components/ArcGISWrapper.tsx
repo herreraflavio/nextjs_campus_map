@@ -309,7 +309,12 @@ export default function ArcGISWrapper() {
             ? ((data as any).settings.apiSources as string[])
             : DEFAULT_EVENT_SOURCES;
 
+        console.log("......................");
+        console.log(data.settings);
+
         const rawS: Partial<ArcGISMapPayload["settings"]> = data.settings ?? {};
+        console.log("rawS:");
+        console.log(rawS);
 
         const center =
           Array.isArray(rawS.center) &&
@@ -320,7 +325,7 @@ export default function ArcGISWrapper() {
             : DEFAULT_CENTER;
 
         const zoom =
-          typeof rawS.zoom === "number" && rawS.zoom >= 1 && rawS.zoom <= 20
+          typeof rawS.zoom === "number" && rawS.zoom >= 1 && rawS.zoom <= 23
             ? rawS.zoom
             : DEFAULT_ZOOM;
 
@@ -370,6 +375,8 @@ export default function ArcGISWrapper() {
             x: settings.center[0],
             y: settings.center[1],
           };
+          console.log("<><><><><><><><><><><><>");
+          console.log(settings.zoom);
           settingsRef.current.zoom = settings.zoom;
           settingsRef.current.featureLayers = settings.featureLayers ?? null;
           settingsRef.current.constraints = settings.constraints;
@@ -404,6 +411,8 @@ export default function ArcGISWrapper() {
     eventSources: DEFAULT_EVENT_SOURCES,
     settings: DEFAULT_SETTINGS,
   };
+
+  console.log(effectiveMapData);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
