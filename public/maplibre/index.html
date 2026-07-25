@@ -791,6 +791,7 @@
         const SPRITE_SIZE_REFERENCE_ZOOM = DEFAULT_ZOOM;
         const SPRITE_DRAG_CLICK_TOLERANCE_PX = 4;
         const SPRITE_CLICK_SUPPRESS_MS = 180;
+        const SPRITE_TOUCH_SESSION_TIMEOUT_MS = 30000;
         const TURN_THRESHOLD = 28;
         const UTURN_THRESHOLD = 150;
         const R = 6378137;
@@ -853,6 +854,8 @@
             items: [],
             raf: null,
             pinch: null,
+            touchRuntimeId: "",
+            touchTimer: 0,
           },
         };
 
@@ -3092,6 +3095,43 @@
           });
         }
 
+        function activeTouchSpriteRuntime() {
+          if (!state.sprite.touchRuntimeId) return null;
+          return (
+            state.sprite.items.find(
+              (runtime) => runtime.id === state.sprite.touchRuntimeId,
+            ) || null
+          );
+        }
+
+        function clearSpriteTouchRuntime(runtime) {
+          if (runtime && state.sprite.touchRuntimeId !== runtime.id) return;
+          state.sprite.touchRuntimeId = "";
+          window.clearTimeout(state.sprite.touchTimer);
+          state.sprite.touchTimer = 0;
+        }
+
+        function trackSpriteTouchRuntime(runtime) {
+          if (!runtime) return;
+          state.sprite.touchRuntimeId = runtime.id;
+          window.clearTimeout(state.sprite.touchTimer);
+          state.sprite.touchTimer = window.setTimeout(() => {
+            clearSpriteTouchRuntime(runtime);
+          }, SPRITE_TOUCH_SESSION_TIMEOUT_MS);
+        }
+
+        function cancelSpriteDrag(runtime) {
+          const drag = runtime?.drag;
+          if (!runtime || !drag) return;
+          if (runtime.element?.hasPointerCapture?.(drag.pointerId)) {
+            try {
+              runtime.element.releasePointerCapture(drag.pointerId);
+            } catch (_error) {}
+          }
+          runtime.element?.classList.remove("is-dragging");
+          runtime.drag = null;
+        }
+
         function suppressSpriteClick(
           runtime,
           delayMs = SPRITE_CLICK_SUPPRESS_MS,
@@ -3149,13 +3189,11 @@
         }
 
         function startSpritePinch(runtime, event) {
+          trackSpriteTouchRuntime(runtime);
           if (!state.map || event.touches.length < 2) return;
           event.preventDefault();
           event.stopPropagation();
-          if (runtime.drag) {
-            runtime.element?.classList.remove("is-dragging");
-            runtime.drag = null;
-          }
+          cancelSpriteDrag(runtime);
 
           const distance = touchDistance(event.touches);
           const center = touchCenter(event.touches);
@@ -3194,6 +3232,59 @@
           event.stopPropagation();
           state.sprite.pinch = null;
           suppressSpriteClick(runtime, 250);
+        }
+
+        function handleDocumentSpriteTouchStart(event) {
+          const runtime = activeTouchSpriteRuntime();
+          if (!runtime || event.touches.length < 2) return;
+          startSpritePinch(runtime, event);
+        }
+
+        function handleDocumentSpriteTouchMove(event) {
+          const runtime = activeTouchSpriteRuntime();
+          if (!runtime || event.touches.length < 2) return;
+          trackSpriteTouchRuntime(runtime);
+          if (!state.sprite.pinch) {
+            startSpritePinch(runtime, event);
+            return;
+          }
+          moveSpritePinch(runtime, event);
+        }
+
+        function handleDocumentSpriteTouchEnd(event) {
+          const runtime = activeTouchSpriteRuntime();
+          if (!runtime) return;
+          endSpritePinch(runtime, event);
+          if (event.touches.length === 0) {
+            clearSpriteTouchRuntime(runtime);
+          }
+        }
+
+        let spriteDocumentTouchBridgeWired = false;
+        function wireSpriteDocumentTouchBridge() {
+          if (spriteDocumentTouchBridgeWired) return;
+          spriteDocumentTouchBridgeWired = true;
+          const options = { passive: false, capture: true };
+          document.addEventListener(
+            "touchstart",
+            handleDocumentSpriteTouchStart,
+            options,
+          );
+          document.addEventListener(
+            "touchmove",
+            handleDocumentSpriteTouchMove,
+            options,
+          );
+          document.addEventListener(
+            "touchend",
+            handleDocumentSpriteTouchEnd,
+            options,
+          );
+          document.addEventListener(
+            "touchcancel",
+            handleDocumentSpriteTouchEnd,
+            options,
+          );
         }
 
         function wheelSpriteZoom(runtime, event) {
@@ -3293,6 +3384,7 @@
         }
 
         function wireSpriteElement(runtime, element) {
+          wireSpriteDocumentTouchBridge();
           element.addEventListener("click", (event) =>
             openSpriteGraphicPopup(runtime, event),
           );
@@ -3375,10 +3467,11 @@
             state.sprite.raf = null;
           }
           state.sprite.pinch = null;
+          clearSpriteTouchRuntime();
           state.sprite.items.forEach((runtime) => {
+            cancelSpriteDrag(runtime);
             runtime.element?.remove();
             window.clearTimeout(runtime.suppressTimer);
-            runtime.drag = null;
             runtime.element = null;
             runtime.imageElement = null;
             runtime.outlineElement = null;
