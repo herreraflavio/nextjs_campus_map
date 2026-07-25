@@ -846,6 +846,7 @@
           selectedEventMarker: null,
           selectedSpriteId: "",
           activePopup: null,
+          overlaysReady: false,
           embeddedEventFeatures: [],
           dynamicEventFeatures: [],
           sprite: {
@@ -3858,6 +3859,121 @@
           }
         }
 
+        const OVERLAY_LAYER_IDS = [
+          "selected-event-pin",
+          "selected-event-halo",
+          "selected-event-outline",
+          "labels",
+          "events-points",
+          "route-points",
+          "route-line",
+          "drawings-points",
+          "drawings-lines",
+          "selected-polygon-outline",
+          "selected-polygon-halo",
+          "drawings-outline",
+          "drawings-fill",
+        ];
+        const OVERLAY_SOURCE_IDS = [
+          "selected-event",
+          "selected-polygon",
+          "route-points",
+          "route-line",
+          "labels",
+          "events",
+          "drawings",
+        ];
+
+        function mapStyleIsReady(map) {
+          if (!map) return false;
+          try {
+            if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded())
+              return true;
+            return typeof map.loaded === "function" ? map.loaded() : false;
+          } catch (_error) {
+            return false;
+          }
+        }
+
+        function resetOverlayLayers(map) {
+          OVERLAY_LAYER_IDS.forEach((layerId) => {
+            try {
+              if (map.getLayer(layerId)) map.removeLayer(layerId);
+            } catch (error) {
+              console.warn(`Unable to remove overlay layer ${layerId}.`, error);
+            }
+          });
+          OVERLAY_SOURCE_IDS.forEach((sourceId) => {
+            try {
+              if (map.getSource(sourceId)) map.removeSource(sourceId);
+            } catch (error) {
+              console.warn(`Unable to remove overlay source ${sourceId}.`, error);
+            }
+          });
+          state.eventPinsReady = false;
+          state.overlaysReady = false;
+        }
+
+        function initializeOverlayLayers(map, payload) {
+          if (state.overlaysReady) return true;
+          if (!mapStyleIsReady(map)) return false;
+
+          try {
+            resetOverlayLayers(map);
+            addLayers(map, payload);
+            state.overlaysReady = true;
+            recomputeCalendarDomain();
+            applyEventFilter();
+            startSprite(payload);
+            setStatus("");
+            loadEventPinImages(map).then(() => upgradeEventPinLayers(map));
+            return true;
+          } catch (error) {
+            resetOverlayLayers(map);
+            console.error("MapLibre overlay layers failed to initialize.", error);
+            setStatus("Basemap loaded; retrying map content...", false);
+            return false;
+          }
+        }
+
+        function scheduleOverlayLayerInit(map, payload) {
+          let timer = 0;
+          let attempts = 0;
+          const maxAttempts = 120;
+
+          const cleanup = () => {
+            if (timer) clearTimeout(timer);
+            map.off("load", run);
+            map.off("idle", run);
+            map.off("styledata", run);
+          };
+
+          const run = () => {
+            if (state.overlaysReady) {
+              cleanup();
+              return;
+            }
+            if (initializeOverlayLayers(map, payload)) {
+              cleanup();
+              return;
+            }
+            attempts += 1;
+            if (attempts >= maxAttempts) {
+              cleanup();
+              setStatus("Basemap loaded, but map content failed to initialize.", true);
+              return;
+            }
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(run, 150);
+          };
+
+          map.on("load", run);
+          map.on("idle", run);
+          map.on("styledata", run);
+          requestAnimationFrame(run);
+          timer = setTimeout(run, 0);
+        }
+
         function addLayers(map, payload) {
           map.addSource("drawings", {
             type: "geojson",
@@ -4050,6 +4166,7 @@
               state.payload = payload;
               state.embeddedEventFeatures = payload.events?.features || [];
               state.dynamicEventFeatures = [];
+              state.overlaysReady = false;
               const center =
                 payload.settings && Array.isArray(payload.settings.center)
                   ? payload.settings.center
@@ -4086,14 +4203,7 @@
                 new maplibregl.AttributionControl({ compact: true }),
               );
 
-              map.on("load", () => {
-                addLayers(map, payload);
-                recomputeCalendarDomain();
-                applyEventFilter();
-                startSprite(payload);
-                setStatus("");
-                loadEventPinImages(map).then(() => upgradeEventPinLayers(map));
-              });
+              scheduleOverlayLayerInit(map, payload);
 
               map.on("move", () => {
                 if (state.sprite.items.length) {
