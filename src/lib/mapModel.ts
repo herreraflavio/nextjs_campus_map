@@ -1,5 +1,5 @@
 // lib/mapModel.js
-import clientPromise from "./mongodb";
+import { getMongoClient } from "./mongodb";
 import { ObjectId } from "mongodb";
 
 export type MapSettings = {
@@ -26,7 +26,7 @@ export async function createMap(mapData: {
   description?: string;
   isPrivate: boolean;
 }) {
-  const db = (await clientPromise).db();
+  const db = (await getMongoClient()).db();
   const generatedId = new ObjectId();
   const mapURL = `/maps/${generatedId}`;
 
@@ -51,12 +51,12 @@ export async function createMap(mapData: {
 }
 
 export async function getMapById(mapId: string) {
-  const db = (await clientPromise).db();
+  const db = (await getMongoClient()).db();
   return db.collection("maps").findOne({ _id: new ObjectId(mapId) });
 }
 
 export async function getMapsByUser(userId: string) {
-  const db = (await clientPromise).db();
+  const db = (await getMongoClient()).db();
   return db
     .collection("maps")
     .find({ ownerId: new ObjectId(userId) })
@@ -64,7 +64,7 @@ export async function getMapsByUser(userId: string) {
 }
 
 export async function getMapsByOwnerId(ownerId: string) {
-  const client = await clientPromise;
+  const client = await getMongoClient();
   const db = client.db();
   const maps = await db
     .collection("maps")

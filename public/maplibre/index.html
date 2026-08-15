@@ -792,6 +792,11 @@
         const SPRITE_DRAG_CLICK_TOLERANCE_PX = 4;
         const SPRITE_CLICK_SUPPRESS_MS = 180;
         const SPRITE_TOUCH_SESSION_TIMEOUT_MS = 30000;
+        const MAP_DATA_FETCH_RETRY_DELAYS_MS = [300, 900, 1800];
+        const ASSET_FETCH_RETRY_DELAYS_MS = [250, 700, 1400];
+        const RETRYABLE_HTTP_STATUS_CODES = new Set([
+          408, 425, 429, 500, 502, 503, 504,
+        ]);
         const TURN_THRESHOLD = 28;
         const UTURN_THRESHOLD = 150;
         const R = 6378137;
@@ -1003,19 +1008,109 @@
           } catch (_error) {}
         }
 
+        function delay(ms) {
+          return new Promise((resolve) => window.setTimeout(resolve, ms));
+        }
+
+        function errorStatus(error) {
+          return typeof error?.status === "number" ? error.status : null;
+        }
+
+        function shouldRetryFetch(error) {
+          if (error?.name === "AbortError") return false;
+
+          const status = errorStatus(error);
+          if (status == null) return true;
+          return RETRYABLE_HTTP_STATUS_CODES.has(status);
+        }
+
+        async function responseError(response, fallbackMessage) {
+          let detail = response.statusText || fallbackMessage || "";
+
+          try {
+            const body = await response.clone().json();
+            if (typeof body?.error === "string" && body.error.trim()) {
+              detail = body.error.trim();
+            }
+          } catch (_jsonError) {
+            try {
+              const text = await response.clone().text();
+              if (text.trim()) detail = text.trim();
+            } catch (_textError) {}
+          }
+
+          const error = new Error(
+            detail
+              ? `HTTP ${response.status}: ${detail}`
+              : `HTTP ${response.status}`,
+          );
+          error.status = response.status;
+          return error;
+        }
+
+        async function fetchWithRetry(
+          url,
+          options,
+          retryDelaysMs,
+          fallbackMessage,
+        ) {
+          let lastError = null;
+
+          for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+            try {
+              const response = await fetch(url, options);
+              if (!response.ok) {
+                throw await responseError(response, fallbackMessage);
+              }
+              return response;
+            } catch (error) {
+              lastError = error;
+              const retryDelay = retryDelaysMs[attempt];
+
+              if (retryDelay == null || !shouldRetryFetch(error)) {
+                throw error;
+              }
+
+              console.warn(
+                `Initial map resource failed; retrying in ${retryDelay}ms.`,
+                error,
+              );
+              await delay(retryDelay);
+            }
+          }
+
+          throw lastError || new Error(fallbackMessage || "Fetch failed");
+        }
+
+        async function fetchJsonWithRetry(
+          url,
+          options,
+          retryDelaysMs,
+          fallbackMessage,
+        ) {
+          const response = await fetchWithRetry(
+            url,
+            options,
+            retryDelaysMs,
+            fallbackMessage,
+          );
+          return response.json();
+        }
+
         async function loadEsriBasemapSession(style) {
           const cached = cachedEsriBasemap(style);
           if (cached) return cached;
 
-          const response = await fetch(
+          const payload = await fetchJsonWithRetry(
             `/api/maplibre/esri-basemap?style=${encodeURIComponent(style)}`,
             { cache: "no-store" },
+            ASSET_FETCH_RETRY_DELAYS_MS,
+            "Unable to load Esri basemap session",
           );
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok || !payload?.styleUrl) {
+          if (!payload?.styleUrl) {
             throw new Error(
               payload?.error ||
-                `Unable to load Esri basemap session (${response.status})`,
+                "Unable to load Esri basemap session",
             );
           }
           cacheEsriBasemap(style, payload);
@@ -1023,13 +1118,12 @@
         }
 
         async function loadJsonStyle(url) {
-          const response = await fetch(url, { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error(
-              `Unable to load Esri basemap style (${response.status})`,
-            );
-          }
-          return response.json();
+          return fetchJsonWithRetry(
+            url,
+            { cache: "no-store" },
+            ASSET_FETCH_RETRY_DELAYS_MS,
+            "Unable to load Esri basemap style",
+          );
         }
 
         function addCampusRasterToStyle(style, tileTemplate) {
@@ -4243,18 +4337,15 @@
             return;
           }
 
-          fetch(endpoint, {
-            credentials: "same-origin",
-            headers: { Accept: "application/json" },
-          })
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error(
-                  `HTTP ${response.status}: ${response.statusText}`,
-                );
-              }
-              return response.json();
-            })
+          fetchJsonWithRetry(
+            endpoint,
+            {
+              credentials: "same-origin",
+              headers: { Accept: "application/json" },
+            },
+            MAP_DATA_FETCH_RETRY_DELAYS_MS,
+            "Failed to load map data",
+          )
             .then(async (payload) => {
               state.payload = payload;
               state.embeddedEventFeatures = payload.events?.features || [];

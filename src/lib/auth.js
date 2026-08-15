@@ -1,12 +1,12 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import clientPromise from "./mongodb"; // renamed from ./db if needed
+import { getMongoClient } from "./mongodb"; // renamed from ./db if needed
 import bcrypt from "bcrypt";
 
 /** @type {import("next-auth").AuthOptions} */
 const authConfig = {
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(getMongoClient),
   providers: [
     CredentialsProvider({
       name: "Email & Password",
@@ -16,7 +16,7 @@ const authConfig = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const db = (await clientPromise).db();
+        const db = (await getMongoClient()).db();
         const user = await db
           .collection("users")
           .findOne({ email: credentials.email });

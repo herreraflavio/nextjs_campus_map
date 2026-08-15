@@ -2,7 +2,7 @@ import { ObjectId, MongoClient, Document, WithId } from "mongodb";
 import type { Session } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import clientPromise from "@/lib/mongodb";
+import { getMongoClient } from "@/lib/mongodb";
 import { findUserByEmail, User } from "@/lib/userModel";
 import type {
   DrawingExport,
@@ -31,6 +31,12 @@ export interface MapDoc extends Document {
   createdAt: Date;
   updatedAt: Date;
   isPrivate: boolean;
+}
+
+function ownsMap(ownerId: any, userId: any): boolean {
+  if (!ownerId || !userId) return false;
+  if (typeof ownerId.equals === "function") return ownerId.equals(userId);
+  return String(ownerId) === String(userId);
 }
 
 function isSpatialReference(x: any): x is SpatialReference {
@@ -372,7 +378,7 @@ export async function PATCH(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const mongo: MongoClient = await clientPromise;
+  const mongo: MongoClient = await getMongoClient();
   const db = mongo.db("campusmap");
   const maps = db.collection<MapDoc>("maps");
 
@@ -431,7 +437,7 @@ export async function DELETE(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const mongo: MongoClient = await clientPromise;
+  const mongo: MongoClient = await getMongoClient();
   const db = mongo.db("campusmap");
   const maps = db.collection<MapDoc>("maps");
 
@@ -455,43 +461,51 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  const { id: rawId } = await context.params;
-
-  let mapObjectId: ObjectId;
   try {
-    mapObjectId = new ObjectId(rawId);
-  } catch {
-    return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
-  }
+    const { id: rawId } = await context.params;
 
-  const mongo: MongoClient = await clientPromise;
-  const db = mongo.db("campusmap");
-  const maps = db.collection<MapDoc>("maps");
-
-  const map = await maps.findOne({ _id: mapObjectId });
-  if (!map) {
-    return NextResponse.json({ error: "Map not found" }, { status: 404 });
-  }
-
-  if (map.isPrivate) {
-    const session = await auth();
-    const email = session?.user?.email;
-    const user = email ? await findUserByEmail(email) : null;
-
-    if (!user || !map.ownerId.equals(user._id)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    let mapObjectId: ObjectId;
+    try {
+      mapObjectId = new ObjectId(rawId);
+    } catch {
+      return NextResponse.json({ error: "Invalid map ID" }, { status: 400 });
     }
-  }
 
-  return NextResponse.json(
-    {
-      polygons: map.polygons ?? [],
-      labels: map.labels ?? [],
-      events: map.events ?? [],
-      settings: map.settings,
-    },
-    { status: 200 },
-  );
+    const mongo: MongoClient = await getMongoClient();
+    const db = mongo.db("campusmap");
+    const maps = db.collection<MapDoc>("maps");
+
+    const map = await maps.findOne({ _id: mapObjectId });
+    if (!map) {
+      return NextResponse.json({ error: "Map not found" }, { status: 404 });
+    }
+
+    if (map.isPrivate) {
+      const session = await auth();
+      const email = session?.user?.email;
+      const user = email ? await findUserByEmail(email) : null;
+
+      if (!user || !ownsMap(map.ownerId, user._id)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    return NextResponse.json(
+      {
+        polygons: map.polygons ?? [],
+        labels: map.labels ?? [],
+        events: map.events ?? [],
+        settings: map.settings,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("[api/maps/[id]] Failed to load map data.", error);
+    return NextResponse.json(
+      { error: "Failed to load map data" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(
@@ -538,7 +552,7 @@ export async function POST(
     );
   }
 
-  const mongo: MongoClient = await clientPromise;
+  const mongo: MongoClient = await getMongoClient();
   const db = mongo.db("campusmap");
   const maps = db.collection<MapDoc>("maps");
 

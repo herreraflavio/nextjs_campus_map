@@ -81,6 +81,11 @@ type ArcGISMapPayload = {
   };
 };
 
+type RawArcGISMapPayload = Partial<ArcGISMapPayload> & {
+  eventSources?: string[];
+  userEmail?: string;
+};
+
 /* ─────────────────────────────────────────
  * Defaults
  * ───────────────────────────────────── */
@@ -94,6 +99,10 @@ const DEFAULT_TILELAYER =
   "https://tiles.flavioherrera.com/v12/{level}/{col}/{row}.png";
 const DEFAULT_BASEMAP = "arcgis/nova";
 const DEFAULT_APISOURCES: string[] = [];
+const MAP_DATA_FETCH_RETRY_DELAYS_MS = [300, 900, 1800];
+const RETRYABLE_HTTP_STATUS_CODES = new Set([
+  408, 425, 429, 500, 502, 503, 504,
+]);
 
 const DEFAULT_SETTINGS: ArcGISMapPayload["settings"] = {
   zoom: DEFAULT_ZOOM,
@@ -240,6 +249,78 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function errorStatus(error: unknown): number | null {
+  const status = (error as { status?: unknown })?.status;
+  return typeof status === "number" ? status : null;
+}
+
+function shouldRetryInitialLoad(error: unknown): boolean {
+  if ((error as { name?: string })?.name === "AbortError") return false;
+
+  const status = errorStatus(error);
+  if (status == null) return true;
+  return RETRYABLE_HTTP_STATUS_CODES.has(status);
+}
+
+async function responseError(response: Response): Promise<Error> {
+  let detail = response.statusText;
+
+  try {
+    const body = await response.clone().json();
+    if (typeof body?.error === "string" && body.error.trim()) {
+      detail = body.error.trim();
+    }
+  } catch {
+    try {
+      const text = await response.clone().text();
+      if (text.trim()) detail = text.trim();
+    } catch {
+      // Keep the HTTP status if the error body cannot be read.
+    }
+  }
+
+  const error = new Error(
+    detail ? `HTTP ${response.status}: ${detail}` : `HTTP ${response.status}`,
+  );
+  (error as Error & { status?: number }).status = response.status;
+  return error;
+}
+
+async function fetchJsonWithRetry<T>(
+  url: string,
+  init: RequestInit,
+  retryDelaysMs = MAP_DATA_FETCH_RETRY_DELAYS_MS,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+    try {
+      const response = await fetch(url, init);
+      if (!response.ok) throw await responseError(response);
+      return (await response.json()) as T;
+    } catch (error) {
+      lastError = error;
+      const retryDelay = retryDelaysMs[attempt];
+
+      if (retryDelay == null || !shouldRetryInitialLoad(error)) {
+        throw error;
+      }
+
+      console.warn(
+        `Initial map data load failed; retrying in ${retryDelay}ms.`,
+        error,
+      );
+      await delay(retryDelay);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Map data load failed");
+}
+
 /* ─────────────────────────────────────────
  * Component
  * ───────────────────────────────────── */
@@ -261,17 +342,17 @@ export default function ArcGISWrapper() {
     setError(null);
     setLoading(true);
 
-    fetch(`/api/maps/${mapId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        return res.json() as Promise<
-          Partial<ArcGISMapPayload> & {
-            eventSources?: string[];
-            userEmail?: string;
-          }
-        >;
-      })
+    const controller = new AbortController();
+    let cancelled = false;
+
+    fetchJsonWithRetry<RawArcGISMapPayload>(`/api/maps/${mapId}`, {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
       .then((data) => {
+        if (cancelled) return;
+
         const userEmail =
           typeof data.userEmail === "string" ? data.userEmail : "";
 
@@ -397,10 +478,19 @@ export default function ArcGISWrapper() {
         });
       })
       .catch((err) => {
+        if (cancelled || err?.name === "AbortError") return;
+
         console.error(err);
         setError(`Failed to load map data: ${err.message}`);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [mapId]);
 
   const effectiveMapData: ArcGISMapPayload = mapData ?? {

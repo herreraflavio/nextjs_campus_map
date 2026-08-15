@@ -1,4 +1,4 @@
-import clientPromise from "./mongodb";
+import { getMongoClient } from "./mongodb";
 import bcrypt from "bcryptjs";
 import { ObjectId, Collection } from "mongodb";
 
@@ -11,7 +11,7 @@ export interface User {
 }
 
 async function getUsersCollection(): Promise<Collection<User>> {
-  const db = (await clientPromise).db();
+  const db = (await getMongoClient()).db();
   return db.collection<User>("users");
 }
 
