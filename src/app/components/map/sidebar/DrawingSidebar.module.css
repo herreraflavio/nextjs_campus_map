@@ -1,0 +1,69 @@
+/* src/app/components/map/sidebar/DrawingSidebar.module.css */
+
+.sidebarSection {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.item {
+  margin: 8px 0;
+}
+
+.itemLabel {
+  line-height: 1.4;
+}
+
+.type {
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  appearance: none;
+  border: 1px solid rgba(25, 118, 210, 0.5);
+  border-radius: 4px;
+  background: transparent;
+  color: #1976d2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.75;
+  min-width: 64px;
+  padding: 3px 9px;
+  text-transform: uppercase;
+}
+
+.actionButton:hover {
+  border-color: #1976d2;
+  background: rgba(25, 118, 210, 0.04);
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}

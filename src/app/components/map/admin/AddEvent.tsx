@@ -1,4 +1,4 @@
-//src/app/components/map/MapControls/addEvent.tsx
+//src/app/components/map/admin/AddEvent.tsx
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";

@@ -1,3 +1,4 @@
+//src/app/components/LoggedInDashboard.jsx
 "use client";
 
 import React, { useCallback, useState } from "react";
@@ -18,11 +19,11 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import SaveMap from "@/app/components/button/SaveMap";
 import ShareMap from "@/app/components/button/ShareMap";
-import SketchTool from "@/app/components/SketchTool";
-import Sidebar from "./map/Sidebar";
+import SketchTool from "@/app/components/map/admin/SketchTool";
+import AdminSidebar from "./map/admin/AdminSidebar";
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
-import AddEvent from "./map/MapControls/addEvent";
-import EventsDashboard from "./map/MapControls/EventsDashboard";
+import AddEvent from "./map/admin/AddEvent";
+import EventsDashboard from "./map/admin/EventsDashboard";
 
 /** Memoize map wrapper so header/menu state changes don't cause map rerenders */
 const MemoArcGISWrapper = React.memo(ArcGISWrapper);
@@ -42,13 +43,8 @@ function DashboardHeader({ email }) {
   }, []);
 
   const onLogout = useCallback(async () => {
-    // Close the menu immediately for UI responsiveness
     setAnchorEl(null);
-
-    // Prevent next-auth from doing a full-page redirect/navigation
     await signOut({ redirect: false });
-
-    // App Router navigation (client-side)
     router.replace("/");
     router.refresh();
   }, [router]);
@@ -65,7 +61,6 @@ function DashboardHeader({ email }) {
           <img src="/branding/logo3.png" alt="Home" style={{ height: 36 }} />
         </Button>
 
-        {/* FIX: Added component="div" to prevent invalid HTML nesting */}
         <Typography component="div" variant="h6" sx={{ flexGrow: 1 }}>
           <Box sx={{ p: 2, display: "flex", justifyContent: "center", gap: 2 }}>
             <SaveMap />
@@ -116,12 +111,9 @@ function DashboardHeader({ email }) {
 export default function LoggedInDashboard({ user }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {/* ===== HEADER ===== */}
       <DashboardHeader email={user?.email} />
 
-      {/* ===== BOTTOM ROW: SIDEBAR + MAP ===== */}
       <Box sx={{ flexGrow: 1, display: "flex", overflow: "hidden" }}>
-        {/* Sidebar */}
         <Box
           sx={{
             width: 250,
@@ -131,10 +123,9 @@ export default function LoggedInDashboard({ user }) {
             overflowY: "auto",
           }}
         >
-          <Sidebar />
+          <AdminSidebar />
         </Box>
 
-        {/* Map */}
         <Box
           sx={{
             flexGrow: 1,
@@ -160,24 +151,19 @@ export default function LoggedInDashboard({ user }) {
                 <div style={crosshairDot} />
               </div>
 
-              {/* Corner brackets overlay */}
               <div style={cornersWrap} aria-hidden="true">
-                {/* Top-left */}
                 <div style={{ ...cornerBox, ...cornerTL }}>
                   <div style={{ ...cornerH, ...hTop }} />
                   <div style={{ ...cornerV, ...vLeft }} />
                 </div>
-                {/* Top-right */}
                 <div style={{ ...cornerBox, ...cornerTR }}>
                   <div style={{ ...cornerH, ...hTop }} />
                   <div style={{ ...cornerV, ...vRight }} />
                 </div>
-                {/* Bottom-left */}
                 <div style={{ ...cornerBox, ...cornerBL }}>
                   <div style={{ ...cornerH, ...hBottom }} />
                   <div style={{ ...cornerV, ...vLeft }} />
                 </div>
-                {/* Bottom-right */}
                 <div style={{ ...cornerBox, ...cornerBR }}>
                   <div style={{ ...cornerH, ...hBottom }} />
                   <div style={{ ...cornerV, ...vRight }} />
@@ -191,8 +177,6 @@ export default function LoggedInDashboard({ user }) {
   );
 }
 
-/* ===== overlay styles unchanged ===== */
-
 const crosshairWrap = {
   position: "absolute",
   left: "50%",
@@ -204,7 +188,6 @@ const crosshairWrap = {
   pointerEvents: "none",
 };
 
-// A tiny alpha background is important: many browsers won’t apply backdrop-filter on fully transparent pixels.
 const backdropInvert = {
   background: "rgba(255,255,255,0.06)",
   backdropFilter: "invert(1)",
@@ -294,6 +277,8 @@ const hBottom = { bottom: 0 };
 
 const vLeft = { left: 0 };
 const vRight = { right: 0 };
+
+// //LoggedInDashboard.jsx
 // "use client";
 
 // import React, { useCallback, useState } from "react";
@@ -318,6 +303,7 @@ const vRight = { right: 0 };
 // import Sidebar from "./map/Sidebar";
 // import ArcGISWrapper from "@/app/components/ArcGISWrapper";
 // import AddEvent from "./map/MapControls/addEvent";
+// import EventsDashboard from "./map/MapControls/EventsDashboard";
 
 // /** Memoize map wrapper so header/menu state changes don't cause map rerenders */
 // const MemoArcGISWrapper = React.memo(ArcGISWrapper);
@@ -360,7 +346,8 @@ const vRight = { right: 0 };
 //           <img src="/branding/logo3.png" alt="Home" style={{ height: 36 }} />
 //         </Button>
 
-//         <Typography variant="h6" sx={{ flexGrow: 1 }}>
+//         {/* FIX: Added component="div" to prevent invalid HTML nesting */}
+//         <Typography component="div" variant="h6" sx={{ flexGrow: 1 }}>
 //           <Box sx={{ p: 2, display: "flex", justifyContent: "center", gap: 2 }}>
 //             <SaveMap />
 //             <ShareMap />
@@ -439,6 +426,9 @@ const vRight = { right: 0 };
 //         >
 //           <div style={{ position: "relative" }}>
 //             <AddEvent />
+//           </div>
+//           <div style={{ position: "relative" }}>
+//             <EventsDashboard />
 //           </div>
 
 //           <div style={{ position: "relative", height: "inherit" }}>

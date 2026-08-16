@@ -1,4 +1,4 @@
-//Sidebar.tsx
+//src/app/components/map/admin/AdminSidebar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,8 +8,8 @@ import {
   MapViewRef,
   settingsRef,
   settingsEvents,
-} from "./arcgisRefs";
-import { rebuildBuckets } from "./bucketManager";
+} from "../arcgisRefs";
+import { rebuildBuckets } from "../bucketManager";
 import Extent from "@arcgis/core/geometry/Extent";
 import { useSession } from "next-auth/react";
 import { useMapId } from "@/app/context/MapContext";
@@ -41,7 +41,11 @@ import {
   DialogContent,
 } from "@mui/material";
 
-import MapControls, { Constraints } from "./MapControls";
+import MapControls, { Constraints } from "../MapControls";
+import DrawingSidebar, {
+  DrawingSidebarButton,
+} from "../sidebar/DrawingSidebar";
+import { goToDrawing, useFinalizedDrawings } from "../sidebar/useMapDrawings";
 import type {
   FeatureLayerConfig as SharedFeatureLayerConfig,
   HiddenSegmentRange,
@@ -447,7 +451,7 @@ const PolylinePreview = ({
 
 export default function Sidebar() {
   // ─── Drawing-editing state ───────────────────────────────────────────
-  const [polygonList, setPolygonList] = useState<any[]>([]);
+  const polygonList = useFinalizedDrawings();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingGeometryType, setEditingGeometryType] =
     useState<DrawableGeometryType | null>(null);
@@ -828,99 +832,72 @@ export default function Sidebar() {
 
   // ─── Drawing/Editing Effects ────────────────────────────────────────
   useEffect(() => {
-    const handler = () => {
-      const items = finalizedLayerRef.current?.graphics?.items ?? [];
-      setPolygonList(
-        items
-          .slice()
-          .sort(
-            (a: any, b: any) =>
-              (a.attributes?.order ?? 0) - (b.attributes?.order ?? 0),
-          ),
+    if (!editingId) return;
+
+    const g = polygonList.find((gr: any) => gr.attributes.id === editingId);
+    if (!g) return;
+
+    const geomType = g.geometry?.type as DrawableGeometryType;
+    setEditingGeometryType(geomType);
+
+    setEditName(g.attributes.name ?? "");
+    const { r, g: grn, b, a } = g.symbol.color;
+    setEditColor(
+      `#${[r, grn, b]
+        .map((v: number) => v.toString(16).padStart(2, "0"))
+        .join("")}`,
+    );
+    setEditAlpha(typeof a === "number" ? a : 0.6);
+    setEditHTML(g.popupTemplate?.content ?? g.attributes.description ?? "");
+
+    if (geomType === "polyline") {
+      setEditingPaths(g.geometry.paths || []);
+      setEditWidth(
+        typeof g.symbol?.width === "number"
+          ? g.symbol.width
+          : typeof g.attributes?.width === "number"
+            ? g.attributes.width
+            : 3,
       );
+      resetAnimationEditorFrom(g.attributes?.animation);
+    } else {
+      setEditingPaths([]);
+      resetAnimationEditorFrom(createDefaultPolylineAnimation());
+    }
 
-      if (editingId) {
-        const g = items.find((gr: any) => gr.attributes.id === editingId);
-        if (g) {
-          const geomType = g.geometry?.type as DrawableGeometryType;
-          setEditingGeometryType(geomType);
+    if (geomType === "point") {
+      setEditPointSize(
+        typeof g.symbol?.size === "number"
+          ? g.symbol.size
+          : typeof g.attributes?.size === "number"
+            ? g.attributes.size
+            : 10,
+      );
+    } else {
+      setEditPointSize(10);
+    }
 
-          setEditName(g.attributes.name ?? "");
-          const { r, g: grn, b, a } = g.symbol.color;
-          setEditColor(
-            `#${[r, grn, b]
-              .map((v: number) => v.toString(16).padStart(2, "0"))
-              .join("")}`,
-          );
-          setEditAlpha(typeof a === "number" ? a : 0.6);
-          setEditHTML(
-            g.popupTemplate?.content ?? g.attributes.description ?? "",
-          );
+    const label = labelsLayerRef.current?.graphics.items.find(
+      (l: any) => l.attributes.parentId === editingId,
+    );
 
-          if (geomType === "polyline") {
-            setEditingPaths(g.geometry.paths || []);
-            setEditWidth(
-              typeof g.symbol?.width === "number"
-                ? g.symbol.width
-                : typeof g.attributes?.width === "number"
-                  ? g.attributes.width
-                  : 3,
-            );
-            resetAnimationEditorFrom(g.attributes?.animation);
-          } else {
-            setEditingPaths([]);
-            resetAnimationEditorFrom(createDefaultPolylineAnimation());
-          }
-
-          if (geomType === "point") {
-            setEditPointSize(
-              typeof g.symbol?.size === "number"
-                ? g.symbol.size
-                : typeof g.attributes?.size === "number"
-                  ? g.attributes.size
-                  : 10,
-            );
-          } else {
-            setEditPointSize(10);
-          }
-
-          const label = labelsLayerRef.current?.graphics.items.find(
-            (l: any) => l.attributes.parentId === editingId,
-          );
-
-          if (label) {
-            const size = (label.symbol as any).font.size;
-            setEditFontSize(typeof size === "number" ? size : 12);
-            const show = label.attributes.showAtZoom;
-            const hide = label.attributes.hideAtZoom;
-            setMinZoomEnabled(show != null);
-            setMaxZoomEnabled(hide != null);
-            if (show != null) setMinZoomLevel(String(show));
-            if (hide != null) setMaxZoomLevel(String(hide));
-          } else {
-            setEditFontSize(12);
-            setMinZoomEnabled(false);
-            setMaxZoomEnabled(false);
-            setMinZoomLevel("14");
-            setMaxZoomLevel("18");
-          }
-        }
-      }
-    };
-
-    finalizedLayerRef.events.addEventListener("change", handler);
-    handler();
-
-    return () =>
-      finalizedLayerRef.events.removeEventListener("change", handler);
-  }, [editingId]);
-
-  const goTo = (graphic: any) => {
-    const target = graphic.geometry.extent?.center || graphic.geometry;
-    view
-      .goTo({ target, zoom: 18 })
-      .then(() => view.popup.open({ features: [graphic], location: target }));
-  };
+    if (label) {
+      const size = (label.symbol as any).font.size;
+      setEditFontSize(typeof size === "number" ? size : 12);
+      const show = label.attributes.showAtZoom;
+      const hide = label.attributes.hideAtZoom;
+      setMinZoomEnabled(show != null);
+      setMaxZoomEnabled(hide != null);
+      if (show != null) setMinZoomLevel(String(show));
+      if (hide != null) setMaxZoomLevel(String(hide));
+    } else {
+      setEditFontSize(12);
+      setMinZoomEnabled(false);
+      setMaxZoomEnabled(false);
+      setMinZoomLevel("14");
+      setMaxZoomLevel("18");
+    }
+  }, [editingId, polygonList]);
 
   const startEditing = (graphic: any) => {
     setEditingId(graphic.attributes.id);
@@ -1246,43 +1223,16 @@ export default function Sidebar() {
         </Box>
       )}
 
-      {/* Drawings List */}
-      <Box display="flex" justifyContent="space-between" mb={1}>
-        <div>╔═</div>
-        <Typography component="h3">Drawings</Typography>
-        <div>═╗</div>
-      </Box>
-
-      <ul style={{ paddingLeft: 20 }}>
-        {polygonList.map((graphic) => (
-          <li key={graphic.attributes.id} style={{ margin: "8px 0" }}>
-            {graphic.attributes.name}{" "}
-            <Typography
-              component="span"
-              variant="caption"
-              sx={{ opacity: 0.7 }}
-            >
-              ({graphic.geometry?.type})
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => goTo(graphic)}
-              >
-                Go to
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => startEditing(graphic)}
-              >
-                Edit
-              </Button>
-            </Box>
-          </li>
-        ))}
-      </ul>
+      {/* Shared drawing list. Admin-only actions are injected through renderActions. */}
+      <DrawingSidebar
+        drawings={polygonList}
+        onGoTo={goToDrawing}
+        renderActions={(graphic) => (
+          <DrawingSidebarButton onClick={() => startEditing(graphic)}>
+            Edit
+          </DrawingSidebarButton>
+        )}
+      />
 
       {/* Edit Modal */}
       {editingId && (
