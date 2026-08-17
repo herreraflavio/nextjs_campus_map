@@ -1,3 +1,4 @@
+//src/app/components/map/MapControls/EventCalendarOverlay.tsx
 "use client";
 
 import React from "react";
@@ -138,7 +139,7 @@ export default function EventCalendarOverlay({
     if (!d) return "—";
     const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-      d.getDate()
+      d.getDate(),
     )} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
@@ -220,7 +221,7 @@ export default function EventCalendarOverlay({
         if (!dt) return (g.visible = false);
         const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
           2,
-          "0"
+          "0",
         )}-${String(dt.getDate()).padStart(2, "0")}`;
         g.visible = iso === singleDate;
       });
@@ -353,16 +354,19 @@ export default function EventCalendarOverlay({
   React.useEffect(() => {
     if (playState === "playing" && steps.length > 0 && tickSeconds > 0) {
       if (tickerRef.current) window.clearInterval(tickerRef.current);
-      tickerRef.current = window.setInterval(() => {
-        setStepIndex((i) => {
-          const last = steps.length - 1;
-          if (i >= last) {
-            setPlayState("ended");
-            return last;
-          }
-          return i + 1;
-        });
-      }, Math.max(100, tickSeconds * 1000)) as unknown as number;
+      tickerRef.current = window.setInterval(
+        () => {
+          setStepIndex((i) => {
+            const last = steps.length - 1;
+            if (i >= last) {
+              setPlayState("ended");
+              return last;
+            }
+            return i + 1;
+          });
+        },
+        Math.max(100, tickSeconds * 1000),
+      ) as unknown as number;
     } else {
       if (tickerRef.current) {
         window.clearInterval(tickerRef.current);
@@ -391,8 +395,8 @@ export default function EventCalendarOverlay({
     playState === "playing"
       ? "Pause"
       : playState === "ended"
-      ? "Replay"
-      : "Play";
+        ? "Replay"
+        : "Play";
 
   const handleMainBtn = () => {
     if (steps.length === 0) return;

@@ -1,5 +1,6 @@
-"use client";
 // context/MapContext.tsx
+"use client";
+
 import { createContext, useContext } from "react";
 
 const MapContext = createContext<string | null>(null);

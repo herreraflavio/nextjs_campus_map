@@ -1,4 +1,4 @@
-// components/map/MapControls/locationIndex.ts
+//src/app/components/map/MapControls/locationIndex.tsx
 
 // Shape of public/vertex_meta.json
 type VertexMeta = {
@@ -48,7 +48,7 @@ async function buildIndex(): Promise<LocationIndex> {
   }
   if (!walkRes.ok) {
     throw new Error(
-      `Failed to load ${WALKING_VERTICES_URL}: ${walkRes.status}`
+      `Failed to load ${WALKING_VERTICES_URL}: ${walkRes.status}`,
     );
   }
 
@@ -90,8 +90,8 @@ async function buildIndex(): Promise<LocationIndex> {
       typeof f.id === "number"
         ? f.id
         : typeof (f as any).properties?.OBJECTID === "number"
-        ? (f as any).properties.OBJECTID
-        : null;
+          ? (f as any).properties.OBJECTID
+          : null;
 
     const coords = f.geometry?.coordinates;
     if (id == null || !Array.isArray(coords) || coords.length < 2) continue;
@@ -125,7 +125,7 @@ async function getLocationIndex(): Promise<LocationIndex> {
  * Returns { x, y } in EPSG:4326 (lon, lat) or null if no match.
  */
 export async function lookupCoordinatesByLocation(
-  location_at: string | null | undefined
+  location_at: string | null | undefined,
 ): Promise<{ x: number; y: number } | null> {
   if (!location_at) return null;
 

@@ -18,6 +18,7 @@ export async function createMap(mapData: {
   polygons: any[];
   labels: any[];
   events?: any[]; // ⬅️ NEW
+  categories?: any[];
   featureLayers: any[];
   settings: MapSettings;
 
@@ -39,6 +40,7 @@ export async function createMap(mapData: {
     polygons: mapData.polygons || [],
     labels: mapData.labels || [],
     events: mapData.events || [], // ⬅️ NEW: persist events
+    categories: mapData.categories || [],
     featureLayers: mapData.featureLayers || [],
     settings: mapData.settings,
     createdAt: new Date(),

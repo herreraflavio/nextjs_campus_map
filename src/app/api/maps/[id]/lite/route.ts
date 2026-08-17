@@ -47,6 +47,7 @@ export async function GET(
           polygons: 1,
           labels: 1,
           events: 1,
+          categories: 1,
           settings: 1,
           createdAt: 1,
           updatedAt: 1,

@@ -1,8 +1,8 @@
-//src/app/components/map/MapControls/EventsDashboard.tsx
+//src/app/components/map/admin/EventsDashboard.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { EventModal } from "./addEvent";
+import { EventModal } from "./AddEvent";
 import { deleteEventFromStore } from "../arcgisRefs";
 import { generateExport } from "@/app/helper/saveMap";
 
@@ -74,8 +74,8 @@ function DashboardOverlay({ onClose }: { onClose: () => void }) {
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.95)", // High opacity white backdrop
-        zIndex: 999998, // Just below the EventModal
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        zIndex: 999998,
         display: "flex",
         flexDirection: "column",
         padding: "40px",
@@ -120,7 +120,6 @@ function DashboardOverlay({ onClose }: { onClose: () => void }) {
         }}
       />
 
-      {/* Grid Container */}
       <div
         style={{
           flex: 1,
@@ -162,7 +161,6 @@ function DashboardOverlay({ onClose }: { onClose: () => void }) {
                   boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
                 }}
               >
-                {/* Image Header */}
                 <div
                   style={{
                     width: "100%",
@@ -187,7 +185,6 @@ function DashboardOverlay({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
-                {/* Card Body */}
                 <div
                   style={{
                     padding: "16px",
@@ -232,7 +229,6 @@ function DashboardOverlay({ onClose }: { onClose: () => void }) {
                   </div>
                 </div>
 
-                {/* Card Footer Actions */}
                 <div
                   style={{
                     padding: "12px 16px",
@@ -262,13 +258,12 @@ function DashboardOverlay({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* When editing an event, overlay the exact same modal used for creation */}
       {editingEvent && (
         <EventModal
           initialEvent={editingEvent}
           onClose={() => {
             setEditingEvent(null);
-            loadEvents(); // Refresh data table after modal closes
+            loadEvents();
           }}
         />
       )}
