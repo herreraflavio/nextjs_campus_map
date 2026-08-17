@@ -2,6 +2,7 @@
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
 import PublicMapSidebar from "@/app/components/map/sidebar/PublicMapSidebar";
 import { MapProvider } from "@/app/context/MapContext";
+import styles from "./page.module.css";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -12,35 +13,12 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <MapProvider mapId={id}>
-      <div
-        style={{
-          display: "flex",
-          width: "100vw",
-          height: "100vh",
-          overflow: "hidden",
-        }}
-      >
-        <aside
-          style={{
-            width: 350,
-            flex: "0 0 350px",
-            height: "100%",
-            overflowY: "auto",
-            padding: 16,
-            boxSizing: "border-box",
-            background: "#fff",
-          }}
-        >
+      <div className={styles.shell}>
+        <aside className={styles.sidebar}>
           <PublicMapSidebar />
         </aside>
 
-        <main
-          style={{
-            flex: 1,
-            minWidth: 0,
-            height: "100%",
-          }}
-        >
+        <main className={styles.main}>
           <ArcGISWrapper />
         </main>
       </div>

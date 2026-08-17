@@ -298,8 +298,8 @@ export default function MapSettingsPanel() {
         onClick={toggleSettings}
         sx={{
           position: "absolute",
-          bottom: 25,
-          left: 360,
+          bottom: { xs: "calc(34vh + 25px)", md: 25 },
+          left: { xs: 16, md: 360 },
           width: 50,
           height: 50,
           bgcolor: "background.paper",
@@ -314,14 +314,15 @@ export default function MapSettingsPanel() {
         <Box
           sx={{
             position: "absolute",
-            bottom: 25,
-            left: 420,
+            bottom: { xs: "calc(34vh + 85px)", md: 25 },
+            left: { xs: 16, md: 420 },
             zIndex: 99,
             bgcolor: "background.paper",
             border: 1,
             p: 1,
-            width: 300,
+            width: { xs: "calc(100vw - 32px)", md: 300 },
             height: 500,
+            maxHeight: { xs: "calc(66vh - 110px)", md: 500 },
             overflow: "scroll",
           }}
         >
