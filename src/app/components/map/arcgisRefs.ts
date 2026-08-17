@@ -130,6 +130,7 @@ export const eventsLayerRef = {
   current: null as any,
   events: new EventTarget(),
 };
+export const spriteLayerRef = { current: null as any };
 
 export function setFinalizedLayer(layer: any) {
   finalizedLayerRef.current = layer;

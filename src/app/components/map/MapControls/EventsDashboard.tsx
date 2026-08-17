@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { EventModal } from "./addEvent";
-import { generateExport, deleteEventFromStore } from "../arcgisRefs";
+import { deleteEventFromStore } from "../arcgisRefs";
+import { generateExport } from "@/app/helper/saveMap";
 
 export default function EventsDashboardManager() {
   const [isOpen, setIsOpen] = useState(false);

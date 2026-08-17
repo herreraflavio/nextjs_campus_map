@@ -27,6 +27,23 @@ export interface FeatureLayerConfig {
   };
 }
 
+export type MapCategory = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  iconUrl?: string | null;
+  order: number;
+};
+
+export type MapDrawingAttributes = Record<string, any> & {
+  id?: string;
+  name?: string;
+  description?: string | null;
+  order?: number;
+  categoryId?: string | null;
+  iconUrl?: string | null;
+};
+
 export interface HiddenSegmentRange {
   startSegmentIndex: number;
   endSegmentIndex: number;
@@ -68,7 +85,7 @@ export interface PolylineAnimation {
 }
 
 export interface PolygonDrawing {
-  attributes: Record<string, any>;
+  attributes: MapDrawingAttributes;
   geometry: {
     type: "polygon";
     rings: number[][][];
@@ -82,7 +99,7 @@ export interface PolygonDrawing {
 }
 
 export interface PolylineDrawing {
-  attributes: Record<string, any> & {
+  attributes: MapDrawingAttributes & {
     animation?: PolylineAnimation | null;
   };
   geometry: {
@@ -98,7 +115,7 @@ export interface PolylineDrawing {
 }
 
 export interface PointDrawing {
-  attributes: Record<string, any>;
+  attributes: MapDrawingAttributes;
   geometry: {
     type: "point";
     x: number;
@@ -196,6 +213,7 @@ export interface ExportBody {
   userEmail: string;
   polygons: DrawingExport[];
   labels: Label[];
+  categories: MapCategory[];
   settings: ExportBodySettingsForRef;
 }
 
@@ -204,6 +222,7 @@ export interface MapSaveBody {
   polygons: DrawingExport[];
   labels: Label[];
   events: EventPoint[];
+  categories: MapCategory[];
   settings: SaveSettings;
 }
 

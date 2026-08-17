@@ -11,6 +11,7 @@ import {
   setLabelsLayer,
   eventsLayerRef,
   eventsStore,
+  spriteLayerRef,
   type CampusEvent,
   resortByZ,
 } from "./map/arcgisRefs";
@@ -18,13 +19,18 @@ import "./ArcGISMap.module.css";
 import EventCalendarOverlay from "./map/MapControls/EventCalendarOverlay";
 import DynamicEventLoader from "./map/MapControls/DynamicEventLoader";
 import TurnByTurnOverlay from "./map/MapControls/TurnByTurnOverlay";
-import { rebuildBuckets, labelBuckets } from "./map/bucketManager";
+import { rebuildBuckets } from "./map/bucketManager";
+import {
+  applyMapVisibility,
+  isItemEffectivelyVisibleById,
+} from "./map/categories/categoryVisibility";
 import { toGraphic as toEventGraphic } from "./map/MapControls/eventsLayer";
 import type {
   DrawingExport,
   EventPoint,
   FeatureLayerConfig,
   Label,
+  MapCategory,
   PolylineAnimation,
 } from "@/app/types/myTypes";
 import { normalizePolylineAnimation } from "@/app/types/myTypes";
@@ -37,6 +43,7 @@ type ArcGISMapProps = {
   polygons: DrawingExport[];
   labels: Label[];
   events?: EventPoint[];
+  categories?: MapCategory[];
   eventSources?: string[];
   settings: {
     zoom: number;
@@ -85,6 +92,7 @@ type SpriteScheduleItem =
 type SpriteRuntime = {
   graphic: __esri.Graphic;
   highlightGraphic: __esri.Graphic;
+  sourceDrawingId: string;
   animation: PolylineAnimation;
   schedule: SpriteScheduleItem[];
   cycleDurationMs: number;
@@ -343,6 +351,11 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             spriteLayer: __esri.GraphicsLayer,
           ): SpriteRuntime | null => {
             if (lineGraphic.geometry?.type !== "polyline") return null;
+            const sourceDrawingId =
+              typeof lineGraphic.attributes?.id === "string"
+                ? lineGraphic.attributes.id
+                : null;
+            if (!sourceDrawingId) return null;
 
             const animation = normalizePolylineAnimation(
               lineGraphic.attributes?.animation,
@@ -512,7 +525,12 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
                 yoffset: `${yoffsetPx}px`,
               },
               visible: false,
-              attributes: lineGraphic.attributes,
+              attributes: {
+                ...lineGraphic.attributes,
+                sourceDrawingId,
+                runtimeKind: "highlight",
+                runtimeBaseVisible: false,
+              },
               popupTemplate: lineGraphic.popupTemplate,
             });
 
@@ -520,7 +538,12 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
               geometry: displayNodes[0].point,
               symbol: createSpriteSymbol(initialUrl, animation),
               visible: true,
-              attributes: lineGraphic.attributes, // Make Sprite clickable
+              attributes: {
+                ...lineGraphic.attributes,
+                sourceDrawingId,
+                runtimeKind: "sprite",
+                runtimeBaseVisible: true,
+              },
               popupTemplate: lineGraphic.popupTemplate,
             });
 
@@ -529,6 +552,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             return {
               graphic: spriteGraphic,
               highlightGraphic: highlightGraphic,
+              sourceDrawingId,
               animation,
               schedule,
               cycleDurationMs,
@@ -762,6 +786,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           });
 
           eventsLayerRef.current = eventsLayer;
+          spriteLayerRef.current = spriteLayer;
 
           const tileSrc = mapData.settings.mapTile;
 
@@ -830,15 +855,6 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           resortByZ(map);
           (map.layers as any).on("change", () => resortByZ(map));
 
-          const applyLabelVisibility = (zoom: number) => {
-            labelBuckets.forEach((bucket) => {
-              const show = zoom >= bucket.minZoom && zoom <= bucket.maxZoom;
-              bucket.labels.forEach((lbl) => {
-                lbl.visible = show;
-              });
-            });
-          };
-
           const rebuildAllLabelsFromPolygons = (
             savedLabelMap: globalThis.Map<string, Label>,
           ) => {
@@ -873,7 +889,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             });
 
             rebuildBuckets(labelsLayer);
-            applyLabelVisibility(view.zoom);
+            applyMapVisibility(view.zoom);
           };
 
           const startDynamicSprites = () => {
@@ -893,8 +909,13 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
               if (!runtime) return;
 
               const initialState = resolveRuntimeState(runtime, 0);
+              const sourceVisible = isItemEffectivelyVisibleById(
+                runtime.sourceDrawingId,
+              );
+              runtime.graphic.attributes.runtimeBaseVisible =
+                initialState.visible;
               runtime.graphic.geometry = initialState.point;
-              runtime.graphic.visible = initialState.visible;
+              runtime.graphic.visible = sourceVisible && initialState.visible;
 
               const initialUrl = resolveFrameUrl(
                 runtime.animation,
@@ -932,6 +953,9 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
 
               for (const runtime of animatedRuntimes) {
                 const state = resolveRuntimeState(runtime, elapsed);
+                const sourceVisible = isItemEffectivelyVisibleById(
+                  runtime.sourceDrawingId,
+                );
 
                 // --- CHECK POPUP STATE ---
                 const isSelected = !!(
@@ -941,11 +965,15 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
 
                 // Update sprite graphic
                 runtime.graphic.geometry = state.point;
-                runtime.graphic.visible = state.visible;
+                runtime.graphic.attributes.runtimeBaseVisible = state.visible;
+                runtime.graphic.visible = sourceVisible && state.visible;
 
                 // Update highlight graphic
                 runtime.highlightGraphic.geometry = state.point;
-                runtime.highlightGraphic.visible = state.visible && isSelected;
+                runtime.highlightGraphic.attributes.runtimeBaseVisible =
+                  state.visible && isSelected;
+                runtime.highlightGraphic.visible =
+                  sourceVisible && state.visible && isSelected;
 
                 const nextUrl = resolveFrameUrl(
                   runtime.animation,
@@ -1080,7 +1108,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           });
 
           view.when(() => {
-            applyLabelVisibility(view.zoom);
+            applyMapVisibility(view.zoom);
             setViewReady(true);
             startDynamicSprites();
           });
@@ -1151,7 +1179,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           eventsStore.events.addEventListener("added", onEventAdded);
           storeListenerRef.current = onEventAdded;
 
-          view.watch("zoom", (z: number) => applyLabelVisibility(z));
+          view.watch("zoom", (z: number) => applyMapVisibility(z));
 
           finalizedLayer.graphics.on("change", () => {
             const savedLabelMap2 = new globalThis.Map<string, Label>();
@@ -1173,6 +1201,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
 
             rebuildAllLabelsFromPolygons(savedLabelMap2);
             startDynamicSprites();
+            applyMapVisibility(view.zoom);
           });
         },
       );
@@ -1234,6 +1263,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
         viewRef = null;
         MapViewRef.current = null as any;
         eventsLayerRef.current = null as any;
+        spriteLayerRef.current = null as any;
         GraphicRef.current = null as any;
         setViewReady(false);
       }

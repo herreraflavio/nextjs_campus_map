@@ -1,7 +1,7 @@
 //src/app/components/map/admin/SketchTool.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   editingLayerRef,
   finalizedLayerRef,
@@ -17,6 +17,13 @@ import {
 import { useSession } from "next-auth/react";
 import { useMapId } from "@/app/context/MapContext";
 import { saveMapToServer } from "@/app/helper/saveMap";
+import {
+  clearPendingDrawingCreation,
+  peekPendingDrawingCreation,
+  subscribeDrawingCreation,
+  type PendingDrawingCreation,
+} from "../categories/drawingCreationStore";
+import { applyMapVisibility } from "../categories/categoryVisibility";
 
 type DrawableGeometryType = "polygon" | "polyline" | "point";
 
@@ -40,6 +47,8 @@ type DrawableSymbolAutocast =
 export default function ToggleSketchTool() {
   const sketchRef = useRef<any>(null);
   const [active, setActive] = useState(false);
+  const activeRef = useRef(false);
+  const pendingCreationRef = useRef<PendingDrawingCreation | null>(null);
 
   const labelMap = useRef<Map<string, __esri.Graphic>>(new Map());
 
@@ -49,6 +58,10 @@ export default function ToggleSketchTool() {
   const { data: session } = useSession();
   const userEmail = session?.user?.email;
   const mapId = useMapId();
+
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   function emitFinalizedChange() {
     const finalLayer = finalizedLayerRef.current as any;
@@ -354,6 +367,7 @@ export default function ToggleSketchTool() {
     if (!view || !editLayer || !finalLayer || !Graphic) return;
 
     if (!active) {
+      const requestedTool = pendingCreationRef.current?.geometryType;
       const labelsLayer = labelsLayerRef.current!;
       labelMap.current.clear();
 
@@ -430,12 +444,18 @@ export default function ToggleSketchTool() {
 
             const color = getGraphicColor(g);
             const id = makeGraphicId(geomType);
-            const name = g.attributes?.name ?? defaultNameForGeometry(geomType);
+            const pending = pendingCreationRef.current;
+            const name =
+              pending?.name?.trim() ||
+              g.attributes?.name ||
+              defaultNameForGeometry(geomType);
 
             g.attributes = {
               ...g.attributes,
               id,
               name,
+              categoryId: pending?.categoryId ?? null,
+              iconUrl: pending?.iconUrl ?? null,
               description:
                 g.attributes?.description ??
                 `Drawn at ${new Date().toLocaleTimeString()}`,
@@ -474,6 +494,9 @@ export default function ToggleSketchTool() {
               editLayer.add(label);
               labelMap.current.set(id, label);
             }
+
+            pendingCreationRef.current = null;
+            clearPendingDrawingCreation();
           });
 
           sketch.on("update", (evt: any) => {
@@ -502,7 +525,11 @@ export default function ToggleSketchTool() {
 
           view.ui.add(sketch, "top-right");
           sketchRef.current = sketch;
+          if (requestedTool) {
+            sketch.create(requestedTool);
+          }
           setActive(true);
+          activeRef.current = true;
         },
       );
 
@@ -592,6 +619,7 @@ export default function ToggleSketchTool() {
 
     emitFinalizedChange();
     finalizedLayerRef.events.dispatchEvent(new Event("change"));
+    applyMapVisibility((MapViewRef.current as __esri.MapView | null)?.zoom);
 
     if (userEmail) {
       const s = settingsRef.current!;
@@ -614,7 +642,28 @@ export default function ToggleSketchTool() {
     }
 
     setActive(false);
+    activeRef.current = false;
   };
+
+  useEffect(() => {
+    const unsubscribe = subscribeDrawingCreation((creation) => {
+      pendingCreationRef.current = creation;
+
+      if (sketchRef.current && activeRef.current) {
+        sketchRef.current.create(creation.geometryType);
+        return;
+      }
+
+      toggleSketch();
+    });
+
+    const pending = peekPendingDrawingCreation();
+    if (pending) {
+      pendingCreationRef.current = pending;
+    }
+
+    return unsubscribe;
+  });
 
   return (
     <button

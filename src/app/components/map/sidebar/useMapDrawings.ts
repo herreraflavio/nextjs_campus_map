@@ -7,12 +7,12 @@ import {
   finalizedLayerRef,
   MapViewRef,
 } from "../arcgisRefs";
-import type { DrawingGraphic } from "./DrawingSidebar";
+import type { MapSidebarGraphic } from "./MapSidebar";
 
-function snapshotFinalizedDrawings(): DrawingGraphic[] {
+function snapshotFinalizedDrawings(): MapSidebarGraphic[] {
   const graphics = finalizedLayerRef.current?.graphics;
 
-  const items: DrawingGraphic[] =
+  const items: MapSidebarGraphic[] =
     typeof graphics?.toArray === "function"
       ? graphics.toArray()
       : Array.isArray(graphics?.items)
@@ -26,8 +26,8 @@ function snapshotFinalizedDrawings(): DrawingGraphic[] {
   );
 }
 
-export function useFinalizedDrawings(): DrawingGraphic[] {
-  const [drawings, setDrawings] = useState<DrawingGraphic[]>([]);
+export function useFinalizedDrawings(): MapSidebarGraphic[] {
+  const [drawings, setDrawings] = useState<MapSidebarGraphic[]>([]);
 
   useEffect(() => {
     const sync = () => {
@@ -45,7 +45,7 @@ export function useFinalizedDrawings(): DrawingGraphic[] {
   return drawings;
 }
 
-export function goToDrawing(graphic: DrawingGraphic): void {
+export function goToDrawing(graphic: MapSidebarGraphic): void {
   const view = MapViewRef.current as __esri.MapView | null;
   const geometry = graphic?.geometry as __esri.Geometry | undefined;
 
@@ -58,7 +58,7 @@ export function goToDrawing(graphic: DrawingGraphic): void {
   void view
     .goTo({ target, zoom: 18 })
     .then(() => {
-      view.popup.open({
+      view.popup?.open({
         features: [graphic as any],
         location: target as any,
       });

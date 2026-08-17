@@ -11,6 +11,7 @@ import type {
   FeatureLayerConfig,
   HiddenSegmentRange,
   Label,
+  MapCategory,
   MapSaveBody,
   PolylineAnimation,
   SaveSettings,
@@ -28,6 +29,7 @@ export interface MapDoc extends Document {
   polygons: DrawingExport[];
   labels?: Label[];
   events?: EventPoint[];
+  categories?: MapCategory[];
   settings?: SaveSettings;
   createdAt: Date;
   updatedAt: Date;
@@ -257,6 +259,76 @@ function isEventPoint(x: any): x is EventPoint {
   );
 }
 
+function isMapCategory(x: any): x is MapCategory {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    typeof x.id === "string" &&
+    x.id.trim().length > 0 &&
+    x.id !== "home" &&
+    typeof x.name === "string" &&
+    x.name.trim().length > 0 &&
+    (x.parentId === null || typeof x.parentId === "string") &&
+    (typeof x.iconUrl === "undefined" ||
+      x.iconUrl === null ||
+      typeof x.iconUrl === "string") &&
+    typeof x.order === "number" &&
+    Number.isFinite(x.order)
+  );
+}
+
+function normalizeMapCategoriesForStorage(categories: MapCategory[]): MapCategory[] {
+  const seen = new Set<string>();
+  const cleaned: MapCategory[] = [];
+
+  categories.forEach((category, index) => {
+    const id = category.id.trim();
+    const name = category.name.trim();
+
+    if (!id || id === "home" || !name || seen.has(id)) return;
+
+    seen.add(id);
+    cleaned.push({
+      id,
+      name,
+      parentId:
+        category.parentId && category.parentId !== "home"
+          ? category.parentId
+          : null,
+      iconUrl:
+        typeof category.iconUrl === "string" && category.iconUrl.trim()
+          ? category.iconUrl.trim()
+          : null,
+      order: Number.isFinite(category.order) ? category.order : index,
+    });
+  });
+
+  const byId = new Map(cleaned.map((category) => [category.id, category]));
+
+  return cleaned.map((category) => {
+    if (
+      !category.parentId ||
+      category.parentId === category.id ||
+      !byId.has(category.parentId)
+    ) {
+      return { ...category, parentId: null };
+    }
+
+    let current: string | null = category.parentId;
+    const ancestors = new Set<string>([category.id]);
+
+    while (current) {
+      if (ancestors.has(current)) {
+        return { ...category, parentId: null };
+      }
+      ancestors.add(current);
+      current = byId.get(current)?.parentId ?? null;
+    }
+
+    return category;
+  });
+}
+
 function isFeatureLayerConfig(x: any): x is FeatureLayerConfig {
   return (
     typeof x === "object" &&
@@ -311,6 +383,8 @@ function isMapSaveBody(x: any): x is MapSaveBody {
     x.labels.every(isLabel) &&
     Array.isArray(x.events) &&
     x.events.every(isEventPoint) &&
+    (typeof x.categories === "undefined" ||
+      (Array.isArray(x.categories) && x.categories.every(isMapCategory))) &&
     isSaveSettings(x.settings)
   );
 }
@@ -496,6 +570,7 @@ export async function GET(
         polygons: map.polygons ?? [],
         labels: map.labels ?? [],
         events: map.events ?? [],
+        categories: map.categories ?? [],
         settings: map.settings,
       },
       { status: 200 },
@@ -530,7 +605,7 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          "Request must include valid userEmail, polygons, labels, events, and settings",
+          "Request must include valid userEmail, polygons, labels, events, categories, and settings",
       },
       { status: 400 },
     );
@@ -539,6 +614,9 @@ export async function POST(
   // Keep userEmail in the request shape for backward compatibility, but never
   // trust client-supplied identity for authorization.
   const { polygons, labels, events, settings } = body;
+  const categories = Array.isArray((body as MapSaveBody).categories)
+    ? normalizeMapCategoriesForStorage((body as MapSaveBody).categories)
+    : [];
 
   let session: Session | null;
   try {
@@ -584,6 +662,7 @@ export async function POST(
         polygons,
         labels,
         events,
+        categories,
         settings,
         updatedAt: new Date(),
       },

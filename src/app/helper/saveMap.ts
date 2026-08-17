@@ -5,11 +5,13 @@ import {
   eventsLayerRef,
   eventsStore,
 } from "@/app/components/map/arcgisRefs";
+import { getCategories } from "@/app/components/map/categories/categoryStore";
 import type {
   DrawingExport,
   EventPoint,
   FeatureLayerConfig,
   Label,
+  MapCategory,
   MapSaveBody,
   SaveSettings,
   SpatialReference,
@@ -107,6 +109,19 @@ function serializeDrawing(g: any, index: number): DrawingExport | null {
   }
   if (g.attributes?.order != null) {
     attrs.order = g.attributes.order;
+  }
+  if (typeof g.attributes?.categoryId === "string") {
+    attrs.categoryId = g.attributes.categoryId;
+  } else if (g.attributes?.categoryId === null) {
+    attrs.categoryId = null;
+  }
+  if (
+    typeof g.attributes?.iconUrl === "string" &&
+    g.attributes.iconUrl.trim().length > 0
+  ) {
+    attrs.iconUrl = g.attributes.iconUrl.trim();
+  } else if (g.attributes?.iconUrl === null) {
+    attrs.iconUrl = null;
   }
   if (Array.isArray(g.attributes?.color)) {
     attrs.color = g.attributes.color;
@@ -238,6 +253,7 @@ export function generateExport(): {
   polygons: DrawingExport[];
   labels: Label[];
   events: EventPoint[];
+  categories: MapCategory[];
 } {
   console.log("========== STARTING EXPORT GENERATION ==========");
 
@@ -464,13 +480,15 @@ export function generateExport(): {
   console.log(`Total labels: ${labels.length}`);
 
   console.log("========== EXPORT GENERATION COMPLETE ==========");
+  const categories = getCategories();
   console.log("Summary:", {
     polygons: polygons.length,
     labels: labels.length,
     events: events.length,
+    categories: categories.length,
   });
 
-  return { polygons, labels, events };
+  return { polygons, labels, events, categories };
 }
 
 export function saveMapToServer(
@@ -483,12 +501,13 @@ export function saveMapToServer(
   console.log("User Email:", userEmail);
   console.log("Settings:", settings);
 
-  const { polygons, labels, events } = generateExport();
+  const { polygons, labels, events, categories } = generateExport();
 
   console.log("========== FINAL DATA BEFORE API CALL ==========");
   console.log("Drawings count:", polygons.length);
   console.log("Labels count:", labels.length);
   console.log("Events count:", events.length);
+  console.log("Categories count:", categories.length);
 
   console.log("Drawings detail:");
   polygons.forEach((drawing, index) => {
@@ -511,8 +530,13 @@ export function saveMapToServer(
     });
   });
 
-  if (polygons.length === 0 && labels.length === 0 && events.length === 0) {
-    console.warn("⚠️ Nothing to save (no drawings, labels, or events).");
+  if (
+    polygons.length === 0 &&
+    labels.length === 0 &&
+    events.length === 0 &&
+    categories.length === 0
+  ) {
+    console.warn("⚠️ Nothing to save (no drawings, labels, events, or categories).");
     return;
   }
 
@@ -521,6 +545,7 @@ export function saveMapToServer(
     polygons,
     labels,
     events,
+    categories,
     settings,
   };
 

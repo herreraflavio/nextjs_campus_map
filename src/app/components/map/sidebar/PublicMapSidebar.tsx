@@ -1,7 +1,7 @@
 //src/app/components/map/sidebar/PublicMapSidebar.tsx
 "use client";
 
-import DrawingSidebar from "./DrawingSidebar";
+import MapSidebar from "./MapSidebar";
 import {
   goToDrawing,
   useFinalizedDrawings,
@@ -11,7 +11,7 @@ export default function PublicMapSidebar() {
   const drawings = useFinalizedDrawings();
 
   return (
-    <DrawingSidebar
+    <MapSidebar
       drawings={drawings}
       onGoTo={goToDrawing}
     />

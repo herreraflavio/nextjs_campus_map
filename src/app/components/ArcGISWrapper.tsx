@@ -5,11 +5,18 @@ import dynamic from "next/dynamic";
 import { useMapId } from "@/app/context/MapContext";
 import { useState, useEffect } from "react";
 import { settingsRef } from "../components/map/arcgisRefs";
+import {
+  normalizeCategories,
+  resetCategories,
+  setCategories,
+} from "./map/categories/categoryStore";
+import { resetMapVisibility } from "./map/categories/categoryVisibility";
 import type {
   DrawingExport,
   EventPoint,
   FeatureLayerConfig,
   Label,
+  MapCategory,
 } from "@/app/types/myTypes";
 import { normalizePolylineAnimation } from "@/app/types/myTypes";
 
@@ -64,6 +71,7 @@ type ArcGISMapPayload = {
   polygons: DrawingExport[];
   labels: Label[];
   events: EventPoint[];
+  categories: MapCategory[];
   eventSources: string[];
   settings: {
     zoom: number;
@@ -337,6 +345,8 @@ export default function ArcGISWrapper() {
       setMapData(null);
       setError(null);
       setLoading(false);
+      resetCategories();
+      resetMapVisibility();
       return;
     }
 
@@ -376,6 +386,10 @@ export default function ArcGISWrapper() {
         const events = Array.isArray((data as any).events)
           ? ((data as any).events as any[]).filter(isEventPoint)
           : [];
+
+        const categories = normalizeCategories((data as any).categories);
+        setCategories(categories);
+        resetMapVisibility();
 
         console.log("Loaded map data:", data);
 
@@ -470,6 +484,7 @@ export default function ArcGISWrapper() {
           polygons,
           labels,
           events,
+          categories,
           eventSources,
           settings,
         });
@@ -494,6 +509,7 @@ export default function ArcGISWrapper() {
     polygons: [],
     labels: [],
     events: [],
+    categories: [],
     eventSources: DEFAULT_EVENT_SOURCES,
     settings: DEFAULT_SETTINGS,
   };

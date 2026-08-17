@@ -19,6 +19,14 @@ type SavedEvent = {
   geometry?: any;
 };
 
+type SavedCategory = {
+  id?: unknown;
+  name?: unknown;
+  parentId?: unknown;
+  iconUrl?: unknown;
+  order?: unknown;
+};
+
 type Feature = {
   type: "Feature";
   geometry: any;
@@ -38,6 +46,7 @@ type LiteMapDoc = {
   polygons?: SavedDrawing[];
   labels?: SavedLabel[];
   events?: SavedEvent[];
+  categories?: SavedCategory[];
   settings?: {
     zoom?: number;
     center?: [number, number];
@@ -165,6 +174,8 @@ function drawingToFeature(drawing: SavedDrawing, index: number): Feature | null 
         kind: "polygon",
         name,
         description: attributes.description ?? "",
+        categoryId: attributes.categoryId ?? null,
+        iconUrl: attributes.iconUrl ?? null,
         fillColor: rgbString(fill),
         fillOpacity: alpha(fill, 0.35),
         strokeColor: rgbString(stroke),
@@ -205,6 +216,8 @@ function drawingToFeature(drawing: SavedDrawing, index: number): Feature | null 
         kind: "polyline",
         name,
         description: attributes.description ?? "",
+        categoryId: attributes.categoryId ?? null,
+        iconUrl: attributes.iconUrl ?? null,
         animation: attributes.animation ?? null,
         lineColor: rgbString(line),
         lineOpacity: alpha(line, 1),
@@ -232,6 +245,8 @@ function drawingToFeature(drawing: SavedDrawing, index: number): Feature | null 
         kind: "point",
         name,
         description: attributes.description ?? "",
+        categoryId: attributes.categoryId ?? null,
+        iconUrl: attributes.iconUrl ?? null,
         pointColor: rgbString(pointColor),
         pointOpacity: alpha(pointColor, 1),
         pointRadius: isFiniteNumber(symbol.size)
@@ -338,6 +353,44 @@ function collection(features: Feature[]): FeatureCollection {
   };
 }
 
+function normalizeCategories(categories?: SavedCategory[]): Array<{
+  id: string;
+  name: string;
+  parentId: string | null;
+  iconUrl: string | null;
+  order: number;
+}> {
+  if (!Array.isArray(categories)) return [];
+
+  return categories
+    .map((category, index) => {
+      const id = typeof category.id === "string" ? category.id.trim() : "";
+      const name =
+        typeof category.name === "string" ? category.name.trim() : "";
+
+      if (!id || id === "home" || !name) return null;
+
+      const parentId =
+        typeof category.parentId === "string" && category.parentId.trim()
+          ? category.parentId.trim()
+          : null;
+
+      return {
+        id,
+        name,
+        parentId: parentId === "home" ? null : parentId,
+        iconUrl:
+          typeof category.iconUrl === "string" && category.iconUrl.trim()
+            ? category.iconUrl.trim()
+            : null,
+        order: isFiniteNumber(category.order) ? category.order : index,
+      };
+    })
+    .filter((category): category is NonNullable<typeof category> => {
+      return category !== null;
+    });
+}
+
 function normalizeCenter(settings?: LiteMapDoc["settings"]): [number, number] {
   const center = settings?.center;
   if (
@@ -389,6 +442,7 @@ export function createLiteMapPayload(map: LiteMapDoc) {
       total:
         drawingFeatures.length + labelFeatures.length + eventFeatures.length,
     },
+    categories: normalizeCategories(map.categories),
     drawings: collection(drawingFeatures),
     labels: collection(labelFeatures),
     events: collection(eventFeatures),
