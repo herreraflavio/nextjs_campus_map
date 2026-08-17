@@ -113,14 +113,27 @@ export default function LoggedInDashboard({ user }) {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <DashboardHeader email={user?.email} />
 
-      <Box sx={{ flexGrow: 1, display: "flex", overflow: "hidden" }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          overflow: "hidden",
+          flexDirection: { xs: "column", md: "row" },
+        }}
+      >
         <Box
           sx={{
-            width: 350,
+            width: { xs: "100%", md: 350 },
+            flex: { xs: "0 0 34vh", md: "0 0 350px" },
+            order: { xs: 2, md: 1 },
             display: "flex",
             flexDirection: "column",
-            height: "100%",
+            height: { xs: "auto", md: "100%" },
             overflowY: "auto",
+            borderTop: {
+              xs: "1px solid rgba(0,0,0,0.12)",
+              md: "none",
+            },
           }}
         >
           <AdminSidebar />
@@ -129,7 +142,10 @@ export default function LoggedInDashboard({ user }) {
         <Box
           sx={{
             flexGrow: 1,
-            height: "100%",
+            flex: "1 1 auto",
+            order: { xs: 1, md: 2 },
+            height: { xs: "auto", md: "100%" },
+            minHeight: 0,
             display: "flex",
             flexDirection: "column",
           }}
@@ -141,7 +157,7 @@ export default function LoggedInDashboard({ user }) {
             <EventsDashboard />
           </div>
 
-          <div style={{ position: "relative", height: "inherit" }}>
+          <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
             <MemoArcGISWrapper />
 
             <div>
