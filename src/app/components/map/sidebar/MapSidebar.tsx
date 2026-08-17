@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
   type ButtonHTMLAttributes,
+  type KeyboardEvent,
   type ReactNode,
 } from "react";
 
@@ -53,6 +54,7 @@ type MapSidebarProps = {
   headerActions?: (context: SidebarContext) => ReactNode;
   renderItemActions?: (graphic: MapSidebarGraphic) => ReactNode;
   onActiveCategoryChange?: (categoryId: string) => void;
+  showItemType?: boolean;
 };
 
 export function MapSidebarButton({
@@ -115,6 +117,7 @@ export default function MapSidebar({
   headerActions,
   renderItemActions,
   onActiveCategoryChange,
+  showItemType = true,
 }: MapSidebarProps) {
   const categories = useMapCategories();
   const [activeCategoryId, setActiveCategoryId] = useState(ROOT_CATEGORY_ID);
@@ -180,6 +183,18 @@ export default function MapSidebar({
     setActiveCategoryId(getCategoryParentId(activeCategoryId));
   };
 
+  const handleItemKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+    graphic: MapSidebarGraphic,
+  ) => {
+    if (event.defaultPrevented) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onGoTo(graphic);
+    }
+  };
+
   return (
     <section className={styles.sidebarSection}>
       {activeCategoryId !== ROOT_CATEGORY_ID && (
@@ -230,7 +245,10 @@ export default function MapSidebar({
                 aria-pressed={ownVisible}
                 aria-label={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
                 title={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
-                onClick={() => toggleCategoryVisibility(category.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleCategoryVisibility(category.id);
+                }}
               >
                 {ownVisible ? "✓" : ""}
               </button>
@@ -263,11 +281,16 @@ export default function MapSidebar({
               key={id}
               className={[
                 styles.item,
+                styles.clickableItem,
                 effectiveVisible ? "" : styles.muted,
               ]
                 .filter(Boolean)
                 .join(" ")}
               role="listitem"
+              tabIndex={0}
+              aria-label={`Go to ${name}`}
+              onClick={() => onGoTo(graphic)}
+              onKeyDown={(event) => handleItemKeyDown(event, graphic)}
             >
               <div className={styles.itemTopLine}>
                 <div className={styles.itemLabel}>
@@ -281,21 +304,27 @@ export default function MapSidebar({
                   aria-pressed={ownVisible}
                   aria-label={`${ownVisible ? "Hide" : "Show"} ${name}`}
                   title={`${ownVisible ? "Hide" : "Show"} ${name}`}
-                  onClick={() => toggleItemVisibility(id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleItemVisibility(id);
+                  }}
                 >
                   {ownVisible ? "✓" : ""}
                 </button>
               </div>
 
-              <div className={styles.type}>{geometryType}</div>
+              {showItemType && (
+                <div className={styles.type}>{geometryType}</div>
+              )}
 
-              <div className={styles.actions}>
-                <MapSidebarButton onClick={() => onGoTo(graphic)}>
-                  Go to
-                </MapSidebarButton>
-
-                {renderItemActions?.(graphic)}
-              </div>
+              {renderItemActions && (
+                <div
+                  className={styles.actions}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {renderItemActions(graphic)}
+                </div>
+              )}
             </div>
           );
         })}

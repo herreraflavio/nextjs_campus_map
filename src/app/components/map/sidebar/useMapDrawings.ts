@@ -51,19 +51,56 @@ export function goToDrawing(graphic: MapSidebarGraphic): void {
 
   if (!view || !geometry) return;
 
-  const target =
-    (geometry as any).extent?.center ??
-    geometry;
+  const location = popupLocationForGeometry(geometry);
+  const target = (geometry as any).extent?.center ?? geometry;
 
   void view
     .goTo({ target, zoom: 18 })
     .then(() => {
-      view.popup?.open({
-        features: [graphic as any],
-        location: target as any,
-      });
+      openDrawingPopup(view, graphic, location);
     })
     .catch((error) => {
       console.error("Failed to navigate to drawing:", error);
     });
+}
+
+function popupLocationForGeometry(geometry: __esri.Geometry): __esri.Geometry {
+  const g = geometry as any;
+  return g.type === "point"
+    ? geometry
+    : g.extent?.center ?? g.centroid ?? geometry;
+}
+
+function openDrawingPopup(
+  view: __esri.MapView,
+  graphic: MapSidebarGraphic,
+  location: __esri.Geometry,
+): void {
+  const viewAny = view as any;
+  const popupOptions = {
+    features: [graphic as any],
+    location: location as any,
+  };
+
+  viewAny.popupEnabled = true;
+  viewAny.popup?.close?.();
+
+  const open = () => {
+    if (typeof viewAny.openPopup === "function") {
+      viewAny.openPopup(popupOptions);
+      return;
+    }
+
+    viewAny.popup?.open?.(popupOptions);
+  };
+
+  window.requestAnimationFrame(() => {
+    open();
+
+    window.setTimeout(() => {
+      if (viewAny.popup?.visible !== true) {
+        open();
+      }
+    }, 120);
+  });
 }

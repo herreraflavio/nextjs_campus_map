@@ -116,7 +116,7 @@ export default function LoggedInDashboard({ user }) {
       <Box sx={{ flexGrow: 1, display: "flex", overflow: "hidden" }}>
         <Box
           sx={{
-            width: 250,
+            width: 350,
             display: "flex",
             flexDirection: "column",
             height: "100%",

@@ -299,7 +299,7 @@ export default function MapSettingsPanel() {
         sx={{
           position: "absolute",
           bottom: 25,
-          left: 260,
+          left: 360,
           width: 50,
           height: 50,
           bgcolor: "background.paper",
@@ -315,7 +315,7 @@ export default function MapSettingsPanel() {
           sx={{
             position: "absolute",
             bottom: 25,
-            left: 320,
+            left: 420,
             zIndex: 99,
             bgcolor: "background.paper",
             border: 1,

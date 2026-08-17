@@ -147,6 +147,15 @@
   padding: 6px 0;
 }
 
+.clickableItem {
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.clickableItem:hover {
+  background: rgba(25, 118, 210, 0.04);
+}
+
 .itemTopLine {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 32px;
@@ -209,6 +218,7 @@
 .backButton:focus-visible,
 .drillButton:focus-visible,
 .visibilityButton:focus-visible,
+.clickableItem:focus-visible,
 .actionButton:focus-visible {
   outline: 2px solid #1976d2;
   outline-offset: 2px;

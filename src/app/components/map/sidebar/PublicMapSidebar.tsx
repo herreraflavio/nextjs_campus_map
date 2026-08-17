@@ -14,6 +14,7 @@ export default function PublicMapSidebar() {
     <MapSidebar
       drawings={drawings}
       onGoTo={goToDrawing}
+      showItemType={false}
     />
   );
 }

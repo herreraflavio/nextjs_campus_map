@@ -22,8 +22,8 @@ export default async function Page({ params }: PageProps) {
       >
         <aside
           style={{
-            width: 250,
-            flex: "0 0 250px",
+            width: 350,
+            flex: "0 0 350px",
             height: "100%",
             overflowY: "auto",
             padding: 16,
