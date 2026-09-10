@@ -61,6 +61,17 @@ type SpriteDirection = "up" | "down" | "left" | "right";
 
 const SPRITE_DIRECTIONS: SpriteDirection[] = ["up", "down", "left", "right"];
 const DEFAULT_APISOURCES: string[] = [];
+const DEFAULT_LEGACY_POINT_SIZE = 10;
+const DEFAULT_POINT_PIN_SIZE = 32;
+const DEFAULT_POINT_PIN_ROTATION = 0;
+const DEFAULT_POINT_PIN_OFFSET_X = 0;
+const MIN_POINT_PIN_SCREEN_SIZE_PX = 0.1;
+const MAX_POINT_PIN_SCREEN_SIZE_PX = 200;
+const POINT_PIN_OPTIONS: Array<{ label: string; url: string | null }> = [
+  { label: "Legacy circle", url: null },
+  { label: "Campus pin", url: "/icons/event-pin.png" },
+  { label: "Legacy pin", url: "/icons/event-pin_old_2.png" },
+];
 
 type EditPanelProps =
   | {
@@ -134,6 +145,155 @@ function colorToHexAlpha(color: any): { hex: string; alpha: number } {
       )
       .join("")}`,
     alpha: typeof a === "number" ? a : 0.6,
+  };
+}
+
+function numberFromSymbolDimension(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function fitPointPinToArcGISLimit(
+  width: number,
+  height: number,
+  offsetX: number,
+  offsetY: number,
+) {
+  const rawWidth = Math.max(MIN_POINT_PIN_SCREEN_SIZE_PX, Math.abs(width));
+  const rawHeight = Math.max(MIN_POINT_PIN_SCREEN_SIZE_PX, Math.abs(height));
+  const maxDimension = Math.max(rawWidth, rawHeight);
+  const scale =
+    maxDimension > MAX_POINT_PIN_SCREEN_SIZE_PX
+      ? MAX_POINT_PIN_SCREEN_SIZE_PX / maxDimension
+      : 1;
+
+  return {
+    width: rawWidth * scale,
+    height: rawHeight * scale,
+    offsetX: offsetX * scale,
+    offsetY: offsetY * scale,
+  };
+}
+
+function pointSizeForEditor(symbol: any, attributes: any): number {
+  if (attributes?.pointIconUseMapUnits === true) {
+    return (
+      numberFromSymbolDimension(attributes?.size) ??
+      numberFromSymbolDimension(attributes?.pointIconWidth) ??
+      DEFAULT_POINT_PIN_SIZE
+    );
+  }
+
+  return (
+    numberFromSymbolDimension(symbol?.size) ??
+    numberFromSymbolDimension(symbol?.width) ??
+    numberFromSymbolDimension(symbol?.height) ??
+    numberFromSymbolDimension(attributes?.size) ??
+    (symbol?.type === "picture-marker" || attributes?.pointIconUrl
+      ? DEFAULT_POINT_PIN_SIZE
+      : DEFAULT_LEGACY_POINT_SIZE)
+  );
+}
+
+function pointPinSettingsForEditor(symbol: any, attributes: any) {
+  const size = pointSizeForEditor(symbol, attributes);
+  const useMapUnits = attributes?.pointIconUseMapUnits === true;
+
+  if (useMapUnits) {
+    const width = numberFromSymbolDimension(attributes?.pointIconWidth) ?? size;
+    const height =
+      numberFromSymbolDimension(attributes?.pointIconHeight) ?? size;
+    const rotation =
+      numberFromSymbolDimension(attributes?.pointIconRotation) ??
+      numberFromSymbolDimension(symbol?.angle) ??
+      DEFAULT_POINT_PIN_ROTATION;
+    const offsetX =
+      numberFromSymbolDimension(attributes?.pointIconOffsetX) ??
+      DEFAULT_POINT_PIN_OFFSET_X;
+    const offsetY =
+      numberFromSymbolDimension(attributes?.pointIconOffsetY) ?? size / 2;
+
+    return { size, width, height, rotation, offsetX, offsetY, useMapUnits };
+  }
+
+  const width =
+    numberFromSymbolDimension(symbol?.width) ??
+    numberFromSymbolDimension(attributes?.pointIconWidth) ??
+    size;
+  const height =
+    numberFromSymbolDimension(symbol?.height) ??
+    numberFromSymbolDimension(attributes?.pointIconHeight) ??
+    size;
+  const rotation =
+    numberFromSymbolDimension(symbol?.angle) ??
+    numberFromSymbolDimension(attributes?.pointIconRotation) ??
+    DEFAULT_POINT_PIN_ROTATION;
+  const offsetX =
+    numberFromSymbolDimension(symbol?.xoffset) ??
+    numberFromSymbolDimension(attributes?.pointIconOffsetX) ??
+    DEFAULT_POINT_PIN_OFFSET_X;
+  const offsetY =
+    numberFromSymbolDimension(symbol?.yoffset) ??
+    numberFromSymbolDimension(attributes?.pointIconOffsetY) ??
+    size / 2;
+
+  return { size, width, height, rotation, offsetX, offsetY, useMapUnits };
+}
+
+function pointIconUrlForEditor(symbol: any, attributes: any): string {
+  const candidates = [
+    attributes?.pointIconUrl,
+    attributes?.pinIconUrl,
+    symbol?.type === "picture-marker" ? symbol?.url : null,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return "";
+}
+
+function buildPointSymbolForEdit(
+  pointIconUrl: string,
+  size: number,
+  width: number,
+  height: number,
+  rotation: number,
+  offsetX: number,
+  offsetY: number,
+  color: number[],
+) {
+  if (pointIconUrl) {
+    const metrics = fitPointPinToArcGISLimit(
+      width,
+      height,
+      offsetX,
+      offsetY,
+    );
+
+    return {
+      type: "picture-marker",
+      url: pointIconUrl,
+      width: `${metrics.width}px`,
+      height: `${metrics.height}px`,
+      xoffset: metrics.offsetX,
+      yoffset: metrics.offsetY,
+      angle: rotation,
+    };
+  }
+
+  return {
+    type: "simple-marker",
+    style: "circle",
+    color,
+    size,
+    outline: { color: [255, 0, 0, 1], width: 1 },
   };
 }
 
@@ -472,13 +632,65 @@ export default function EditPanel(props: EditPanelProps) {
   const [editHTML, setEditHTML] = useState("");
   const [editFontSize, setEditFontSize] = useState(12);
   const [editWidth, setEditWidth] = useState(3);
-  const [editPointSize, setEditPointSize] = useState(10);
+  const [editPointSize, setEditPointSize] = useState(DEFAULT_LEGACY_POINT_SIZE);
+  const [editPointPinWidth, setEditPointPinWidth] = useState(
+    DEFAULT_POINT_PIN_SIZE,
+  );
+  const [editPointPinHeight, setEditPointPinHeight] = useState(
+    DEFAULT_POINT_PIN_SIZE,
+  );
+  const [editPointPinRotation, setEditPointPinRotation] = useState(
+    DEFAULT_POINT_PIN_ROTATION,
+  );
+  const [editPointPinOffsetX, setEditPointPinOffsetX] = useState(
+    DEFAULT_POINT_PIN_OFFSET_X,
+  );
+  const [editPointPinOffsetY, setEditPointPinOffsetY] = useState(
+    DEFAULT_POINT_PIN_SIZE / 2,
+  );
   const [editCategoryId, setEditCategoryId] = useState(
     props.mode === "create"
       ? resolveCategoryId(initialCategoryId)
       : ROOT_CATEGORY_ID,
   );
   const [editIconUrl, setEditIconUrl] = useState("");
+  const [editPointIconUrl, setEditPointIconUrl] = useState("");
+
+  const applyPointSize = (value: number) => {
+    const next = Math.max(1, value || 1);
+    const wasDefaultOffsetY = editPointPinOffsetY === editPointSize / 2;
+
+    setEditPointSize(next);
+    if (editPointIconUrl.trim()) {
+      setEditPointPinWidth(next);
+      setEditPointPinHeight(next);
+      if (wasDefaultOffsetY) setEditPointPinOffsetY(next / 2);
+    }
+  };
+
+  const applyPointIconUrl = (value: string) => {
+    const trimmed = value.trim();
+    const shouldApplyImageDefaults =
+      trimmed &&
+      !editPointIconUrl.trim() &&
+      editPointSize === DEFAULT_LEGACY_POINT_SIZE;
+    const shouldApplyLegacyDefaults =
+      !trimmed &&
+      editPointIconUrl.trim() &&
+      editPointSize === DEFAULT_POINT_PIN_SIZE;
+
+    setEditPointIconUrl(value);
+    if (shouldApplyImageDefaults) {
+      setEditPointSize(DEFAULT_POINT_PIN_SIZE);
+      setEditPointPinWidth(DEFAULT_POINT_PIN_SIZE);
+      setEditPointPinHeight(DEFAULT_POINT_PIN_SIZE);
+      setEditPointPinOffsetX(DEFAULT_POINT_PIN_OFFSET_X);
+      setEditPointPinOffsetY(DEFAULT_POINT_PIN_SIZE / 2);
+      setEditPointPinRotation(DEFAULT_POINT_PIN_ROTATION);
+    } else if (shouldApplyLegacyDefaults) {
+      setEditPointSize(DEFAULT_LEGACY_POINT_SIZE);
+    }
+  };
 
   const [minZoomEnabled, setMinZoomEnabled] = useState(false);
   const [maxZoomEnabled, setMaxZoomEnabled] = useState(false);
@@ -584,15 +796,27 @@ export default function EditPanel(props: EditPanelProps) {
     }
 
     if (geomType === "point") {
-      setEditPointSize(
-        typeof graphic.symbol?.size === "number"
-          ? graphic.symbol.size
-          : typeof graphic.attributes?.size === "number"
-            ? graphic.attributes.size
-            : 10,
+      const pointPinSettings = pointPinSettingsForEditor(
+        graphic.symbol,
+        graphic.attributes,
+      );
+      setEditPointSize(pointPinSettings.size);
+      setEditPointPinWidth(pointPinSettings.width);
+      setEditPointPinHeight(pointPinSettings.height);
+      setEditPointPinRotation(pointPinSettings.rotation);
+      setEditPointPinOffsetX(pointPinSettings.offsetX);
+      setEditPointPinOffsetY(pointPinSettings.offsetY);
+      setEditPointIconUrl(
+        pointIconUrlForEditor(graphic.symbol, graphic.attributes),
       );
     } else {
-      setEditPointSize(10);
+      setEditPointSize(DEFAULT_LEGACY_POINT_SIZE);
+      setEditPointPinWidth(DEFAULT_POINT_PIN_SIZE);
+      setEditPointPinHeight(DEFAULT_POINT_PIN_SIZE);
+      setEditPointPinRotation(DEFAULT_POINT_PIN_ROTATION);
+      setEditPointPinOffsetX(DEFAULT_POINT_PIN_OFFSET_X);
+      setEditPointPinOffsetY(DEFAULT_POINT_PIN_SIZE / 2);
+      setEditPointIconUrl("");
     }
 
     const label = labelsLayerRef.current?.graphics.items.find(
@@ -651,6 +875,8 @@ export default function EditPanel(props: EditPanelProps) {
 
       if (key === "item-icon") {
         setEditIconUrl(url);
+      } else if (key === "point-pin-icon") {
+        applyPointIconUrl(url);
       } else {
         const [direction, frameIndex] = key.split("-");
         updateDirectionFrame(
@@ -733,11 +959,22 @@ export default function EditPanel(props: EditPanelProps) {
     setVertexPauses((prev) => prev.filter((_, i) => i !== index));
 
   const startCreate = () => {
+    const pointIconUrl =
+      editingGeometryType === "point" ? editPointIconUrl.trim() : "";
+
     requestDrawingCreation({
       name: editName.trim() || "New Item",
       categoryId:
         editCategoryId === ROOT_CATEGORY_ID ? null : editCategoryId,
       iconUrl: editIconUrl.trim() || null,
+      pointIconUrl: pointIconUrl || null,
+      pointSize: editingGeometryType === "point" ? editPointSize : null,
+      pointIconWidth: pointIconUrl ? editPointPinWidth : null,
+      pointIconHeight: pointIconUrl ? editPointPinHeight : null,
+      pointIconRotation: pointIconUrl ? editPointPinRotation : null,
+      pointIconOffsetX: pointIconUrl ? editPointPinOffsetX : null,
+      pointIconOffsetY: pointIconUrl ? editPointPinOffsetY : null,
+      pointIconUseMapUnits: false,
       geometryType: editingGeometryType,
     });
     props.onClose();
@@ -789,8 +1026,13 @@ export default function EditPanel(props: EditPanelProps) {
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
-    const newSym = (graphic.symbol as any).clone();
-    newSym.color = [r, g, b, +editAlpha.toFixed(2)];
+    const color = [r, g, b, +editAlpha.toFixed(2)];
+    const newSym =
+      typeof (graphic.symbol as any)?.clone === "function"
+        ? (graphic.symbol as any).clone()
+        : { ...(graphic.symbol as any) };
+    newSym.color = color;
+    let nextSymbol = newSym;
 
     if (editingGeometryType === "polyline") {
       newSym.width = editWidth;
@@ -844,11 +1086,39 @@ export default function EditPanel(props: EditPanelProps) {
     }
 
     if (editingGeometryType === "point") {
-      newSym.size = editPointSize;
-      graphic.attributes.size = editPointSize;
+      const size = Math.max(1, editPointSize);
+      const pointIconUrl = editPointIconUrl.trim();
+      graphic.attributes.size = size;
+      graphic.attributes.pointIconUrl = pointIconUrl || null;
+      graphic.attributes.pointIconWidth = pointIconUrl
+        ? editPointPinWidth
+        : null;
+      graphic.attributes.pointIconHeight = pointIconUrl
+        ? editPointPinHeight
+        : null;
+      graphic.attributes.pointIconRotation = pointIconUrl
+        ? editPointPinRotation
+        : null;
+      graphic.attributes.pointIconOffsetX = pointIconUrl
+        ? editPointPinOffsetX
+        : null;
+      graphic.attributes.pointIconOffsetY = pointIconUrl
+        ? editPointPinOffsetY
+        : null;
+      graphic.attributes.pointIconUseMapUnits = false;
+      nextSymbol = buildPointSymbolForEdit(
+        pointIconUrl,
+        size,
+        Math.max(1, editPointPinWidth),
+        Math.max(1, editPointPinHeight),
+        editPointPinRotation,
+        editPointPinOffsetX,
+        editPointPinOffsetY,
+        color,
+      );
     }
 
-    graphic.symbol = newSym;
+    graphic.symbol = nextSymbol;
 
     const labelsLayer = labelsLayerRef.current;
     const label = labelsLayer?.graphics.find(
@@ -1027,6 +1297,211 @@ export default function EditPanel(props: EditPanelProps) {
         </TextField>
       )}
 
+      {editingGeometryType === "point" && (
+        <Box sx={{ mt: 1.5 }}>
+          <TextField
+            label="Point Size"
+            type="number"
+            fullWidth
+            inputProps={{ min: 1, step: 1 }}
+            value={editPointSize}
+            onChange={(event) =>
+              applyPointSize(Math.max(1, +event.target.value || 1))
+            }
+            size="small"
+            margin="dense"
+          />
+
+          <Typography variant="subtitle2" sx={{ mt: 1.5, fontWeight: 700 }}>
+            Point Pin Icon
+          </Typography>
+          <Box
+            sx={{
+              mt: 1,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 1,
+            }}
+          >
+            {POINT_PIN_OPTIONS.map((option) => {
+              const selected =
+                option.url === null
+                  ? !editPointIconUrl.trim()
+                  : editPointIconUrl.trim() === option.url;
+
+              return (
+                <Button
+                  key={option.label}
+                  variant={selected ? "contained" : "outlined"}
+                  size="small"
+                  onClick={() => applyPointIconUrl(option.url ?? "")}
+                  sx={{
+                    justifyContent: "flex-start",
+                    gap: 1,
+                    textTransform: "none",
+                  }}
+                >
+                  {option.url ? (
+                    <img
+                      src={option.url}
+                      alt=""
+                      style={{
+                        width: 22,
+                        height: 22,
+                        objectFit: "contain",
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      component="span"
+                      sx={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        bgcolor: editColor,
+                        border: "1px solid rgba(0,0,0,0.3)",
+                        display: "inline-block",
+                        flex: "0 0 auto",
+                      }}
+                    />
+                  )}
+                  {option.label}
+                </Button>
+              );
+            })}
+          </Box>
+
+          <TextField
+            label="Point Icon URL"
+            fullWidth
+            value={editPointIconUrl}
+            onChange={(event) => applyPointIconUrl(event.target.value)}
+            placeholder="/icons/event-pin.png"
+            size="small"
+            margin="dense"
+          />
+
+          {editPointIconUrl && (
+            <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+              <img
+                src={editPointIconUrl}
+                alt=""
+                style={{
+                  width: 44,
+                  height: 44,
+                  objectFit: "contain",
+                  borderRadius: 4,
+                  border: "1px solid #ddd",
+                }}
+              />
+              <Button size="small" onClick={() => applyPointIconUrl("")}>
+                Use legacy circle
+              </Button>
+            </Box>
+          )}
+
+          {editPointIconUrl && (
+            <Box
+              sx={{
+                mt: 1,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 1,
+              }}
+            >
+              <TextField
+                label="Pin Width"
+                type="number"
+                inputProps={{ min: 1, step: 1 }}
+                value={editPointPinWidth}
+                onChange={(event) =>
+                  setEditPointPinWidth(Math.max(1, +event.target.value || 1))
+                }
+                size="small"
+                margin="dense"
+              />
+              <TextField
+                label="Pin Height"
+                type="number"
+                inputProps={{ min: 1, step: 1 }}
+                value={editPointPinHeight}
+                onChange={(event) =>
+                  setEditPointPinHeight(Math.max(1, +event.target.value || 1))
+                }
+                size="small"
+                margin="dense"
+              />
+              <TextField
+                label="Rotation"
+                type="number"
+                inputProps={{ step: 1 }}
+                value={editPointPinRotation}
+                onChange={(event) =>
+                  setEditPointPinRotation(+event.target.value || 0)
+                }
+                size="small"
+                margin="dense"
+              />
+              <TextField
+                label="Offset X"
+                type="number"
+                inputProps={{ step: 1 }}
+                value={editPointPinOffsetX}
+                onChange={(event) =>
+                  setEditPointPinOffsetX(+event.target.value || 0)
+                }
+                size="small"
+                margin="dense"
+              />
+              <TextField
+                label="Offset Y"
+                type="number"
+                inputProps={{ step: 1 }}
+                value={editPointPinOffsetY}
+                onChange={(event) =>
+                  setEditPointPinOffsetY(+event.target.value || 0)
+                }
+                size="small"
+                margin="dense"
+                sx={{ gridColumn: "1 / -1" }}
+              />
+            </Box>
+          )}
+
+          <Box sx={{ mt: 1, display: "flex", gap: 1, alignItems: "center" }}>
+            <Button
+              component="label"
+              variant="outlined"
+              size="small"
+              startIcon={
+                uploadingKey === "point-pin-icon" ? (
+                  <CircularProgress size={14} />
+                ) : (
+                  <UploadFileIcon />
+                )
+              }
+              disabled={uploadingKey === "point-pin-icon"}
+            >
+              {uploadingKey === "point-pin-icon"
+                ? "Uploading..."
+                : "Upload Pin"}
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  void handleImageUpload(
+                    "point-pin-icon",
+                    event.target.files?.[0] ?? null,
+                  );
+                  event.currentTarget.value = "";
+                }}
+              />
+            </Button>
+          </Box>
+        </Box>
+      )}
+
       {props.mode === "edit" && (
         <>
           <InputLabel sx={{ mt: 2 }}>Color</InputLabel>
@@ -1060,21 +1535,6 @@ export default function EditPanel(props: EditPanelProps) {
               value={editWidth}
               onChange={(event) =>
                 setEditWidth(Math.max(1, +event.target.value || 1))
-              }
-              size="small"
-              margin="dense"
-            />
-          )}
-
-          {editingGeometryType === "point" && (
-            <TextField
-              label="Point Size"
-              type="number"
-              fullWidth
-              inputProps={{ min: 1, step: 1 }}
-              value={editPointSize}
-              onChange={(event) =>
-                setEditPointSize(Math.max(1, +event.target.value || 1))
               }
               size="small"
               margin="dense"

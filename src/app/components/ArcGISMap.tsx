@@ -122,6 +122,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
     let destroyed = false;
     let viewRef: __esri.MapView | null = null;
     let pollId: number | null = null;
+    const viewHandles: Array<{ remove: () => void }> = [];
 
     setViewReady(false);
 
@@ -1179,30 +1180,34 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           eventsStore.events.addEventListener("added", onEventAdded);
           storeListenerRef.current = onEventAdded;
 
-          view.watch("zoom", (z: number) => applyMapVisibility(z));
+          viewHandles.push(
+            view.watch("zoom", (z: number) => applyMapVisibility(z)),
+          );
 
-          finalizedLayer.graphics.on("change", () => {
-            const savedLabelMap2 = new globalThis.Map<string, Label>();
+          viewHandles.push(
+            finalizedLayer.graphics.on("change", () => {
+              const savedLabelMap2 = new globalThis.Map<string, Label>();
 
-            labelsLayer.graphics.toArray().forEach((lbl: any) => {
-              const att = lbl.attributes;
-              if (att?.parentId) {
-                savedLabelMap2.set(att.parentId, {
-                  attributes: att,
-                  geometry: {
-                    type: "point",
-                    x: lbl.geometry.x,
-                    y: lbl.geometry.y,
-                    spatialReference: { wkid: 3857, latestWkid: 3857 },
-                  },
-                } as Label);
-              }
-            });
+              labelsLayer.graphics.toArray().forEach((lbl: any) => {
+                const att = lbl.attributes;
+                if (att?.parentId) {
+                  savedLabelMap2.set(att.parentId, {
+                    attributes: att,
+                    geometry: {
+                      type: "point",
+                      x: lbl.geometry.x,
+                      y: lbl.geometry.y,
+                      spatialReference: { wkid: 3857, latestWkid: 3857 },
+                    },
+                  } as Label);
+                }
+              });
 
-            rebuildAllLabelsFromPolygons(savedLabelMap2);
-            startDynamicSprites();
-            applyMapVisibility(view.zoom);
-          });
+              rebuildAllLabelsFromPolygons(savedLabelMap2);
+              startDynamicSprites();
+              applyMapVisibility(view.zoom);
+            }),
+          );
         },
       );
     };
@@ -1249,6 +1254,8 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
         window.cancelAnimationFrame(spriteAnimRef.current);
         spriteAnimRef.current = null;
       }
+
+      viewHandles.splice(0).forEach((handle) => handle.remove());
 
       if (storeListenerRef.current) {
         eventsStore.events.removeEventListener(

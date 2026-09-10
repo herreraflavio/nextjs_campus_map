@@ -84,6 +84,38 @@ function toRgbaArray(value: any, fallback: number[]): number[] {
   return fallback;
 }
 
+function numberFromSymbolDimension(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function stringDimension(value: unknown, fallbackPx: number): string | number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return `${fallbackPx}px`;
+}
+
+function optionalMarkerOffset(value: unknown, fallback: number): string | number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return fallback;
+}
+
+function copyOptionalNumberAttribute(
+  source: Record<string, any> | undefined,
+  target: Record<string, any>,
+  key: string,
+) {
+  if (typeof source?.[key] === "number" && Number.isFinite(source[key])) {
+    target[key] = source[key];
+  } else if (source?.[key] === null) {
+    target[key] = null;
+  }
+}
+
 function serializeDrawing(g: any, index: number): DrawingExport | null {
   const geomType = g?.geometry?.type;
   if (
@@ -122,6 +154,24 @@ function serializeDrawing(g: any, index: number): DrawingExport | null {
     attrs.iconUrl = g.attributes.iconUrl.trim();
   } else if (g.attributes?.iconUrl === null) {
     attrs.iconUrl = null;
+  }
+  if (
+    typeof g.attributes?.pointIconUrl === "string" &&
+    g.attributes.pointIconUrl.trim().length > 0
+  ) {
+    attrs.pointIconUrl = g.attributes.pointIconUrl.trim();
+  } else if (g.attributes?.pointIconUrl === null) {
+    attrs.pointIconUrl = null;
+  }
+  copyOptionalNumberAttribute(g.attributes, attrs, "pointIconWidth");
+  copyOptionalNumberAttribute(g.attributes, attrs, "pointIconHeight");
+  copyOptionalNumberAttribute(g.attributes, attrs, "pointIconRotation");
+  copyOptionalNumberAttribute(g.attributes, attrs, "pointIconOffsetX");
+  copyOptionalNumberAttribute(g.attributes, attrs, "pointIconOffsetY");
+  if (typeof g.attributes?.pointIconUseMapUnits === "boolean") {
+    attrs.pointIconUseMapUnits = g.attributes.pointIconUseMapUnits;
+  } else if (g.attributes?.pointIconUseMapUnits === null) {
+    attrs.pointIconUseMapUnits = null;
   }
   if (Array.isArray(g.attributes?.color)) {
     attrs.color = g.attributes.color;
@@ -220,14 +270,87 @@ function serializeDrawing(g: any, index: number): DrawingExport | null {
   const outlineWidth =
     typeof sym.outline?.width === "number" ? sym.outline.width : 1;
 
+  const pointIconUseMapUnits = false;
   const size =
-    typeof sym.size === "number"
-      ? sym.size
-      : typeof g.attributes?.size === "number"
-        ? g.attributes.size
-        : 10;
+    (pointIconUseMapUnits
+      ? numberFromSymbolDimension(g.attributes?.size) ??
+        numberFromSymbolDimension(attrs.pointIconWidth)
+      : null) ??
+    numberFromSymbolDimension(sym.size) ??
+    numberFromSymbolDimension(sym.width) ??
+    numberFromSymbolDimension(sym.height) ??
+    numberFromSymbolDimension(g.attributes?.size) ??
+    10;
+  const pointIconUrl =
+    typeof attrs.pointIconUrl === "string" && attrs.pointIconUrl.trim()
+      ? attrs.pointIconUrl.trim()
+      : typeof g.attributes?.pinIconUrl === "string" &&
+          g.attributes.pinIconUrl.trim()
+        ? g.attributes.pinIconUrl.trim()
+        : sym.type === "picture-marker" &&
+            typeof sym.url === "string" &&
+            sym.url.trim()
+          ? sym.url.trim()
+          : "";
+  const pointIconWidth =
+    (pointIconUseMapUnits
+      ? numberFromSymbolDimension(attrs.pointIconWidth)
+      : numberFromSymbolDimension(sym.width)) ??
+    numberFromSymbolDimension(attrs.pointIconWidth) ??
+    size;
+  const pointIconHeight =
+    (pointIconUseMapUnits
+      ? numberFromSymbolDimension(attrs.pointIconHeight)
+      : numberFromSymbolDimension(sym.height)) ??
+    numberFromSymbolDimension(attrs.pointIconHeight) ??
+    size;
+  const pointIconRotation =
+    numberFromSymbolDimension(sym.angle) ??
+    numberFromSymbolDimension(attrs.pointIconRotation) ??
+    0;
+  const pointIconOffsetX =
+    (pointIconUseMapUnits
+      ? numberFromSymbolDimension(attrs.pointIconOffsetX)
+      : numberFromSymbolDimension(sym.xoffset)) ??
+    numberFromSymbolDimension(attrs.pointIconOffsetX) ??
+    0;
+  const pointIconOffsetY =
+    (pointIconUseMapUnits
+      ? numberFromSymbolDimension(attrs.pointIconOffsetY)
+      : numberFromSymbolDimension(sym.yoffset)) ??
+    numberFromSymbolDimension(attrs.pointIconOffsetY) ??
+    size / 2;
 
   console.log(`Point ${index}: "${attrs.name}" (id: ${attrs.id})`);
+
+  if (pointIconUrl) {
+    attrs.pointIconUrl = pointIconUrl;
+    attrs.pointIconWidth = pointIconWidth;
+    attrs.pointIconHeight = pointIconHeight;
+    attrs.pointIconRotation = pointIconRotation;
+    attrs.pointIconOffsetX = pointIconOffsetX;
+    attrs.pointIconOffsetY = pointIconOffsetY;
+    attrs.pointIconUseMapUnits = pointIconUseMapUnits;
+
+    return {
+      attributes: attrs,
+      geometry: {
+        type: "point",
+        x: g.geometry.x,
+        y: g.geometry.y,
+        spatialReference: sr,
+      },
+      symbol: {
+        type: "picture-marker",
+        url: pointIconUrl,
+        width: stringDimension(sym.width, pointIconWidth),
+        height: stringDimension(sym.height, pointIconHeight),
+        xoffset: optionalMarkerOffset(sym.xoffset, pointIconOffsetX),
+        yoffset: optionalMarkerOffset(sym.yoffset, pointIconOffsetY),
+        angle: pointIconRotation,
+      },
+    };
+  }
 
   return {
     attributes: attrs,

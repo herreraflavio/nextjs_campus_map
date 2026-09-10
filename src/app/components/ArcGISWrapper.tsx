@@ -64,6 +64,15 @@ type LooseDrawing = {
         color: number[];
         size: number;
         outline: { color: number[]; width: number };
+      }
+    | {
+        type: "picture-marker";
+        url: string;
+        width?: string | number;
+        height?: string | number;
+        xoffset?: string | number;
+        yoffset?: string | number;
+        angle?: number;
       };
 };
 
@@ -173,6 +182,58 @@ function isPolylineDrawing(value: any): boolean {
   );
 }
 
+function isMarkerDimension(value: any): boolean {
+  return (
+    typeof value === "undefined" ||
+    (typeof value === "number" && Number.isFinite(value)) ||
+    (typeof value === "string" && value.trim().length > 0)
+  );
+}
+
+function isSimplePointSymbol(value: any): boolean {
+  return (
+    value?.type === "simple-marker" &&
+    Array.isArray(value?.color) &&
+    typeof value?.size === "number" &&
+    value?.outline &&
+    Array.isArray(value?.outline?.color) &&
+    typeof value?.outline?.width === "number"
+  );
+}
+
+function isPicturePointSymbol(value: any): boolean {
+  return (
+    value?.type === "picture-marker" &&
+    typeof value?.url === "string" &&
+    value.url.trim().length > 0 &&
+    isMarkerDimension(value.width) &&
+    isMarkerDimension(value.height) &&
+    isMarkerDimension(value.xoffset) &&
+    isMarkerDimension(value.yoffset) &&
+    (typeof value.angle === "undefined" ||
+      (typeof value.angle === "number" && Number.isFinite(value.angle)))
+  );
+}
+
+function isOptionalNumberAttribute(value: any): boolean {
+  return value == null || (typeof value === "number" && Number.isFinite(value));
+}
+
+function isOptionalBooleanAttribute(value: any): boolean {
+  return value == null || typeof value === "boolean";
+}
+
+function hasValidPointPinAttributes(attributes: any): boolean {
+  return (
+    isOptionalNumberAttribute(attributes?.pointIconWidth) &&
+    isOptionalNumberAttribute(attributes?.pointIconHeight) &&
+    isOptionalNumberAttribute(attributes?.pointIconRotation) &&
+    isOptionalNumberAttribute(attributes?.pointIconOffsetX) &&
+    isOptionalNumberAttribute(attributes?.pointIconOffsetY) &&
+    isOptionalBooleanAttribute(attributes?.pointIconUseMapUnits)
+  );
+}
+
 function isPointDrawing(value: any): boolean {
   return (
     value &&
@@ -181,13 +242,9 @@ function isPointDrawing(value: any): boolean {
     typeof value.geometry?.x === "number" &&
     typeof value.geometry?.y === "number" &&
     isSpatialReference(value.geometry?.spatialReference) &&
+    hasValidPointPinAttributes(value.attributes) &&
     typeof value.symbol === "object" &&
-    value.symbol?.type === "simple-marker" &&
-    Array.isArray(value.symbol?.color) &&
-    typeof value.symbol?.size === "number" &&
-    value.symbol?.outline &&
-    Array.isArray(value.symbol?.outline?.color) &&
-    typeof value.symbol?.outline?.width === "number"
+    (isSimplePointSymbol(value.symbol) || isPicturePointSymbol(value.symbol))
   );
 }
 

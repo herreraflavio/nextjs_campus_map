@@ -191,12 +191,70 @@ function isPolylineDrawing(x: any): boolean {
   );
 }
 
+function isMarkerDimension(x: any): boolean {
+  return (
+    typeof x === "undefined" ||
+    (typeof x === "number" && Number.isFinite(x)) ||
+    (typeof x === "string" && x.trim().length > 0)
+  );
+}
+
+function isSimplePointSymbol(x: any): boolean {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    x.type === "simple-marker" &&
+    Array.isArray(x.color) &&
+    typeof x.size === "number" &&
+    typeof x.outline === "object" &&
+    x.outline !== null &&
+    Array.isArray(x.outline.color) &&
+    typeof x.outline.width === "number"
+  );
+}
+
+function isPicturePointSymbol(x: any): boolean {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    x.type === "picture-marker" &&
+    typeof x.url === "string" &&
+    x.url.trim().length > 0 &&
+    isMarkerDimension(x.width) &&
+    isMarkerDimension(x.height) &&
+    isMarkerDimension(x.xoffset) &&
+    isMarkerDimension(x.yoffset) &&
+    (typeof x.angle === "undefined" ||
+      (typeof x.angle === "number" && Number.isFinite(x.angle)))
+  );
+}
+
+function isOptionalNumberAttribute(x: any): boolean {
+  return x == null || (typeof x === "number" && Number.isFinite(x));
+}
+
+function isOptionalBooleanAttribute(x: any): boolean {
+  return x == null || typeof x === "boolean";
+}
+
+function hasValidPointPinAttributes(attributes: any): boolean {
+  return (
+    isOptionalNumberAttribute(attributes.pointIconWidth) &&
+    isOptionalNumberAttribute(attributes.pointIconHeight) &&
+    isOptionalNumberAttribute(attributes.pointIconRotation) &&
+    isOptionalNumberAttribute(attributes.pointIconOffsetX) &&
+    isOptionalNumberAttribute(attributes.pointIconOffsetY) &&
+    isOptionalBooleanAttribute(attributes.pointIconUseMapUnits)
+  );
+}
+
 function isPointDrawing(x: any): boolean {
   return (
     typeof x === "object" &&
     x !== null &&
     typeof x.attributes === "object" &&
     x.attributes !== null &&
+    hasValidPointPinAttributes(x.attributes) &&
     typeof x.geometry === "object" &&
     x.geometry !== null &&
     x.geometry.type === "point" &&
@@ -205,13 +263,7 @@ function isPointDrawing(x: any): boolean {
     isSpatialReference(x.geometry.spatialReference) &&
     typeof x.symbol === "object" &&
     x.symbol !== null &&
-    x.symbol.type === "simple-marker" &&
-    Array.isArray(x.symbol.color) &&
-    typeof x.symbol.size === "number" &&
-    typeof x.symbol.outline === "object" &&
-    x.symbol.outline !== null &&
-    Array.isArray(x.symbol.outline.color) &&
-    typeof x.symbol.outline.width === "number"
+    (isSimplePointSymbol(x.symbol) || isPicturePointSymbol(x.symbol))
   );
 }
 

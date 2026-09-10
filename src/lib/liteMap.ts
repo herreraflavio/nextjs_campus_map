@@ -70,6 +70,14 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function numberFromDimension(value: unknown): number | null {
+  if (isFiniteNumber(value)) return value;
+  if (typeof value !== "string") return null;
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function isLonLat(x: number, y: number): boolean {
   return Math.abs(x) <= 180 && Math.abs(y) <= 90;
 }
@@ -233,6 +241,40 @@ function drawingToFeature(drawing: SavedDrawing, index: number): Feature | null 
   ) {
     const pointColor = rgbaParts(symbol.color, [239, 68, 68, 1]);
     const outlineColor = rgbaParts(symbol.outline?.color, [255, 255, 255, 1]);
+    const pointIconUrl =
+      typeof attributes.pointIconUrl === "string" &&
+      attributes.pointIconUrl.trim()
+        ? attributes.pointIconUrl.trim()
+        : symbol.type === "picture-marker" &&
+            typeof symbol.url === "string" &&
+            symbol.url.trim()
+          ? symbol.url.trim()
+          : null;
+    const pointIconUseMapUnits = false;
+    const pointIconSize =
+      typeof attributes.size === "number"
+        ? attributes.size
+        : numberFromDimension(symbol.size) ?? numberFromDimension(symbol.width);
+    const pointIconWidth =
+      numberFromDimension(symbol.width) ??
+      numberFromDimension(attributes.pointIconWidth) ??
+      pointIconSize;
+    const pointIconHeight =
+      numberFromDimension(symbol.height) ??
+      numberFromDimension(attributes.pointIconHeight) ??
+      pointIconSize;
+    const pointIconRotation =
+      numberFromDimension(symbol.angle) ??
+      numberFromDimension(attributes.pointIconRotation) ??
+      0;
+    const pointIconOffsetX =
+      numberFromDimension(symbol.xoffset) ??
+      numberFromDimension(attributes.pointIconOffsetX) ??
+      0;
+    const pointIconOffsetY =
+      numberFromDimension(symbol.yoffset) ??
+      numberFromDimension(attributes.pointIconOffsetY) ??
+      (pointIconSize != null ? pointIconSize / 2 : 0);
 
     return {
       type: "Feature",
@@ -247,6 +289,14 @@ function drawingToFeature(drawing: SavedDrawing, index: number): Feature | null 
         description: attributes.description ?? "",
         categoryId: attributes.categoryId ?? null,
         iconUrl: attributes.iconUrl ?? null,
+        pointIconUrl,
+        pointIconSize,
+        pointIconWidth,
+        pointIconHeight,
+        pointIconRotation,
+        pointIconOffsetX,
+        pointIconOffsetY,
+        pointIconUseMapUnits,
         pointColor: rgbString(pointColor),
         pointOpacity: alpha(pointColor, 1),
         pointRadius: isFiniteNumber(symbol.size)

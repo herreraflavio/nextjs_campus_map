@@ -42,7 +42,35 @@ export type MapDrawingAttributes = Record<string, any> & {
   order?: number;
   categoryId?: string | null;
   iconUrl?: string | null;
+  pointIconUrl?: string | null;
+  pointIconWidth?: number | null;
+  pointIconHeight?: number | null;
+  pointIconRotation?: number | null;
+  pointIconOffsetX?: number | null;
+  pointIconOffsetY?: number | null;
+  pointIconUseMapUnits?: boolean | null;
 };
+
+export type PointSimpleMarkerSymbol = {
+  type: "simple-marker";
+  color: number[];
+  size: number;
+  outline: { color: number[]; width: number };
+};
+
+export type PointPictureMarkerSymbol = {
+  type: "picture-marker";
+  url: string;
+  width?: string | number;
+  height?: string | number;
+  xoffset?: string | number;
+  yoffset?: string | number;
+  angle?: number;
+};
+
+export type PointMarkerSymbol =
+  | PointSimpleMarkerSymbol
+  | PointPictureMarkerSymbol;
 
 export interface HiddenSegmentRange {
   startSegmentIndex: number;
@@ -122,12 +150,7 @@ export interface PointDrawing {
     y: number;
     spatialReference: SpatialReference;
   };
-  symbol: {
-    type: "simple-marker";
-    color: number[];
-    size: number;
-    outline: { color: number[]; width: number };
-  };
+  symbol: PointMarkerSymbol;
 }
 
 export type DrawingExport = PolygonDrawing | PolylineDrawing | PointDrawing;

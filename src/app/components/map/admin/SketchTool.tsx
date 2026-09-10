@@ -26,6 +26,12 @@ import {
 import { applyMapVisibility } from "../categories/categoryVisibility";
 
 type DrawableGeometryType = "polygon" | "polyline" | "point";
+const DEFAULT_LEGACY_POINT_SIZE = 10;
+const DEFAULT_POINT_PIN_SIZE = 32;
+const DEFAULT_POINT_PIN_ROTATION = 0;
+const DEFAULT_POINT_PIN_OFFSET_X = 0;
+const MIN_POINT_PIN_SCREEN_SIZE_PX = 0.1;
+const MAX_POINT_PIN_SCREEN_SIZE_PX = 200;
 
 type SimpleFillAutocast = __esri.SimpleFillSymbolProperties & {
   type: "simple-fill";
@@ -39,10 +45,15 @@ type SimpleMarkerAutocast = __esri.SimpleMarkerSymbolProperties & {
   type: "simple-marker";
 };
 
+type PictureMarkerAutocast = __esri.PictureMarkerSymbolProperties & {
+  type: "picture-marker";
+};
+
 type DrawableSymbolAutocast =
   | SimpleFillAutocast
   | SimpleLineAutocast
-  | SimpleMarkerAutocast;
+  | SimpleMarkerAutocast
+  | PictureMarkerAutocast;
 
 export default function ToggleSketchTool() {
   const sketchRef = useRef<any>(null);
@@ -113,6 +124,135 @@ export default function ToggleSketchTool() {
     return makeRandomColor();
   };
 
+  const numberFromSymbolDimension = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value !== "string") return null;
+
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const fitPointPinToArcGISLimit = (
+    width: number,
+    height: number,
+    offsetX: number,
+    offsetY: number,
+  ) => {
+    const rawWidth = Math.max(MIN_POINT_PIN_SCREEN_SIZE_PX, Math.abs(width));
+    const rawHeight = Math.max(MIN_POINT_PIN_SCREEN_SIZE_PX, Math.abs(height));
+    const maxDimension = Math.max(rawWidth, rawHeight);
+    const scale =
+      maxDimension > MAX_POINT_PIN_SCREEN_SIZE_PX
+        ? MAX_POINT_PIN_SCREEN_SIZE_PX / maxDimension
+        : 1;
+
+    return {
+      width: rawWidth * scale,
+      height: rawHeight * scale,
+      offsetX: offsetX * scale,
+      offsetY: offsetY * scale,
+    };
+  };
+
+  const getPointIconUseMapUnits = (g: any): boolean =>
+    g.attributes?.pointIconUseMapUnits === true;
+
+  const getPointSize = (g: any): number => {
+    if (getPointIconUseMapUnits(g)) {
+      return (
+        numberFromSymbolDimension(g.attributes?.size) ??
+        numberFromSymbolDimension(g.attributes?.pointIconWidth) ??
+        DEFAULT_POINT_PIN_SIZE
+      );
+    }
+
+    return (
+      numberFromSymbolDimension((g.symbol as any)?.size) ??
+      numberFromSymbolDimension((g.symbol as any)?.width) ??
+      numberFromSymbolDimension((g.symbol as any)?.height) ??
+      numberFromSymbolDimension(g.attributes?.size) ??
+      ((g.symbol as any)?.type === "picture-marker" || g.attributes?.pointIconUrl
+        ? DEFAULT_POINT_PIN_SIZE
+        : DEFAULT_LEGACY_POINT_SIZE)
+    );
+  };
+
+  const getPointIconUrl = (g: any): string => {
+    const candidates = [
+      g.attributes?.pointIconUrl,
+      g.attributes?.pinIconUrl,
+      (g.symbol as any)?.type === "picture-marker"
+        ? (g.symbol as any)?.url
+        : null,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+
+    return "";
+  };
+
+  const getPointIconWidth = (g: any, size = getPointSize(g)): number => {
+    if (getPointIconUseMapUnits(g)) {
+      return numberFromSymbolDimension(g.attributes?.pointIconWidth) ?? size;
+    }
+
+    return (
+      numberFromSymbolDimension((g.symbol as any)?.width) ??
+      numberFromSymbolDimension(g.attributes?.pointIconWidth) ??
+      size
+    );
+  };
+
+  const getPointIconHeight = (g: any, size = getPointSize(g)): number => {
+    if (getPointIconUseMapUnits(g)) {
+      return numberFromSymbolDimension(g.attributes?.pointIconHeight) ?? size;
+    }
+
+    return (
+      numberFromSymbolDimension((g.symbol as any)?.height) ??
+      numberFromSymbolDimension(g.attributes?.pointIconHeight) ??
+      size
+    );
+  };
+
+  const getPointIconRotation = (g: any): number =>
+    numberFromSymbolDimension((g.symbol as any)?.angle) ??
+    numberFromSymbolDimension(g.attributes?.pointIconRotation) ??
+    DEFAULT_POINT_PIN_ROTATION;
+
+  const getPointIconOffsetX = (g: any): number => {
+    if (getPointIconUseMapUnits(g)) {
+      return (
+        numberFromSymbolDimension(g.attributes?.pointIconOffsetX) ??
+        DEFAULT_POINT_PIN_OFFSET_X
+      );
+    }
+
+    return (
+      numberFromSymbolDimension((g.symbol as any)?.xoffset) ??
+      numberFromSymbolDimension(g.attributes?.pointIconOffsetX) ??
+      DEFAULT_POINT_PIN_OFFSET_X
+    );
+  };
+
+  const getPointIconOffsetY = (g: any, size = getPointSize(g)): number => {
+    if (getPointIconUseMapUnits(g)) {
+      return (
+        numberFromSymbolDimension(g.attributes?.pointIconOffsetY) ?? size / 2
+      );
+    }
+
+    return (
+      numberFromSymbolDimension((g.symbol as any)?.yoffset) ??
+      numberFromSymbolDimension(g.attributes?.pointIconOffsetY) ??
+      size / 2
+    );
+  };
+
   const buildPolygonSymbol = (
     _g: any,
     color: number[],
@@ -137,18 +277,45 @@ export default function ToggleSketchTool() {
           : 3,
   });
 
-  const buildPointSymbol = (g: any, color: number[]): SimpleMarkerAutocast => ({
-    type: "simple-marker",
-    style: "circle",
-    color,
-    size:
-      typeof (g.symbol as any)?.size === "number"
-        ? (g.symbol as any).size
-        : typeof g.attributes?.size === "number"
-          ? g.attributes.size
-          : 10,
-    outline: { color: [255, 0, 0, 1], width: 1 },
-  });
+  const buildPointSymbol = (
+    g: any,
+    color: number[],
+  ): SimpleMarkerAutocast | PictureMarkerAutocast => {
+    const pointIconUrl = getPointIconUrl(g);
+    const size = getPointSize(g);
+
+    if (pointIconUrl) {
+      const width = getPointIconWidth(g, size);
+      const height = getPointIconHeight(g, size);
+      const offsetX = getPointIconOffsetX(g);
+      const offsetY = getPointIconOffsetY(g, size);
+
+      const metrics = fitPointPinToArcGISLimit(
+        width,
+        height,
+        offsetX,
+        offsetY,
+      );
+
+      return {
+        type: "picture-marker",
+        url: pointIconUrl,
+        width: `${metrics.width}px`,
+        height: `${metrics.height}px`,
+        xoffset: metrics.offsetX,
+        yoffset: metrics.offsetY,
+        angle: getPointIconRotation(g),
+      };
+    }
+
+    return {
+      type: "simple-marker",
+      style: "circle",
+      color,
+      size,
+      outline: { color: [255, 0, 0, 1], width: 1 },
+    };
+  };
 
   const buildSymbolForGeometry = (
     type: DrawableGeometryType,
@@ -327,12 +494,27 @@ export default function ToggleSketchTool() {
         }
 
         if (geomType === "point") {
-          duplicate.attributes.size =
-            typeof (duplicate.symbol as any)?.size === "number"
-              ? (duplicate.symbol as any).size
-              : typeof duplicate.attributes?.size === "number"
-                ? duplicate.attributes.size
-                : 10;
+          const pointIconUrl = getPointIconUrl(duplicate);
+          const size = getPointSize(duplicate);
+
+          duplicate.attributes.size = size;
+          duplicate.attributes.pointIconUrl = pointIconUrl || null;
+          duplicate.attributes.pointIconWidth = pointIconUrl
+            ? getPointIconWidth(duplicate, size)
+            : null;
+          duplicate.attributes.pointIconHeight = pointIconUrl
+            ? getPointIconHeight(duplicate, size)
+            : null;
+          duplicate.attributes.pointIconRotation = pointIconUrl
+            ? getPointIconRotation(duplicate)
+            : null;
+          duplicate.attributes.pointIconOffsetX = pointIconUrl
+            ? getPointIconOffsetX(duplicate)
+            : null;
+          duplicate.attributes.pointIconOffsetY = pointIconUrl
+            ? getPointIconOffsetY(duplicate, size)
+            : null;
+          duplicate.attributes.pointIconUseMapUnits = false;
         }
 
         duplicate.symbol = buildSymbolForGeometry(
@@ -472,10 +654,30 @@ export default function ToggleSketchTool() {
             }
 
             if (geomType === "point") {
-              g.attributes.size =
-                typeof (g.symbol as any)?.size === "number"
-                  ? (g.symbol as any).size
-                  : 10;
+              const pointIconUrl = pending?.pointIconUrl ?? null;
+              const size =
+                typeof pending?.pointSize === "number"
+                  ? Math.max(1, pending.pointSize)
+                  : getPointSize(g);
+
+              g.attributes.pointIconUrl = pointIconUrl;
+              g.attributes.size = size;
+              g.attributes.pointIconWidth = pointIconUrl
+                ? pending?.pointIconWidth ?? size
+                : null;
+              g.attributes.pointIconHeight = pointIconUrl
+                ? pending?.pointIconHeight ?? size
+                : null;
+              g.attributes.pointIconRotation = pointIconUrl
+                ? pending?.pointIconRotation ?? DEFAULT_POINT_PIN_ROTATION
+                : null;
+              g.attributes.pointIconOffsetX = pointIconUrl
+                ? pending?.pointIconOffsetX ?? DEFAULT_POINT_PIN_OFFSET_X
+                : null;
+              g.attributes.pointIconOffsetY = pointIconUrl
+                ? pending?.pointIconOffsetY ?? size / 2
+                : null;
+              g.attributes.pointIconUseMapUnits = false;
             }
 
             g.symbol = buildSymbolForGeometry(geomType, g, color) as any;
@@ -594,23 +796,36 @@ export default function ToggleSketchTool() {
       }
 
       finalizedLayerRef.current!.add(
-        new Graphic({
-          geometry: g.geometry,
-          symbol: buildPointSymbol(g, color) as any,
-          attributes: {
-            ...g.attributes,
-            order,
-            name,
-            color,
-            size:
-              typeof (g.symbol as any)?.size === "number"
-                ? (g.symbol as any).size
-                : typeof g.attributes?.size === "number"
-                  ? g.attributes.size
-                  : 10,
-          },
-          popupTemplate: g.popupTemplate ?? makePopupTemplate(),
-        }),
+        (() => {
+          const pointIconUrl = getPointIconUrl(g);
+          const size = getPointSize(g);
+
+          return new Graphic({
+            geometry: g.geometry,
+            symbol: buildPointSymbol(g, color) as any,
+            attributes: {
+              ...g.attributes,
+              order,
+              name,
+              color,
+              pointIconUrl: pointIconUrl || null,
+              pointIconWidth: pointIconUrl ? getPointIconWidth(g, size) : null,
+              pointIconHeight: pointIconUrl
+                ? getPointIconHeight(g, size)
+                : null,
+              pointIconRotation: pointIconUrl
+                ? getPointIconRotation(g)
+                : null,
+              pointIconOffsetX: pointIconUrl ? getPointIconOffsetX(g) : null,
+              pointIconOffsetY: pointIconUrl
+                ? getPointIconOffsetY(g, size)
+                : null,
+              pointIconUseMapUnits: false,
+              size,
+            },
+            popupTemplate: g.popupTemplate ?? makePopupTemplate(),
+          });
+        })(),
       );
     });
 
