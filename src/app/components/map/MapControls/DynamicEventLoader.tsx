@@ -180,7 +180,6 @@ export default function DynamicEventLoader(props: {
             // This await is fine inside a .map passed to Promise.all
             const coords = await lookupCoordinatesByLocation(ev.location);
             if (coords) {
-              console.log(coords);
               lon = coords.x;
               lat = coords.y;
             }
@@ -195,10 +194,6 @@ export default function DynamicEventLoader(props: {
             typeof ev.host === "string" && ev.host.trim().length > 0
               ? ev.host
               : undefined;
-
-          const poster_url =
-            (typeof ev.poster_url === "string" && ev.poster_url) ||
-            "/icons/event-pin.png";
 
           const ce: CampusEvent = {
             id: String(
@@ -237,7 +232,6 @@ export default function DynamicEventLoader(props: {
             poster_url: ev.poster_url,
           };
 
-          console.log("Processed event:", ce);
           const g = toEventGraphic(Graphic, ce);
           return g; // Return the graphic
         } catch (e) {
@@ -267,15 +261,12 @@ export default function DynamicEventLoader(props: {
       if (allGraphics.length > 0) {
         layer.addMany(allGraphics);
         dynamicGraphicsRef.current.push(...allGraphics);
-        console.log(`Added ${allGraphics.length} dynamic events to map.`);
 
         //
         // 🎯 *** THIS IS THE FIX *** 🎯
         // Manually notify listeners that the layer contents have changed.
         //
         eventsLayerRef.events.dispatchEvent(new Event("change"));
-      } else {
-        console.log("No dynamic events to add.");
       } // --- End new logic ---
     } catch (e) {
       if ((e as any)?.name !== "AbortError") {

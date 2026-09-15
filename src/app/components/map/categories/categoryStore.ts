@@ -10,6 +10,7 @@ export const ROOT_CATEGORY: MapCategory = {
   parentId: null,
   iconUrl: null,
   order: 0,
+  adminVisible: true,
 };
 
 const categoriesRef = {
@@ -89,7 +90,7 @@ export function normalizeCategories(value: unknown): MapCategory[] {
     if (!id || id === ROOT_CATEGORY_ID || !name || seen.has(id)) return;
 
     seen.add(id);
-    cleaned.push({
+    const normalized: MapCategory = {
       id,
       name,
       parentId: normalizeParentId(candidate.parentId),
@@ -102,10 +103,50 @@ export function normalizeCategories(value: unknown): MapCategory[] {
         Number.isFinite(candidate.order)
           ? candidate.order
           : index,
-    });
+    };
+
+    if (typeof candidate.adminVisible === "boolean") {
+      normalized.adminVisible = candidate.adminVisible;
+    }
+
+    cleaned.push(normalized);
   });
 
   return breakInvalidParentsAndCycles(cleaned);
+}
+
+export function isCategoryAdminVisibleValue(category: MapCategory): boolean {
+  return category.adminVisible !== false;
+}
+
+export function isCategoryAdminVisibleInList(
+  categories: MapCategory[],
+  categoryId: string | null | undefined,
+): boolean {
+  if (!categoryId || categoryId === ROOT_CATEGORY_ID) return true;
+
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  let current = categoryId;
+  const seen = new Set<string>();
+
+  while (current && current !== ROOT_CATEGORY_ID) {
+    if (seen.has(current)) return true;
+    seen.add(current);
+
+    const category = byId.get(current);
+    if (!category) return true;
+    if (!isCategoryAdminVisibleValue(category)) return false;
+
+    current = category.parentId ?? ROOT_CATEGORY_ID;
+  }
+
+  return true;
+}
+
+export function isCategoryAdminVisible(
+  categoryId: string | null | undefined,
+): boolean {
+  return isCategoryAdminVisibleInList(categoriesRef.current, categoryId);
 }
 
 export function setCategories(categories: unknown): void {

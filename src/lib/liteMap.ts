@@ -25,6 +25,16 @@ type SavedCategory = {
   parentId?: unknown;
   iconUrl?: unknown;
   order?: unknown;
+  adminVisible?: unknown;
+};
+
+type NormalizedCategory = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  iconUrl: string | null;
+  order: number;
+  adminVisible?: boolean;
 };
 
 type Feature = {
@@ -353,13 +363,7 @@ function collection(features: Feature[]): FeatureCollection {
   };
 }
 
-function normalizeCategories(categories?: SavedCategory[]): Array<{
-  id: string;
-  name: string;
-  parentId: string | null;
-  iconUrl: string | null;
-  order: number;
-}> {
+function normalizeCategories(categories?: SavedCategory[]): NormalizedCategory[] {
   if (!Array.isArray(categories)) return [];
 
   return categories
@@ -375,7 +379,7 @@ function normalizeCategories(categories?: SavedCategory[]): Array<{
           ? category.parentId.trim()
           : null;
 
-      return {
+      const normalized: NormalizedCategory = {
         id,
         name,
         parentId: parentId === "home" ? null : parentId,
@@ -385,10 +389,49 @@ function normalizeCategories(categories?: SavedCategory[]): Array<{
             : null,
         order: isFiniteNumber(category.order) ? category.order : index,
       };
+
+      if (typeof category.adminVisible === "boolean") {
+        normalized.adminVisible = category.adminVisible;
+      }
+
+      return normalized;
     })
     .filter((category): category is NonNullable<typeof category> => {
       return category !== null;
     });
+}
+
+function isCategoryAdminVisible(
+  categories: NormalizedCategory[],
+  categoryId: unknown,
+): boolean {
+  if (typeof categoryId !== "string" || !categoryId.trim()) return true;
+
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  let current = categoryId.trim();
+  const seen = new Set<string>();
+
+  while (current && current !== "home") {
+    if (seen.has(current)) return true;
+    seen.add(current);
+
+    const category = byId.get(current);
+    if (!category) return true;
+    if (category.adminVisible === false) return false;
+
+    current = category.parentId ?? "home";
+  }
+
+  return true;
+}
+
+function drawingCategoryId(drawing: SavedDrawing): unknown {
+  return drawing.attributes?.categoryId;
+}
+
+function drawingSavedId(drawing: SavedDrawing): string | null {
+  const id = drawing.attributes?.id;
+  return typeof id === "string" && id.trim() ? id.trim() : null;
 }
 
 function normalizeCenter(settings?: LiteMapDoc["settings"]): [number, number] {
@@ -405,10 +448,24 @@ function normalizeCenter(settings?: LiteMapDoc["settings"]): [number, number] {
 }
 
 export function createLiteMapPayload(map: LiteMapDoc) {
-  const drawingFeatures = (map.polygons ?? [])
+  const categories = normalizeCategories(map.categories);
+  const visibleDrawings = (map.polygons ?? []).filter((drawing) =>
+    isCategoryAdminVisible(categories, drawingCategoryId(drawing)),
+  );
+  const visibleDrawingIds = new Set(
+    visibleDrawings
+      .map((drawing) => drawingSavedId(drawing))
+      .filter((id): id is string => id !== null),
+  );
+
+  const drawingFeatures = visibleDrawings
     .map(drawingToFeature)
     .filter((feature): feature is Feature => feature !== null);
   const labelFeatures = (map.labels ?? [])
+    .filter((label) => {
+      const parentId = label.attributes?.parentId;
+      return typeof parentId !== "string" || visibleDrawingIds.has(parentId);
+    })
     .map(labelToFeature)
     .filter((feature): feature is Feature => feature !== null);
   const eventFeatures = (map.events ?? [])
@@ -442,7 +499,9 @@ export function createLiteMapPayload(map: LiteMapDoc) {
       total:
         drawingFeatures.length + labelFeatures.length + eventFeatures.length,
     },
-    categories: normalizeCategories(map.categories),
+    categories: categories.filter((category) =>
+      isCategoryAdminVisible(categories, category.id),
+    ),
     drawings: collection(drawingFeatures),
     labels: collection(labelFeatures),
     events: collection(eventFeatures),

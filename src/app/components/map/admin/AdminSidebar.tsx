@@ -20,6 +20,9 @@ export default function AdminSidebar() {
   const drawings = useFinalizedDrawings();
   const [activeCategoryId, setActiveCategoryId] = useState(ROOT_CATEGORY_ID);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  );
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [creatingItem, setCreatingItem] = useState(false);
 
@@ -38,6 +41,7 @@ export default function AdminSidebar() {
         drawings={drawings}
         onGoTo={goToDrawing}
         onActiveCategoryChange={setActiveCategoryId}
+        includeAdminHiddenCategories
         headerActions={() => (
           <>
             <MapSidebarButton onClick={() => setCreatingCategory(true)}>
@@ -48,11 +52,8 @@ export default function AdminSidebar() {
             </MapSidebarButton>
           </>
         )}
-        renderItemActions={(graphic) => (
-          <MapSidebarButton onClick={() => startEditing(graphic)}>
-            Edit
-          </MapSidebarButton>
-        )}
+        onEditCategory={(category) => setEditingCategoryId(category.id)}
+        onEditItem={startEditing}
       />
 
       {editingId && (
@@ -60,6 +61,14 @@ export default function AdminSidebar() {
           mode="edit"
           editingId={editingId}
           onClose={() => setEditingId(null)}
+        />
+      )}
+
+      {editingCategoryId && (
+        <EditPanel
+          mode="category"
+          categoryId={editingCategoryId}
+          onClose={() => setEditingCategoryId(null)}
         />
       )}
 

@@ -1,10 +1,7 @@
 // app/api/maps/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { createMap, getMapById, getMapsByOwnerId } from "@/lib/mapModel";
-import { findUserByEmail, addMapToUserByEmail } from "@/lib/userModel";
+import { NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const feed = [
       {

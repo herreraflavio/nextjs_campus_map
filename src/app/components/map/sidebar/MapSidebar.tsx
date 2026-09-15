@@ -12,6 +12,8 @@ import {
 import {
   getCategoryName,
   getCategoryParentId,
+  isCategoryAdminVisibleInList,
+  isCategoryAdminVisibleValue,
   ROOT_CATEGORY_ID,
   resolveCategoryId,
 } from "../categories/categoryStore";
@@ -25,6 +27,7 @@ import {
   toggleItemVisibility,
 } from "../categories/categoryVisibility";
 import { useMapCategories } from "../categories/useMapCategories";
+import type { MapCategory } from "@/app/types/myTypes";
 import styles from "./MapSidebar.module.css";
 
 export type MapSidebarGraphic = {
@@ -52,9 +55,11 @@ type MapSidebarProps = {
   drawings: MapSidebarGraphic[];
   onGoTo: (graphic: MapSidebarGraphic) => void;
   headerActions?: (context: SidebarContext) => ReactNode;
-  renderItemActions?: (graphic: MapSidebarGraphic) => ReactNode;
+  onEditCategory?: (category: MapCategory) => void;
+  onEditItem?: (graphic: MapSidebarGraphic) => void;
   onActiveCategoryChange?: (categoryId: string) => void;
   showItemType?: boolean;
+  includeAdminHiddenCategories?: boolean;
 };
 
 export function MapSidebarButton({
@@ -111,21 +116,63 @@ function IconSlot({
   );
 }
 
+function EditIconButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={styles.editIconButton}
+      aria-label={label}
+      title={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+    >
+      <svg
+        className={styles.editIcon}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M4 16.5V20h3.5L18.1 9.4l-3.5-3.5L4 16.5Zm12.9-12.9 3.5 3.5-1.7 1.7-3.5-3.5 1.7-1.7Z"
+          fill="currentColor"
+        />
+      </svg>
+    </button>
+  );
+}
+
 export default function MapSidebar({
   drawings,
   onGoTo,
   headerActions,
-  renderItemActions,
+  onEditCategory,
+  onEditItem,
   onActiveCategoryChange,
   showItemType = true,
+  includeAdminHiddenCategories = false,
 }: MapSidebarProps) {
   const categories = useMapCategories();
   const [activeCategoryId, setActiveCategoryId] = useState(ROOT_CATEGORY_ID);
   const [, setVisibilityVersion] = useState(0);
 
+  const visibleCategories = useMemo(() => {
+    if (includeAdminHiddenCategories) return categories;
+    return categories.filter((category) =>
+      isCategoryAdminVisibleInList(categories, category.id),
+    );
+  }, [categories, includeAdminHiddenCategories]);
+
   const categoryIds = useMemo(
-    () => new Set(categories.map((category) => category.id)),
-    [categories],
+    () => new Set(visibleCategories.map((category) => category.id)),
+    [visibleCategories],
   );
 
   useEffect(() => {
@@ -155,7 +202,7 @@ export default function MapSidebar({
       activeCategoryId === ROOT_CATEGORY_ID ? null : activeCategoryId;
 
     return sortByOrderThenName(
-      categories
+      visibleCategories
         .filter((category) => (category.parentId ?? null) === parentId)
         .map((category) => ({
           ...category,
@@ -163,21 +210,24 @@ export default function MapSidebar({
           name: category.name,
         })),
     );
-  }, [activeCategoryId, categories]);
+  }, [activeCategoryId, visibleCategories]);
 
   const directDrawings = useMemo(() => {
     return [...drawings]
-      .filter(
-        (graphic) =>
-          resolveCategoryId(graphic.attributes?.categoryId) ===
-          activeCategoryId,
-      )
+      .filter((graphic) => {
+        const categoryId = resolveCategoryId(graphic.attributes?.categoryId);
+        return (
+          categoryId === activeCategoryId &&
+          (includeAdminHiddenCategories ||
+            isCategoryAdminVisibleInList(categories, categoryId))
+        );
+      })
       .sort(
         (a, b) =>
           (a.attributes?.order ?? 0) -
           (b.attributes?.order ?? 0),
       );
-  }, [activeCategoryId, drawings]);
+  }, [activeCategoryId, categories, drawings, includeAdminHiddenCategories]);
 
   const goBack = () => {
     setActiveCategoryId(getCategoryParentId(activeCategoryId));
@@ -218,53 +268,70 @@ export default function MapSidebar({
         {childCategories.map((category) => {
           const ownVisible = getCategoryOwnVisibility(category.id);
           const effectiveVisible = isCategoryEffectivelyVisible(category.id);
+          const adminVisible = isCategoryAdminVisibleValue(category);
 
           return (
-            <div
-              key={category.id}
-              className={[
-                styles.categoryRow,
-                effectiveVisible ? "" : styles.muted,
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              role="listitem"
-            >
-              <button
-                type="button"
-                className={styles.categoryLabel}
-                onClick={() => setActiveCategoryId(category.id)}
+            <div key={category.id} role="listitem">
+              <div
+                className={[
+                  styles.categoryRow,
+                  effectiveVisible ? "" : styles.muted,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
-                <IconSlot src={category.iconUrl} fallback="C" />
-                <span className={styles.categoryName}>{category.name}</span>
-              </button>
+                <button
+                  type="button"
+                  className={styles.categoryLabel}
+                  onClick={() => setActiveCategoryId(category.id)}
+                >
+                  <IconSlot src={category.iconUrl} fallback="C" />
+                  <span className={styles.categoryText}>
+                    <span className={styles.categoryName}>
+                      {category.name}
+                    </span>
+                    {includeAdminHiddenCategories && !adminVisible && (
+                      <span className={styles.statusBadge}>Hidden</span>
+                    )}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                className={styles.visibilityButton}
-                aria-pressed={ownVisible}
-                aria-label={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
-                title={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleCategoryVisibility(category.id);
-                }}
-              >
-                {ownVisible ? "✓" : ""}
-              </button>
+                <div className={styles.rowControls}>
+                  {onEditCategory && (
+                    <EditIconButton
+                      label={`Edit ${category.name}`}
+                      onClick={() => onEditCategory(category)}
+                    />
+                  )}
 
-              <button
-                type="button"
-                className={styles.drillButton}
-                aria-label={`Open ${category.name}`}
-                onClick={() => setActiveCategoryId(category.id)}
-              >
-                <img
-                  src="/assets/icons/right-chevron.svg"
-                  alt=""
-                  className={styles.chevron}
-                />
-              </button>
+                  <button
+                    type="button"
+                    className={styles.visibilityButton}
+                    aria-pressed={ownVisible}
+                    aria-label={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
+                    title={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleCategoryVisibility(category.id);
+                    }}
+                  >
+                    {ownVisible ? "✓" : ""}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className={styles.drillButton}
+                  aria-label={`Open ${category.name}`}
+                  onClick={() => setActiveCategoryId(category.id)}
+                >
+                  <img
+                    src="/assets/icons/right-chevron.svg"
+                    alt=""
+                    className={styles.chevron}
+                  />
+                </button>
+              </div>
             </div>
           );
         })}
@@ -298,32 +365,32 @@ export default function MapSidebar({
                   <span>{name}</span>
                 </div>
 
-                <button
-                  type="button"
-                  className={styles.visibilityButton}
-                  aria-pressed={ownVisible}
-                  aria-label={`${ownVisible ? "Hide" : "Show"} ${name}`}
-                  title={`${ownVisible ? "Hide" : "Show"} ${name}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    toggleItemVisibility(id);
-                  }}
-                >
-                  {ownVisible ? "✓" : ""}
-                </button>
+                <div className={styles.rowControls}>
+                  {onEditItem && (
+                    <EditIconButton
+                      label={`Edit ${name}`}
+                      onClick={() => onEditItem(graphic)}
+                    />
+                  )}
+
+                  <button
+                    type="button"
+                    className={styles.visibilityButton}
+                    aria-pressed={ownVisible}
+                    aria-label={`${ownVisible ? "Hide" : "Show"} ${name}`}
+                    title={`${ownVisible ? "Hide" : "Show"} ${name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleItemVisibility(id);
+                    }}
+                  >
+                    {ownVisible ? "✓" : ""}
+                  </button>
+                </div>
               </div>
 
               {showItemType && (
                 <div className={styles.type}>{geometryType}</div>
-              )}
-
-              {renderItemActions && (
-                <div
-                  className={styles.actions}
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  {renderItemActions(graphic)}
-                </div>
               )}
             </div>
           );

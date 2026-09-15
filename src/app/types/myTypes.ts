@@ -33,6 +33,7 @@ export type MapCategory = {
   parentId: string | null;
   iconUrl?: string | null;
   order: number;
+  adminVisible?: boolean;
 };
 
 export type MapDrawingAttributes = Record<string, any> & {

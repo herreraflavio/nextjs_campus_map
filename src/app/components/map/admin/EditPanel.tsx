@@ -36,8 +36,10 @@ import { rebuildBuckets } from "../bucketManager";
 import { useMapCategories } from "../categories/useMapCategories";
 import {
   getCategoryDepth,
+  isCategoryAdminVisibleValue,
   ROOT_CATEGORY_ID,
   resolveCategoryId,
+  updateCategory,
 } from "../categories/categoryStore";
 import {
   requestDrawingCreation,
@@ -73,6 +75,13 @@ type EditPanelProps =
       mode: "create";
       editingId?: never;
       initialCategoryId: string;
+      onClose: () => void;
+    }
+  | {
+      mode: "category";
+      editingId?: never;
+      initialCategoryId?: never;
+      categoryId: string;
       onClose: () => void;
     };
 
@@ -166,7 +175,9 @@ function buildCategoryOptions(categories: MapCategory[]) {
       const depth = getCategoryDepth(category.id);
       options.push({
         id: category.id,
-        label: `${"  ".repeat(depth)}${category.name}`,
+        label: `${"  ".repeat(depth)}${category.name}${
+          isCategoryAdminVisibleValue(category) ? "" : " (Hidden)"
+        }`,
       });
 
       seen.add(category.id);
@@ -479,6 +490,7 @@ export default function EditPanel(props: EditPanelProps) {
       : ROOT_CATEGORY_ID,
   );
   const [editIconUrl, setEditIconUrl] = useState("");
+  const [categoryAdminVisible, setCategoryAdminVisible] = useState(true);
 
   const [minZoomEnabled, setMinZoomEnabled] = useState(false);
   const [maxZoomEnabled, setMaxZoomEnabled] = useState(false);
@@ -617,6 +629,20 @@ export default function EditPanel(props: EditPanelProps) {
     }
   }, [props.mode, editingId]);
 
+  const editingCategoryId =
+    props.mode === "category" ? props.categoryId : null;
+
+  useEffect(() => {
+    if (!editingCategoryId) return;
+
+    const category = categories.find((item) => item.id === editingCategoryId);
+    if (!category) return;
+
+    setEditName(category.name);
+    setEditIconUrl(category.iconUrl ?? "");
+    setCategoryAdminVisible(isCategoryAdminVisibleValue(category));
+  }, [editingCategoryId, categories]);
+
   const handleImageUpload = async (key: string, file: File | null) => {
     if (!file) return;
 
@@ -649,7 +675,7 @@ export default function EditPanel(props: EditPanelProps) {
         );
       }
 
-      if (key === "item-icon") {
+      if (key === "item-icon" || key === "category-icon") {
         setEditIconUrl(url);
       } else {
         const [direction, frameIndex] = key.split("-");
@@ -740,6 +766,23 @@ export default function EditPanel(props: EditPanelProps) {
       iconUrl: editIconUrl.trim() || null,
       geometryType: editingGeometryType,
     });
+    props.onClose();
+  };
+
+  const applyCategoryEdits = () => {
+    if (props.mode !== "category") return;
+
+    const trimmedName = editName.trim();
+    if (!trimmedName) return;
+
+    updateCategory(props.categoryId, {
+      name: trimmedName,
+      iconUrl: editIconUrl.trim() || null,
+      adminVisible: categoryAdminVisible,
+    });
+
+    saveCurrentMap();
+    applyMapVisibility((MapViewRef.current as __esri.MapView | null)?.zoom);
     props.onClose();
   };
 
@@ -904,7 +947,9 @@ export default function EditPanel(props: EditPanelProps) {
   };
 
   const panelTitle =
-    props.mode === "create"
+    props.mode === "category"
+      ? "Edit Category"
+      : props.mode === "create"
       ? "New Item"
       : `Edit ${editingGeometryType ?? "Drawing"}`;
 
@@ -937,26 +982,43 @@ export default function EditPanel(props: EditPanelProps) {
         margin="dense"
       />
 
-      <TextField
-        label="Category"
-        fullWidth
-        select
-        SelectProps={{ native: true }}
-        value={editCategoryId}
-        onChange={(event) => setEditCategoryId(event.target.value)}
-        size="small"
-        margin="dense"
-      >
-        {categoryOptions.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </TextField>
+      {props.mode !== "category" && (
+        <TextField
+          label="Category"
+          fullWidth
+          select
+          SelectProps={{ native: true }}
+          value={editCategoryId}
+          onChange={(event) => setEditCategoryId(event.target.value)}
+          size="small"
+          margin="dense"
+        >
+          {categoryOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+      )}
+
+      {props.mode === "category" && (
+        <FormControlLabel
+          sx={{ mt: 1 }}
+          control={
+            <Checkbox
+              checked={categoryAdminVisible}
+              onChange={(event) =>
+                setCategoryAdminVisible(event.target.checked)
+              }
+            />
+          }
+          label={categoryAdminVisible ? "Visible to users" : "Hidden from users"}
+        />
+      )}
 
       <Box sx={{ mt: 1.5 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          Sidebar Icon
+          {props.mode === "category" ? "Category Icon" : "Sidebar Icon"}
         </Typography>
         {editIconUrl && (
           <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
@@ -982,22 +1044,29 @@ export default function EditPanel(props: EditPanelProps) {
             variant="outlined"
             size="small"
             startIcon={
-              uploadingKey === "item-icon" ? (
+              uploadingKey ===
+              (props.mode === "category" ? "category-icon" : "item-icon") ? (
                 <CircularProgress size={14} />
               ) : (
                 <UploadFileIcon />
               )
             }
-            disabled={uploadingKey === "item-icon"}
+            disabled={
+              uploadingKey ===
+              (props.mode === "category" ? "category-icon" : "item-icon")
+            }
           >
-            {uploadingKey === "item-icon" ? "Uploading..." : "Upload"}
+            {uploadingKey ===
+            (props.mode === "category" ? "category-icon" : "item-icon")
+              ? "Uploading..."
+              : "Upload"}
             <input
               hidden
               type="file"
               accept="image/*"
               onChange={(event) => {
                 void handleImageUpload(
-                  "item-icon",
+                  props.mode === "category" ? "category-icon" : "item-icon",
                   event.target.files?.[0] ?? null,
                 );
                 event.currentTarget.value = "";
@@ -1522,7 +1591,13 @@ export default function EditPanel(props: EditPanelProps) {
         </Button>
         <Button
           variant="contained"
-          onClick={props.mode === "create" ? startCreate : applyEdits}
+          onClick={
+            props.mode === "create"
+              ? startCreate
+              : props.mode === "category"
+                ? applyCategoryEdits
+                : applyEdits
+          }
         >
           {props.mode === "create" ? "Start Drawing" : "Save"}
         </Button>

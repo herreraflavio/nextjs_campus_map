@@ -1,7 +1,7 @@
 // app/api/maps/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { createMap, getMapById, getMapsByOwnerId } from "@/lib/mapModel";
+import { createMap, getMapsByOwnerId } from "@/lib/mapModel";
 import { findUserByEmail, addMapToUserByEmail } from "@/lib/userModel";
 
 function toMapListItem(map: any) {
