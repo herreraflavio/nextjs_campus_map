@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 
 // SIMPLIFIED PARTNER COMPONENT
-// SIMPLIFIED PARTNER COMPONENT
 function PartnerLogoCard({ name, src, href }) {
   const [imgOk, setImgOk] = useState(true);
 
@@ -91,7 +90,7 @@ export default function LandingPage() {
       { src: "/landingpage/ss3.png", alt: "Screenshot 3" },
       { src: "/landingpage/ss4.png", alt: "Screenshot 4" },
     ],
-    []
+    [],
   );
 
   const partners = useMemo(
@@ -99,10 +98,10 @@ export default function LandingPage() {
       {
         name: "Partner A",
         src: "/landingpage/Map UC Merced.png",
-        href: "https://campusmap.ucmercedhub.com/", // replace with real URL
+        href: "https://campusmap.ucmercedhub.com/",
       },
     ],
-    []
+    [],
   );
 
   const [active, setActive] = useState(0);
@@ -112,6 +111,7 @@ export default function LandingPage() {
     const id = window.setInterval(() => {
       setActive((prev) => (prev + 1) % slides.length);
     }, 4500);
+
     return () => window.clearInterval(id);
   }, [slides.length]);
 
@@ -121,7 +121,7 @@ export default function LandingPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#fff" }}>
-      {/* Navbar */}
+      {/* NAVBAR */}
       <AppBar
         position="sticky"
         elevation={0}
@@ -161,20 +161,22 @@ export default function LandingPage() {
             <Stack direction="row" spacing={1}>
               <Button
                 component="a"
-                href="#partners"
-                variant="text"
-                sx={{ fontWeight: 800 }}
-              >
-                Partners
-              </Button>
-              <Button
-                component="a"
                 href="#product"
                 variant="text"
                 sx={{ fontWeight: 800 }}
               >
                 Product
               </Button>
+
+              <Button
+                component="a"
+                href="#partners"
+                variant="text"
+                sx={{ fontWeight: 800 }}
+              >
+                Partners
+              </Button>
+
               <Button
                 component={Link}
                 href="/signin"
@@ -183,11 +185,15 @@ export default function LandingPage() {
               >
                 Sign in
               </Button>
+
               <Button
                 component={Link}
                 href="/register"
                 variant="contained"
-                sx={{ fontWeight: 900, borderRadius: 999 }}
+                sx={{
+                  fontWeight: 900,
+                  borderRadius: 999,
+                }}
               >
                 Create account
               </Button>
@@ -208,7 +214,10 @@ export default function LandingPage() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "1.1fr 0.9fr" },
+              gridTemplateColumns: {
+                xs: "1fr",
+                md: "1.1fr 0.9fr",
+              },
               gap: { xs: 4, md: 6 },
               alignItems: "center",
             }}
@@ -220,10 +229,14 @@ export default function LandingPage() {
                   fontWeight: 950,
                   letterSpacing: "-0.04em",
                   lineHeight: 1.02,
-                  fontSize: { xs: "2.4rem", sm: "3.0rem", md: "3.6rem" },
+                  fontSize: {
+                    xs: "2.4rem",
+                    sm: "3.0rem",
+                    md: "3.6rem",
+                  },
                 }}
               >
-                Build, publish, and maintain interactive maps—fast.
+                Build, publish, and maintain interactive maps.
               </Typography>
 
               <Stack
@@ -236,7 +249,10 @@ export default function LandingPage() {
                   href="/register"
                   variant="contained"
                   size="large"
-                  sx={{ borderRadius: 999, fontWeight: 900 }}
+                  sx={{
+                    borderRadius: 999,
+                    fontWeight: 900,
+                  }}
                 >
                   Get started
                 </Button>
@@ -276,9 +292,19 @@ export default function LandingPage() {
       </Box>
 
       {/* PRODUCT / FEATURES */}
-      <Container id="product" maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
+      <Container
+        id="product"
+        maxWidth="lg"
+        sx={{
+          py: { xs: 7, md: 9 },
+        }}
+      >
         <Typography
-          sx={{ fontWeight: 950, letterSpacing: "-0.03em", fontSize: "2.0rem" }}
+          sx={{
+            fontWeight: 950,
+            letterSpacing: "-0.03em",
+            fontSize: "2rem",
+          }}
         >
           Product highlights
         </Typography>
@@ -287,11 +313,14 @@ export default function LandingPage() {
           sx={{
             mt: 4,
             display: "grid",
+
+            // Mobile = vertical stack
+            // Tablet/Desktop = 2 × 2
             gridTemplateColumns: {
               xs: "1fr",
-              sm: "1fr 1fr",
-              md: "1fr 1fr 1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
             },
+
             gap: 2,
           }}
         >
@@ -312,21 +341,33 @@ export default function LandingPage() {
               title: "Extensible",
               desc: "Build toward digital twin workflows.",
             },
-          ].map((f) => (
+          ].map((feature) => (
             <Card
-              key={f.title}
+              key={feature.title}
               sx={{
+                height: "100%",
                 borderRadius: 4,
                 border: "1px solid rgba(0,0,0,0.08)",
                 boxShadow: "0 10px 26px rgba(0,0,0,0.06)",
               }}
             >
               <CardContent>
-                <Typography sx={{ fontWeight: 950 }}>{f.title}</Typography>
                 <Typography
-                  sx={{ mt: 0.75, color: "rgba(0,0,0,0.70)", lineHeight: 1.65 }}
+                  sx={{
+                    fontWeight: 950,
+                  }}
                 >
-                  {f.desc}
+                  {feature.title}
+                </Typography>
+
+                <Typography
+                  sx={{
+                    mt: 0.75,
+                    color: "rgba(0,0,0,0.70)",
+                    lineHeight: 1.65,
+                  }}
+                >
+                  {feature.desc}
                 </Typography>
               </CardContent>
             </Card>
@@ -335,7 +376,13 @@ export default function LandingPage() {
       </Container>
 
       {/* SLIDESHOW */}
-      <Container maxWidth="lg" sx={{ pt: 0, pb: { xs: 7, md: 9 } }}>
+      <Container
+        maxWidth="lg"
+        sx={{
+          pt: 0,
+          pb: { xs: 7, md: 9 },
+        }}
+      >
         <Box
           sx={{
             mt: 4,
@@ -357,6 +404,7 @@ export default function LandingPage() {
               alt={slides[active]?.alt}
               sx={{
                 width: "711px",
+                maxWidth: "100%",
                 height: "622px",
                 objectFit: "cover",
                 display: "block",
@@ -366,14 +414,23 @@ export default function LandingPage() {
           ) : (
             <Box
               sx={{
-                height: { xs: 260, sm: 380, md: 460 },
+                height: {
+                  xs: 260,
+                  sm: 380,
+                  md: 460,
+                },
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 p: 3,
               }}
             >
-              <Typography sx={{ fontWeight: 900, color: "rgba(0,0,0,0.55)" }}>
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  color: "rgba(0,0,0,0.55)",
+                }}
+              >
                 Screenshot placeholder (add images in /public/landingpage)
               </Typography>
             </Box>
@@ -381,6 +438,7 @@ export default function LandingPage() {
 
           <Box
             sx={{
+              width: "100%",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -393,17 +451,24 @@ export default function LandingPage() {
               <Button
                 variant="outlined"
                 size="small"
-                sx={{ borderRadius: 999, fontWeight: 900 }}
+                sx={{
+                  borderRadius: 999,
+                  fontWeight: 900,
+                }}
                 onClick={() =>
                   setActive((a) => (a - 1 + slides.length) % slides.length)
                 }
               >
                 Prev
               </Button>
+
               <Button
                 variant="contained"
                 size="small"
-                sx={{ borderRadius: 999, fontWeight: 900 }}
+                sx={{
+                  borderRadius: 999,
+                  fontWeight: 900,
+                }}
                 onClick={() => setActive((a) => (a + 1) % slides.length)}
               >
                 Next
@@ -415,12 +480,17 @@ export default function LandingPage() {
         <Stack
           direction="row"
           spacing={1}
-          sx={{ mt: 2, justifyContent: "center" }}
+          sx={{
+            mt: 2,
+            justifyContent: "center",
+          }}
         >
           {slides.map((_, i) => (
             <Box
               key={i}
               onClick={() => setActive(i)}
+              role="button"
+              aria-label={`Show screenshot ${i + 1}`}
               sx={{
                 width: 10,
                 height: 10,
@@ -430,7 +500,6 @@ export default function LandingPage() {
                 backgroundColor:
                   i === active ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.12)",
               }}
-              role="button"
             />
           ))}
         </Stack>
@@ -439,9 +508,19 @@ export default function LandingPage() {
       <Divider />
 
       {/* PARTNERS */}
-      <Container id="partners" maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
+      <Container
+        id="partners"
+        maxWidth="lg"
+        sx={{
+          py: { xs: 7, md: 9 },
+        }}
+      >
         <Typography
-          sx={{ fontWeight: 950, letterSpacing: "-0.03em", fontSize: "2.0rem" }}
+          sx={{
+            fontWeight: 950,
+            letterSpacing: "-0.03em",
+            fontSize: "2rem",
+          }}
         >
           Partners
         </Typography>
@@ -449,34 +528,171 @@ export default function LandingPage() {
         <Box
           sx={{
             mt: 4,
-            // UPDATED: Using Flex instead of Grid
             display: "flex",
             flexWrap: "wrap",
             gap: 3,
-            // Centers the item(s) horizontally
-            justifyContent: "left",
+            justifyContent: "flex-start",
           }}
         >
-          {partners.map((p) => (
+          {partners.map((partner) => (
             <PartnerLogoCard
-              key={p.name}
-              name={p.name}
-              src={p.src}
-              href={p.href}
+              key={partner.name}
+              name={partner.name}
+              src={partner.src}
+              href={partner.href}
             />
           ))}
         </Box>
       </Container>
 
-      {/* Footer */}
+      {/* FOOTER */}
       <Box
+        component="footer"
         sx={{
-          borderTop: "1px solid rgba(0,0,0,0.06)",
+          borderTop: "1px solid rgba(0,0,0,0.08)",
           backgroundColor: "#fff",
         }}
       >
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Typography sx={{ color: "rgba(0,0,0,0.65)", textAlign: "center" }}>
+        <Container
+          maxWidth="lg"
+          sx={{
+            py: { xs: 4, md: 5 },
+          }}
+        >
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                md: "1fr auto 1fr",
+              },
+              gap: { xs: 3, md: 5 },
+              alignItems: "stretch",
+            }}
+          >
+            {/* Social Media */}
+            <Box>
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: "1rem",
+                  mb: 1,
+                }}
+              >
+                Social Media
+              </Typography>
+
+              <Box
+                component="a"
+                href="https://x.com/logit_solutions"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Logit on X"
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1,
+                  color: "rgba(0,0,0,0.68)",
+                  textDecoration: "none",
+                  transition: "color 0.2s ease",
+
+                  "&:hover": {
+                    color: "text.primary",
+                  },
+
+                  "&:hover .social-label": {
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/social/x.svg"
+                  alt=""
+                  aria-hidden="true"
+                  sx={{
+                    width: 18,
+                    height: 18,
+                    display: "block",
+                  }}
+                />
+
+                <Typography
+                  component="span"
+                  className="social-label"
+                  sx={{
+                    fontSize: "inherit",
+                  }}
+                >
+                  @logit_solutions
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Desktop vertical divider */}
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{
+                display: {
+                  xs: "none",
+                  md: "block",
+                },
+              }}
+            />
+
+            {/* Mobile horizontal divider */}
+            <Divider
+              sx={{
+                display: {
+                  xs: "block",
+                  md: "none",
+                },
+              }}
+            />
+
+            {/* Contact */}
+            <Box>
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: "1rem",
+                  mb: 1,
+                }}
+              >
+                Contact
+              </Typography>
+
+              <Typography
+                component="a"
+                href="mailto:herreraflavio0@gmail.com"
+                sx={{
+                  color: "rgba(0,0,0,0.68)",
+                  textDecoration: "none",
+                  transition: "color 0.2s ease",
+
+                  "&:hover": {
+                    color: "text.primary",
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                herreraflavio0@gmail.com
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Copyright */}
+          <Typography
+            sx={{
+              mt: 4,
+              pt: 3,
+              borderTop: "1px solid rgba(0,0,0,0.06)",
+              color: "rgba(0,0,0,0.55)",
+              textAlign: "center",
+              fontSize: "0.875rem",
+            }}
+          >
             © {new Date().getFullYear()} Logit. All rights reserved.
           </Typography>
         </Container>
