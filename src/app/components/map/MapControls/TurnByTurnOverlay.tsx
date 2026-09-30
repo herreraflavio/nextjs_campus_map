@@ -245,9 +245,14 @@ export default function TurnByTurnOverlay({
       return publicNodes[0].id;
     });
 
+    // setDest((prev) => {
+    //   if (prev && publicNodes.some((n) => n.id === prev)) return prev;
+    //   return publicNodes[Math.max(1, publicNodes.length - 1)].id;
+    // });
     setDest((prev) => {
       if (prev && publicNodes.some((n) => n.id === prev)) return prev;
-      return publicNodes[Math.min(1, publicNodes.length - 1)].id;
+      console.log(publicNodes);
+      return publicNodes[70].id;
     });
   }, [publicNodes]);
 
@@ -529,7 +534,7 @@ export default function TurnByTurnOverlay({
       }}
     >
       <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>
-        Turn-by-Turn (GeoJSON graph)
+        Navigation
       </div>
 
       {loading ? (

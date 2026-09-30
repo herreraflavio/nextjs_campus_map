@@ -624,7 +624,7 @@ export function SearchableLocationInput({
           disabled={disabled}
           placeholder={placeholder ?? `Search ${label.toLowerCase()}…`}
           style={{
-            width: "100%",
+            width: "90%",
             padding: "8px 10px",
             borderRadius: 8,
             border: "1px solid #ccc",
