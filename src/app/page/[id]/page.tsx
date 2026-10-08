@@ -1,5 +1,6 @@
 import { MapProvider } from "@/app/context/MapContext";
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
+import MapShell from "@/app/components/map/MapShell";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,9 +11,9 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <MapProvider mapId={id}>
-      <div>header</div>
-      <ArcGISWrapper />
-      <div>footer</div>
+      <MapShell>
+        <ArcGISWrapper />
+      </MapShell>
     </MapProvider>
   );
 }

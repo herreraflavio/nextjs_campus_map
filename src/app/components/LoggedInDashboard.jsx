@@ -24,6 +24,7 @@ import AdminSidebar from "./map/admin/AdminSidebar";
 import ArcGISWrapper from "@/app/components/ArcGISWrapper";
 import AddEvent from "./map/admin/AddEvent";
 import EventsDashboard from "./map/admin/EventsDashboard";
+import MapShell from "./map/MapShell";
 
 /** Memoize map wrapper so header/menu state changes don't cause map rerenders */
 const MemoArcGISWrapper = React.memo(ArcGISWrapper);
@@ -108,87 +109,93 @@ function DashboardHeader({ email }) {
   );
 }
 
-export default function LoggedInDashboard({ user }) {
+export default function LoggedInDashboard({ user, canEdit = false }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <DashboardHeader email={user?.email} />
-
-      <Box
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          overflow: "hidden",
-          flexDirection: { xs: "column", md: "row" },
-        }}
-      >
+      <MapShell canEdit={canEdit}>
         <Box
-          sx={{
-            width: { xs: "100%", md: 350 },
-            flex: { xs: "0 0 34vh", md: "0 0 350px" },
-            order: { xs: 2, md: 1 },
-            display: "flex",
-            flexDirection: "column",
-            height: { xs: "auto", md: "100%" },
-            overflowY: "auto",
-            borderTop: {
-              xs: "1px solid rgba(0,0,0,0.12)",
-              md: "none",
-            },
-          }}
-        >
-          <AdminSidebar />
-        </Box>
-
-        <Box
+          data-map-body
           sx={{
             flexGrow: 1,
-            flex: "1 1 auto",
-            order: { xs: 1, md: 2 },
-            height: { xs: "auto", md: "100%" },
             minHeight: 0,
             display: "flex",
-            flexDirection: "column",
+            overflow: "hidden",
+            flexDirection: { xs: "column", md: "row" },
           }}
         >
-          <div style={{ position: "relative" }}>
-            <AddEvent />
-          </div>
-          <div style={{ position: "relative" }}>
-            <EventsDashboard />
-          </div>
+          <Box
+            component="aside"
+            sx={{
+              width: { xs: "100%", md: 350 },
+              flex: { xs: "0 0 34vh", md: "0 0 350px" },
+              order: { xs: 2, md: 1 },
+              display: "flex",
+              flexDirection: "column",
+              height: { xs: "auto", md: "100%" },
+              overflowY: "auto",
+              borderTop: {
+                xs: "1px solid rgba(0,0,0,0.12)",
+                md: "none",
+              },
+            }}
+          >
+            <AdminSidebar canEdit={canEdit} />
+          </Box>
 
-          <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-            <MemoArcGISWrapper includeAdminHiddenCategories />
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              flex: "1 1 auto",
+              order: { xs: 1, md: 2 },
+              height: { xs: "auto", md: "100%" },
+              minHeight: 0,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ position: "relative" }}>
+              <AddEvent />
+            </div>
+            <div style={{ position: "relative" }}>
+              <EventsDashboard />
+            </div>
 
-            <div>
-              <div style={crosshairWrap} aria-hidden="true">
-                <div style={crosshairH} />
-                <div style={crosshairV} />
-                <div style={crosshairDot} />
-              </div>
+            <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+              <MemoArcGISWrapper includeAdminHiddenCategories />
 
-              <div style={cornersWrap} aria-hidden="true">
-                <div style={{ ...cornerBox, ...cornerTL }}>
-                  <div style={{ ...cornerH, ...hTop }} />
-                  <div style={{ ...cornerV, ...vLeft }} />
+              <div>
+                <div style={crosshairWrap} aria-hidden="true">
+                  <div style={crosshairH} />
+                  <div style={crosshairV} />
+                  <div style={crosshairDot} />
                 </div>
-                <div style={{ ...cornerBox, ...cornerTR }}>
-                  <div style={{ ...cornerH, ...hTop }} />
-                  <div style={{ ...cornerV, ...vRight }} />
-                </div>
-                <div style={{ ...cornerBox, ...cornerBL }}>
-                  <div style={{ ...cornerH, ...hBottom }} />
-                  <div style={{ ...cornerV, ...vLeft }} />
-                </div>
-                <div style={{ ...cornerBox, ...cornerBR }}>
-                  <div style={{ ...cornerH, ...hBottom }} />
-                  <div style={{ ...cornerV, ...vRight }} />
+
+                <div style={cornersWrap} aria-hidden="true">
+                  <div style={{ ...cornerBox, ...cornerTL }}>
+                    <div style={{ ...cornerH, ...hTop }} />
+                    <div style={{ ...cornerV, ...vLeft }} />
+                  </div>
+                  <div style={{ ...cornerBox, ...cornerTR }}>
+                    <div style={{ ...cornerH, ...hTop }} />
+                    <div style={{ ...cornerV, ...vRight }} />
+                  </div>
+                  <div style={{ ...cornerBox, ...cornerBL }}>
+                    <div style={{ ...cornerH, ...hBottom }} />
+                    <div style={{ ...cornerV, ...vLeft }} />
+                  </div>
+                  <div style={{ ...cornerBox, ...cornerBR }}>
+                    <div style={{ ...cornerH, ...hBottom }} />
+                    <div style={{ ...cornerV, ...vRight }} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Box>
         </Box>
-      </Box>
+      </MapShell>
     </Box>
   );
 }

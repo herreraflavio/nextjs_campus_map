@@ -4,8 +4,10 @@ import {
   labelsLayerRef,
   eventsLayerRef,
   eventsStore,
+  settingsRef,
 } from "@/app/components/map/arcgisRefs";
 import { getCategories } from "@/app/components/map/categories/categoryStore";
+import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
 import type {
   DrawingExport,
   EventPoint,
@@ -400,48 +402,49 @@ export function generateExport(): {
   return { polygons, labels, events, categories };
 }
 
+// Serialize saves per map so slower earlier writes cannot overwrite newer edits.
+type SaveQueue = { tail: Promise<boolean>; topBar: MapTopBarSettings };
+const pendingSaves = new Map<string, SaveQueue>();
+
 export function saveMapToServer(
   mapId: string,
   userEmail: string,
   settings: SaveSettings,
-): void {
+): Promise<boolean> {
   const { polygons, labels, events, categories } = generateExport();
-
-  if (
-    polygons.length === 0 &&
-    labels.length === 0 &&
-    events.length === 0 &&
-    categories.length === 0
-  ) {
-    console.warn("⚠️ Nothing to save (no drawings, labels, events, or categories).");
-    return;
-  }
-
-  const payload: MapSaveBody = {
-    userEmail,
-    polygons,
-    labels,
-    events,
-    categories,
-    settings,
+  const queue = pendingSaves.get(mapId) ?? {
+    tail: Promise.resolve(true),
+    topBar: normalizeMapTopBar(settingsRef.current.topBar),
   };
-
-  fetch(`/api/maps/${mapId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        console.error(`Save failed (${res.status}):`, res.statusText);
-        return res.json().then((body) => {
-          console.error("Error body:", body);
-          throw new Error(`Save failed: ${res.statusText}`);
-        });
-      }
-      return res.json();
-    })
-    .catch((err) => {
+  const save = queue.tail.then(async () => {
+    const payload: MapSaveBody = {
+      userEmail, polygons, labels, events, categories,
+      settings: {
+        ...settings,
+        // Resolve committed settings when the queued save runs. Popup drafts
+        // only enter this path via an explicit Save override.
+        topBar: normalizeMapTopBar(settings.topBar ?? queue.topBar),
+      },
+    };
+    try {
+      const res = await fetch(`/api/maps/${mapId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`Save failed (${res.status})`);
+      // Commit before releasing queued saves that need the latest bar.
+      queue.topBar = payload.settings.topBar!;
+      return true;
+    } catch (err) {
       console.error("❌ Error saving map:", err);
-    });
+      return false;
+    }
+  });
+  queue.tail = save;
+  pendingSaves.set(mapId, queue);
+  void save.then(() => {
+    if (pendingSaves.get(mapId)?.tail === save) pendingSaves.delete(mapId);
+  });
+  return save;
 }

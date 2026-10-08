@@ -709,17 +709,19 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             center: centerPoint,
             zoom: mapData.settings.zoom,
 
-            constraints: mapData.settings.constraints
+            ...(mapData.settings.constraints
               ? {
-                  geometry: new Extent({
-                    xmin: mapData.settings.constraints.xmin,
-                    ymin: mapData.settings.constraints.ymin,
-                    xmax: mapData.settings.constraints.xmax,
-                    ymax: mapData.settings.constraints.ymax,
-                    spatialReference: { wkid: 3857 },
-                  }),
+                  constraints: {
+                    geometry: new Extent({
+                      xmin: mapData.settings.constraints.xmin,
+                      ymin: mapData.settings.constraints.ymin,
+                      xmax: mapData.settings.constraints.xmax,
+                      ymax: mapData.settings.constraints.ymax,
+                      spatialReference: { wkid: 3857 },
+                    }),
+                  },
                 }
-              : undefined,
+              : {}),
           });
 
           viewRef = view;

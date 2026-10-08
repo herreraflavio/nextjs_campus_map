@@ -116,12 +116,14 @@ function IconSlot({
   );
 }
 
-function EditIconButton({
+export function EditIconButton({
   label,
   onClick,
+  disabled = false,
 }: {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -129,6 +131,7 @@ function EditIconButton({
       className={styles.editIconButton}
       aria-label={label}
       title={label}
+      disabled={disabled}
       onClick={(event) => {
         event.stopPropagation();
         onClick();

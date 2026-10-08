@@ -47,6 +47,8 @@ import {
 } from "../categories/drawingCreationStore";
 import { applyMapVisibility } from "../categories/categoryVisibility";
 import { saveMapToServer } from "@/app/helper/saveMap";
+import { uploadImage } from "@/app/helper/uploadImage";
+import EditorPanel from "./EditorPanel";
 import type {
   FeatureLayerConfig,
   HiddenSegmentRange,
@@ -98,26 +100,6 @@ function sanitizeFrameList(value: string[]): string[] {
     .map((item) => item.trim())
     .filter((item) => item.length > 0)
     .slice(0, 4);
-}
-
-function getUploadUrlFromResponse(payload: any): string | null {
-  const candidates = [
-    payload?.url,
-    payload?.imageUrl,
-    payload?.location,
-    payload?.fileUrl,
-    payload?.data?.url,
-    payload?.data?.imageUrl,
-    payload?.data?.location,
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim()) {
-      return candidate.trim();
-    }
-  }
-
-  return null;
 }
 
 function colorToHexAlpha(color: any): { hex: string; alpha: number } {
@@ -655,25 +637,7 @@ export default function EditPanel(props: EditPanelProps) {
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed (${response.status})`);
-      }
-
-      const payload = await response.json();
-      const url = getUploadUrlFromResponse(payload);
-      if (!url) {
-        throw new Error(
-          "Upload succeeded but no image URL was returned by /api/upload.",
-        );
-      }
+      const url = await uploadImage(file);
 
       if (key === "item-icon" || key === "category-icon") {
         setEditIconUrl(url);
@@ -954,25 +918,7 @@ export default function EditPanel(props: EditPanelProps) {
       : `Edit ${editingGeometryType ?? "Drawing"}`;
 
   return (
-    <Box
-      sx={{
-        position: "absolute",
-        top: 90,
-        right: 25,
-        zIndex: 999,
-        bgcolor: "background.paper",
-        p: 2,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-        borderRadius: 1,
-        width: 380,
-        maxHeight: "82vh",
-        overflowY: "auto",
-      }}
-    >
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        {panelTitle}
-      </Typography>
-
+    <EditorPanel title={panelTitle}>
       <TextField
         label="Name"
         fullWidth
@@ -1602,6 +1548,6 @@ export default function EditPanel(props: EditPanelProps) {
           {props.mode === "create" ? "Start Drawing" : "Save"}
         </Button>
       </Box>
-    </Box>
+    </EditorPanel>
   );
 }

@@ -16,7 +16,7 @@ import {
 } from "../sidebar/useMapDrawings";
 import { ROOT_CATEGORY_ID } from "../categories/categoryStore";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ canEdit = false }: { canEdit?: boolean }) {
   const drawings = useFinalizedDrawings();
   const [activeCategoryId, setActiveCategoryId] = useState(ROOT_CATEGORY_ID);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function AdminSidebar() {
 
   return (
     <Box sx={{ height: "100%", overflowY: "auto", p: 2 }}>
-      <MapSettingsPanel />
+      <MapSettingsPanel canEdit={canEdit} />
 
       <MapSidebar
         drawings={drawings}

@@ -3,6 +3,7 @@ import { getMongoClient } from "./mongodb";
 import { ObjectId } from "mongodb";
 
 export type MapSettings = {
+  topBar?: import("@/app/types/mapTopBar").MapTopBarSettings;
   zoom: number;
   center: [number, number]; // [x, y] in Web Mercator
   constraints?: {

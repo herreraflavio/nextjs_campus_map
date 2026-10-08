@@ -1,3 +1,5 @@
+import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
+
 type SpatialReferenceLike = {
   wkid?: number;
   latestWkid?: number;
@@ -58,6 +60,7 @@ type LiteMapDoc = {
   events?: SavedEvent[];
   categories?: SavedCategory[];
   settings?: {
+    topBar?: MapTopBarSettings;
     zoom?: number;
     center?: [number, number];
     constraints?: any;
@@ -482,6 +485,7 @@ export function createLiteMapPayload(map: LiteMapDoc) {
     createdAt: toDateString(map.createdAt),
     updatedAt: toDateString(map.updatedAt),
     settings: {
+      topBar: normalizeMapTopBar(map.settings?.topBar),
       center: normalizeCenter(map.settings),
       zoom: isFiniteNumber(map.settings?.zoom)
         ? map.settings.zoom

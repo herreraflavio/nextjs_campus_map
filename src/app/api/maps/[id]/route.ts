@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getMongoClient } from "@/lib/mongodb";
 import { findUserByEmail, User } from "@/lib/userModel";
+import { isMapTopBarSettings, normalizeMapTopBar } from "@/app/types/mapTopBar";
 import type {
   DrawingExport,
   EventPoint,
@@ -353,6 +354,7 @@ function isSaveSettings(x: any): x is SaveSettings {
   return (
     typeof x === "object" &&
     x !== null &&
+    (typeof x.topBar === "undefined" || isMapTopBarSettings(x.topBar)) &&
     typeof x.zoom === "number" &&
     Array.isArray(x.center) &&
     x.center.length === 2 &&
@@ -671,7 +673,10 @@ export async function POST(
         labels,
         events,
         categories,
-        settings,
+        settings: {
+          ...settings,
+          topBar: normalizeMapTopBar(settings.topBar ?? existing.settings?.topBar),
+        },
         updatedAt: new Date(),
       },
     },

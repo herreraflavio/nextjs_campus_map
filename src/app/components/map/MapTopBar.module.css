@@ -1,0 +1,55 @@
+.bar {
+  box-sizing: border-box;
+  flex: 0 0 56px;
+  min-width: 0;
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(280px, calc(100% - 36px));
+  max-height: 40px;
+  object-fit: contain;
+}
+
+.edit {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.placeholder {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.65);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.placeholder:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.placeholder:disabled {
+  cursor: wait;
+}
+
+@media (max-width: 600px) {
+  .bar { padding-inline: 12px; }
+}

@@ -89,7 +89,7 @@ function lonLatToMercator(
   return [x, y];
 }
 
-export default function MapSettingsPanel() {
+export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolean }) {
   const [openSettings, setOpenSettings] = useState(false);
   const [center, setCenter] = useState({ x: "", y: "" });
   const [zoom, setZoom] = useState(10);
@@ -337,6 +337,18 @@ export default function MapSettingsPanel() {
           </Box>
 
           <Box mt={1}>
+            {canEdit && (
+              <>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Map Top Bar</Typography>
+                <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => {
+                  settingsEvents.dispatchEvent(new Event("edit-top-bar"));
+                  setOpenSettings(false);
+                }}>
+                  Edit Map Top Bar
+                </Button>
+                <Divider sx={{ my: 2 }} />
+              </>
+            )}
             <MapControls
               centerX={center.x}
               centerY={center.y}

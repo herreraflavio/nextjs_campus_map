@@ -20,6 +20,7 @@ import {
 } from "../categories/categoryStore";
 import { settingsRef } from "../arcgisRefs";
 import { saveMapToServer } from "@/app/helper/saveMap";
+import { uploadImage } from "@/app/helper/uploadImage";
 import type { FeatureLayerConfig } from "@/app/types/myTypes";
 
 type CategoryCreatePanelProps = {
@@ -28,26 +29,6 @@ type CategoryCreatePanelProps = {
 };
 
 const DEFAULT_APISOURCES: string[] = [];
-
-function getUploadUrlFromResponse(payload: any): string | null {
-  const candidates = [
-    payload?.url,
-    payload?.imageUrl,
-    payload?.location,
-    payload?.fileUrl,
-    payload?.data?.url,
-    payload?.data?.imageUrl,
-    payload?.data?.location,
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim()) {
-      return candidate.trim();
-    }
-  }
-
-  return null;
-}
 
 function coerceStringArray(value: any): string[] {
   if (!Array.isArray(value)) return [];
@@ -82,26 +63,7 @@ export default function CategoryCreatePanel({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed (${response.status})`);
-      }
-
-      const payload = await response.json();
-      const url = getUploadUrlFromResponse(payload);
-      if (!url) {
-        throw new Error(
-          "Upload succeeded but no image URL was returned by /api/upload.",
-        );
-      }
-
+      const url = await uploadImage(file);
       setIconUrl(url);
     } catch (uploadError: any) {
       console.error(uploadError);

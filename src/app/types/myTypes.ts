@@ -181,6 +181,7 @@ export interface EventPoint {
 }
 
 export interface ExportBodySettingsForRef {
+  topBar?: import("./mapTopBar").MapTopBarSettings;
   zoom: number;
   center: { spatialReference: SpatialReference; x: number; y: number };
   constraints: {
@@ -196,6 +197,7 @@ export interface ExportBodySettingsForRef {
 }
 
 export interface SaveSettings {
+  topBar?: import("./mapTopBar").MapTopBarSettings;
   zoom: number;
   center: [number, number];
   constraints: {

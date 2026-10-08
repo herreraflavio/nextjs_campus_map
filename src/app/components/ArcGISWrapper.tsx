@@ -4,7 +4,7 @@
 import dynamic from "next/dynamic";
 import { useMapId } from "@/app/context/MapContext";
 import { useState, useEffect } from "react";
-import { settingsRef } from "../components/map/arcgisRefs";
+import { settingsEvents, settingsRef } from "../components/map/arcgisRefs";
 import {
   isCategoryAdminVisibleInList,
   normalizeCategories,
@@ -12,6 +12,11 @@ import {
   setCategories,
 } from "./map/categories/categoryStore";
 import { resetMapVisibility } from "./map/categories/categoryVisibility";
+import {
+  MAP_TOP_BAR_LOADED,
+  normalizeMapTopBar,
+  type MapTopBarSettings,
+} from "@/app/types/mapTopBar";
 import type {
   DrawingExport,
   EventPoint,
@@ -75,6 +80,7 @@ type ArcGISMapPayload = {
   categories: MapCategory[];
   eventSources: string[];
   settings: {
+    topBar?: MapTopBarSettings;
     zoom: number;
     center: [number, number];
     constraints: {
@@ -488,6 +494,7 @@ export default function ArcGISWrapper({
           rawApiSources.length > 0 ? rawApiSources : DEFAULT_APISOURCES;
 
         const settings: ArcGISMapPayload["settings"] = {
+          topBar: normalizeMapTopBar(rawS.topBar),
           zoom,
           center,
           constraints,
@@ -509,6 +516,7 @@ export default function ArcGISWrapper({
           settingsRef.current.mapTile = settings.mapTile;
           settingsRef.current.baseMap = settings.baseMap;
           settingsRef.current.apiSources = settings.apiSources;
+          settingsRef.current.topBar = settings.topBar;
         } catch {
           // ignore
         }
@@ -525,6 +533,9 @@ export default function ArcGISWrapper({
           eventSources,
           settings,
         });
+        settingsEvents.dispatchEvent(new CustomEvent(MAP_TOP_BAR_LOADED, {
+          detail: { mapId, settings: settings.topBar },
+        }));
       })
       .catch((err) => {
         if (cancelled || err?.name === "AbortError") return;
@@ -552,7 +563,7 @@ export default function ArcGISWrapper({
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", minWidth: 0 }}>
       <ArcGISMap {...effectiveMapData} />
 
       {loading && (
