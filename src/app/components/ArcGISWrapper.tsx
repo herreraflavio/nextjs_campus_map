@@ -1,9 +1,9 @@
 //ArcGISWrapper.tsx
 "use client";
 
-import dynamic from "next/dynamic";
+import ArcGISMap from "./ArcGISMap";
 import { useMapId } from "@/app/context/MapContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { settingsEvents, settingsRef } from "../components/map/arcgisRefs";
 import {
   isCategoryAdminVisibleInList,
@@ -25,6 +25,8 @@ import type {
   MapCategory,
 } from "@/app/types/myTypes";
 import { normalizePolylineAnimation } from "@/app/types/myTypes";
+import { createMapLoadTrace, type MapLoadTrace } from "./map/mapLoadTrace";
+import { beginMapHydration } from "./map/mapHydration";
 
 /* ─────────────────────────────────────────
  * Types
@@ -122,24 +124,12 @@ const RETRYABLE_HTTP_STATUS_CODES = new Set([
   408, 425, 429, 500, 502, 503, 504,
 ]);
 
-const DEFAULT_SETTINGS: ArcGISMapPayload["settings"] = {
-  zoom: DEFAULT_ZOOM,
-  center: DEFAULT_CENTER,
-  constraints: NO_CONSTRAINTS,
-  featureLayers: null,
-  mapTile: DEFAULT_TILELAYER,
-  baseMap: DEFAULT_BASEMAP,
-  apiSources: DEFAULT_APISOURCES,
-};
-
 const DEFAULT_EVENT_SOURCES: string[] = [
   //"https://uc-merced-campus-event-api-backend.onrender.com/get/events",
   //"https://api.ucmercedhub.com/crimelogs",
   //"https://uc-merced-campus-event-api-backend.onrender.com/presence_events",
   //"http://127.0.0.1:8050/presence_events",
 ];
-
-const ArcGISMap = dynamic(() => import("./ArcGISMap"), { ssr: false });
 
 /* ─────────────────────────────────────────
  * Guards / normalizers
@@ -384,24 +374,62 @@ export default function ArcGISWrapper({
   includeAdminHiddenCategories = false,
 }: ArcGISWrapperProps) {
   const mapId = useMapId();
-  const [mapData, setMapData] = useState<ArcGISMapPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  // Scope results to the request so a map switch cannot briefly expose old data.
+  const requestKey = `${mapId}:${includeAdminHiddenCategories}`;
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    data: ArcGISMapPayload;
+    trace: MapLoadTrace;
+    hydration: ReturnType<typeof beginMapHydration>;
+  } | null>(null);
+  const [readyData, setReadyData] = useState<ArcGISMapPayload | null>(null);
+  const [failure, setFailure] = useState<{
+    key: string;
+    message: string;
+  } | null>(null);
+  const mapData = loaded?.key === requestKey ? loaded.data : null;
+  const trace = loaded?.key === requestKey ? loaded.trace : null;
+  const error = failure?.key === requestKey ? failure.message : null;
+  const loading = Boolean(mapId) && !error && (!mapData || readyData !== mapData);
+  const onInitialReady = useCallback(() => setReadyData(mapData), [mapData]);
+  const onSavedDataReady = useCallback(() => {
+    if (loaded?.key === requestKey) loaded.hydration.complete();
+  }, [loaded, requestKey]);
+  const onInitialError = useCallback(
+    (cause: unknown) => {
+      const message = cause instanceof Error ? cause.message : String(cause);
+      if (loaded?.key === requestKey) loaded.hydration.cancel();
+      setFailure({ key: requestKey, message: `Failed to initialize map: ${message}` });
+    },
+    [loaded, requestKey],
+  );
+  // Record the DOM commit before child effects start SDK work.
+  useLayoutEffect(() => {
+    if (mapData) {
+      trace?.mark("config-hydrated");
+      trace?.mark("sidebar-ready");
+    }
+    if (mapData && readyData === mapData) trace?.mark("map-visible");
+  }, [mapData, readyData, trace]);
 
   useEffect(() => {
     if (!mapId) {
-      setMapData(null);
-      setError(null);
-      setLoading(false);
+      setLoaded(null);
+      setFailure(null);
+      setReadyData(null);
       resetCategories();
       resetMapVisibility();
       return;
     }
 
-    setError(null);
-    setLoading(true);
+    setLoaded(null);
+    setFailure(null);
+    setReadyData(null);
 
     const controller = new AbortController();
+    const hydration = beginMapHydration(mapId);
+    const loadTrace = createMapLoadTrace(mapId);
+    loadTrace.mark("config-request");
     let cancelled = false;
 
     fetchJsonWithRetry<RawArcGISMapPayload>(`/api/maps/${mapId}`, {
@@ -411,6 +439,7 @@ export default function ArcGISWrapper({
     })
       .then((data) => {
         if (cancelled) return;
+        loadTrace.mark("config-loaded");
 
         const polygons = Array.isArray(data.polygons)
           ? data.polygons
@@ -525,13 +554,18 @@ export default function ArcGISWrapper({
           ? { polygons, labels, categories }
           : filterAdminVisibleMapData(polygons, labels, categories);
 
-        setMapData({
-          polygons: visibleMapData.polygons,
-          labels: visibleMapData.labels,
-          events,
-          categories: visibleMapData.categories,
-          eventSources,
-          settings,
+        setLoaded({
+          key: requestKey,
+          trace: loadTrace,
+          hydration,
+          data: {
+            polygons: visibleMapData.polygons,
+            labels: visibleMapData.labels,
+            events,
+            categories: visibleMapData.categories,
+            eventSources,
+            settings,
+          },
         });
         settingsEvents.dispatchEvent(new CustomEvent(MAP_TOP_BAR_LOADED, {
           detail: { mapId, settings: settings.topBar },
@@ -541,51 +575,47 @@ export default function ArcGISWrapper({
         if (cancelled || err?.name === "AbortError") return;
 
         console.error(err);
-        setError(`Failed to load map data: ${err.message}`);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        hydration.cancel();
+        setFailure({
+          key: requestKey,
+          message: `Failed to load map data: ${err.message}`,
+        });
       });
 
     return () => {
       cancelled = true;
       controller.abort();
+      hydration.cancel();
     };
-  }, [includeAdminHiddenCategories, mapId]);
-
-  const effectiveMapData: ArcGISMapPayload = mapData ?? {
-    polygons: [],
-    labels: [],
-    events: [],
-    categories: [],
-    eventSources: DEFAULT_EVENT_SOURCES,
-    settings: DEFAULT_SETTINGS,
-  };
+  }, [includeAdminHiddenCategories, mapId, requestKey]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", minWidth: 0 }}>
-      <ArcGISMap {...effectiveMapData} />
-
-      {loading && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            background: "rgba(255,255,255,0.8)",
-            zIndex: 10,
-            fontSize: 18,
-            color: "#666",
-          }}
-        >
-          Loading map data...
-        </div>
-      )}
+    <div
+      data-map-loading={loading}
+      aria-busy={loading}
+      style={{ position: "relative", width: "100%", height: "100%", minWidth: 0 }}
+    >
+      <div
+        data-map-content
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        {mapData && (
+          <ArcGISMap
+            {...mapData}
+            onInitialReady={onInitialReady}
+            onInitialError={onInitialError}
+            onSavedDataReady={onSavedDataReady}
+            loadTrace={trace ?? undefined}
+          />
+        )}
+      </div>
 
       {error && (
         <div
+          role="alert"
           style={{
             position: "absolute",
             inset: 16,
@@ -594,7 +624,7 @@ export default function ArcGISWrapper({
             alignItems: "center",
             background: "#ffebee",
             borderRadius: 4,
-            zIndex: 11,
+            zIndex: 3000,
             fontSize: 18,
             color: "#d32f2f",
           }}

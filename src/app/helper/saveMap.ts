@@ -7,6 +7,11 @@ import {
   settingsRef,
 } from "@/app/components/map/arcgisRefs";
 import { getCategories } from "@/app/components/map/categories/categoryStore";
+import {
+  captureMapHydrationGuard,
+  getMapHydrationStatus,
+  waitForMapHydration,
+} from "@/app/components/map/mapHydration";
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
 import type {
   DrawingExport,
@@ -403,7 +408,7 @@ export function generateExport(): {
 }
 
 // Serialize saves per map so slower earlier writes cannot overwrite newer edits.
-type SaveQueue = { tail: Promise<boolean>; topBar: MapTopBarSettings };
+type SaveQueue = { tail: Promise<boolean>; topBar: MapTopBarSettings | null };
 const pendingSaves = new Map<string, SaveQueue>();
 
 export function saveMapToServer(
@@ -411,19 +416,44 @@ export function saveMapToServer(
   userEmail: string,
   settings: SaveSettings,
 ): Promise<boolean> {
-  const { polygons, labels, events, categories } = generateExport();
+  const hydrationStatus = getMapHydrationStatus(mapId);
+  if (hydrationStatus === "cancelled") return Promise.resolve(false);
+
+  const isCurrent = captureMapHydrationGuard(mapId);
+  const snapshot = () => ({
+    ...generateExport(),
+    topBar: normalizeMapTopBar(settingsRef.current.topBar),
+  });
+  // Preserve action-time snapshots for ready maps. During initial hydration,
+  // exporting partial layers would replace saved records with incomplete arrays.
+  const graphics = hydrationStatus === "ready"
+    ? snapshot()
+    : waitForMapHydration(mapId).then((complete) => {
+        if (!complete || !isCurrent()) return null;
+        return snapshot();
+      }).catch((error) => {
+        console.error("Error preparing map save:", error);
+        return null;
+      });
+  // A deferred save must keep the settings from its own editing action, even
+  // when shared settings refs subsequently hydrate or switch to another map.
+  const saveSettings = hydrationStatus === "pending" ? cloneJsonValue(settings) : settings;
   const queue = pendingSaves.get(mapId) ?? {
     tail: Promise.resolve(true),
-    topBar: normalizeMapTopBar(settingsRef.current.topBar),
+    topBar: hydrationStatus === "ready" ? normalizeMapTopBar(settingsRef.current.topBar) : null,
   };
   const save = queue.tail.then(async () => {
+    const exported = await graphics;
+    if (!exported) return false;
+    const { polygons, labels, events, categories } = exported;
+    queue.topBar ??= exported.topBar;
     const payload: MapSaveBody = {
       userEmail, polygons, labels, events, categories,
       settings: {
-        ...settings,
+        ...saveSettings,
         // Resolve committed settings when the queued save runs. Popup drafts
         // only enter this path via an explicit Save override.
-        topBar: normalizeMapTopBar(settings.topBar ?? queue.topBar),
+        topBar: normalizeMapTopBar(saveSettings.topBar ?? queue.topBar),
       },
     };
     try {

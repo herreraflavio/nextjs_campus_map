@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { eventsLayerRef, GraphicRef, type CampusEvent } from "../arcgisRefs";
 import { toGraphic as toEventGraphic } from "./eventsLayer";
 import { lookupCoordinatesByLocation } from "./locationIndex";
+import type { MapLoadTrace } from "../mapLoadTrace";
 
 /**
  * Fetches events from external endpoints (eventSources) for a rolling time window,
@@ -17,41 +18,22 @@ export default function DynamicEventLoader(props: {
   futureDays?: number; // how many days forward to include
   debounceMs?: number;
   refreshMs?: number; // optional periodic refresh interval
+  loadTrace?: MapLoadTrace;
 }) {
   const {
     eventSources,
     pastDays = 7, // Note: pastDays/futureDays are no longer used but kept for prop compatibility
     futureDays = 30,
-    debounceMs = 300,
+    debounceMs = 0,
     refreshMs,
+    loadTrace,
   } = props;
 
   const dynamicGraphicsRef = useRef<any[]>([]);
   const activeFetchAbortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<number | null>(null);
   const refreshRef = useRef<number | null>(null); // Helper: wait until map layer & Graphic are ready
-
-  function waitUntilReady(): Promise<void> {
-    return new Promise((resolve) => {
-      let tries = 0;
-      const tick = () => {
-        const layerReady = !!eventsLayerRef.current;
-        const graphicReady = !!GraphicRef.current;
-        if (layerReady && graphicReady) {
-          resolve();
-          return;
-        }
-        tries += 1;
-        if (tries > 200) {
-          // ~20s max wait
-          resolve();
-          return;
-        }
-        setTimeout(tick, 100);
-      };
-      tick();
-    });
-  } // Helpers for time window
+  const dynamicLayerRef = useRef<any>(null);
 
   const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
   const dateToISODate = (d: Date) =>
@@ -85,7 +67,7 @@ export default function DynamicEventLoader(props: {
   const fetchDynamic = async () => {
     if (!Array.isArray(eventSources) || eventSources.length === 0) return;
 
-    await waitUntilReady();
+    // Mounted at MapView readiness; the event layer and Graphic are already set.
     const layer = eventsLayerRef.current as any;
     const Graphic = GraphicRef.current as any;
     if (!layer || !Graphic) return; // Abort previous fetch
@@ -94,7 +76,9 @@ export default function DynamicEventLoader(props: {
       activeFetchAbortRef.current.abort();
     }
     const ctrl = new AbortController();
+    loadTrace?.mark("dynamic-events-start");
     activeFetchAbortRef.current = ctrl; // Remove previous dynamic graphics
+    dynamicLayerRef.current = layer;
 
     if (dynamicGraphicsRef.current.length) {
       try {
@@ -243,31 +227,20 @@ export default function DynamicEventLoader(props: {
       const graphics = (await Promise.all(eventPromises)).filter(
         (g) => g !== null,
       );
+      if (ctrl.signal.aborted || activeFetchAbortRef.current !== ctrl) return;
+      // Publish each source when it finishes, independently of slower sources.
+      if (graphics.length) {
+        layer.addMany(graphics);
+        dynamicGraphicsRef.current.push(...graphics);
+        eventsLayerRef.events.dispatchEvent(new Event("change"));
+      }
+      loadTrace?.mark("dynamic-events-source-loaded");
       return graphics; // Return the array of graphics
     });
 
     try {
-      // Wait for all sources to be fetched and processed
-      const results = await Promise.allSettled(requests); // --- NEW: Add all graphics from all sources in one batch ---
-
-      const allGraphics: any[] = [];
-      for (const result of results) {
-        if (result.status === "fulfilled" && Array.isArray(result.value)) {
-          // result.value is the array of graphics from one source
-          allGraphics.push(...result.value);
-        }
-      }
-
-      if (allGraphics.length > 0) {
-        layer.addMany(allGraphics);
-        dynamicGraphicsRef.current.push(...allGraphics);
-
-        //
-        // 🎯 *** THIS IS THE FIX *** 🎯
-        // Manually notify listeners that the layer contents have changed.
-        //
-        eventsLayerRef.events.dispatchEvent(new Event("change"));
-      } // --- End new logic ---
+      // Await settlement only for request cleanup, never for rendering a source.
+      await Promise.allSettled(requests);
     } catch (e) {
       if ((e as any)?.name !== "AbortError") {
         console.error("Dynamic events fetch error:", e);
@@ -281,17 +254,20 @@ export default function DynamicEventLoader(props: {
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => {
-      fetchDynamic();
-    }, debounceMs) as unknown as number;
+    if (debounceMs > 0) {
+      debounceRef.current = window.setTimeout(() => { void fetchDynamic(); }, debounceMs);
+    } else {
+      void fetchDynamic();
+    }
 
     return () => {
       if (debounceRef.current) {
         window.clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
+      activeFetchAbortRef.current?.abort();
     }; // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(eventSources)]); // Optional periodic refresh
+  }, [JSON.stringify(eventSources), debounceMs]); // Optional periodic refresh
 
   useEffect(() => {
     if (!refreshMs || refreshMs <= 0) return;
@@ -315,7 +291,7 @@ export default function DynamicEventLoader(props: {
       try {
         activeFetchAbortRef.current?.abort();
       } catch {}
-      const layer = eventsLayerRef.current as any;
+      const layer = dynamicLayerRef.current;
       if (layer && dynamicGraphicsRef.current.length) {
         try {
           layer.removeMany(dynamicGraphicsRef.current);

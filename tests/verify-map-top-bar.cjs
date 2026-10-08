@@ -107,6 +107,7 @@ async function save(page) {
     releaseInitialLoad();
     await page.getByRole('button', { name: 'Edit Campus', exact: true }).waitFor();
     await waitUntil(() => page.evaluate(() => !!window.verifyMapView?.current?.ready), 'ArcGIS ready', 60000);
+    await page.locator('[data-map-loading="false"]').waitFor({ timeout: 60000 });
     await page.screenshot({ path: path.join(output, 'initial-desktop.png') });
     await page.evaluate(() => { window.initialMapView = window.verifyMapView.current; window.initialLayers = window.verifyMapView.current.map.layers.toArray(); window.initialCenter = window.verifyMapView.current.center.clone(); window.initialZoom = window.verifyMapView.current.zoom; });
     pass('Legacy map immediately has a full-width header between the Logit navbar and sidebar/map body');
@@ -187,6 +188,7 @@ async function save(page) {
     await page.reload();
     await page.getByRole('img', { name: 'Map logo', exact: true }).waitFor();
     await waitUntil(() => page.evaluate(() => !!window.verifyMapView?.current?.ready), 'reloaded ArcGIS ready');
+    await page.locator('[data-map-loading="false"]').waitFor({ timeout: 60000 });
     assert.equal(await bar.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(171, 205, 239)');
     pass('Reload loads the saved bar');
 

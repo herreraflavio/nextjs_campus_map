@@ -36,3 +36,37 @@ upload and save failures, color inputs, category editing, reload, map view/layer
 center/zoom preservation, and editor visibility in the builder, share document,
 and desktop/mobile iframe. Screenshots and results are
 written under `tools/top-bar-verification`.
+
+## Map loading checks
+
+```sh
+node --test tests/graphics-hydration.test.cjs tests/map-hydration.test.cjs tests/map-top-bar.test.cjs
+node tests/verify-map-loading.cjs
+node tests/profile-map-initialization.cjs
+```
+
+The loading browser runner uses the same environment variables and real ArcGIS
+runtime as the header runner. It temporarily creates and removes
+`src/app/loading-verification-fixture/page.tsx`; all map/API responses are fixtures.
+It holds configuration and optional layer responses to verify that SDK readiness
+reveals the map independently of secondary resources, samples every rendered frame, and checks
+initial load, refresh, background updates, map switching, stale requests, reopening,
+configuration errors, and the actual `/share` document in an iframe. It also checks
+saved graphics/header restoration and unhandled browser errors. Screenshots and
+results are written under `tools/loading-verification`.
+
+The profiler uses 600 saved polygons and labels, saved events, concurrent fast/slow
+event feeds, and a controlled three-second optional FeatureLayer network stall.
+It records browser User Timing and Resource Timing entries for configuration,
+sidebar readiness, SDK modules, view creation/readiness, basemap rendering,
+saved graphic hydration, live events and visible map content. It verifies partial
+graphics at reveal, complete distinct records afterward, stable view identity,
+category visibility, sidebar navigation and popups in builder/reload/iframe.
+Results and screenshots are under `tools/initial-loading-profile`.
+
+Initialization marks are available in the browser Performance panel with prefix
+`logit-map:<mapId>:<loadNumber>`. The `:elapsed` measures are durations from load
+start. They are diagnostic only and never determine loading visibility. In
+particular, `first-basemap-render` observes basemap layer views without waiting
+for operational layers, while `map-visible` records the UI's committed SDK-ready
+state. Saves independently wait for `saved-data-ready` to prevent partial exports.

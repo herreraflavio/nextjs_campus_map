@@ -16,6 +16,8 @@ import {
 } from "@/app/types/myTypes";
 import { useSession } from "next-auth/react";
 import { useMapId } from "@/app/context/MapContext";
+import { captureMapHydrationGuard, getMapHydrationStatus, waitForMapHydration } from "../mapHydration";
+import { yieldMapWork } from "../hydrateGraphics";
 import { saveMapToServer } from "@/app/helper/saveMap";
 import {
   clearPendingDrawingCreation,
@@ -58,6 +60,15 @@ export default function ToggleSketchTool() {
   const { data: session } = useSession();
   const userEmail = session?.user?.email;
   const mapId = useMapId();
+  const pendingActivationRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    pendingActivationRef.current?.abort();
+    pendingActivationRef.current = null;
+    return () => {
+      pendingActivationRef.current?.abort();
+      pendingActivationRef.current = null;
+    };
+  }, [mapId]);
 
   useEffect(() => {
     activeRef.current = active;
@@ -359,7 +370,23 @@ export default function ToggleSketchTool() {
     });
   }
 
-  const toggleSketch = () => {
+  const toggleSketch = async () => {
+    if (!active && getMapHydrationStatus(mapId) !== "ready") {
+      if (pendingActivationRef.current) return;
+      const activation = new AbortController();
+      pendingActivationRef.current = activation;
+      const isCurrent = captureMapHydrationGuard(mapId);
+      const ready = await waitForMapHydration(mapId);
+      if (pendingActivationRef.current !== activation) return;
+      if (ready && isCurrent()) {
+        // Let queued hydration saves capture complete finalized graphics before
+        // sketch activation moves those graphics into the editing layer.
+        try { await yieldMapWork(activation.signal); } catch { return; }
+      }
+      if (pendingActivationRef.current !== activation) return;
+      pendingActivationRef.current = null;
+      if (!ready || activation.signal.aborted || !isCurrent()) return;
+    }
     const view = MapViewRef.current as __esri.MapView;
     const editLayer = editingLayerRef.current!;
     const finalLayer = finalizedLayerRef.current!;

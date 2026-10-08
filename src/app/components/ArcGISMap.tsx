@@ -1,7 +1,9 @@
 //ArcGISMap.tsx
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { hydrateGraphics } from "./map/hydrateGraphics";
+import type { MapLoadTrace } from "./map/mapLoadTrace";
 import {
   editingLayerRef,
   MapViewRef,
@@ -23,6 +25,7 @@ import { rebuildBuckets } from "./map/bucketManager";
 import {
   applyMapVisibility,
   isItemEffectivelyVisibleById,
+  isGraphicEffectivelyVisible,
 } from "./map/categories/categoryVisibility";
 import { toGraphic as toEventGraphic } from "./map/MapControls/eventsLayer";
 import type {
@@ -40,6 +43,10 @@ import { normalizePolylineAnimation } from "@/app/types/myTypes";
  * ───────────────────────────────────── */
 
 type ArcGISMapProps = {
+  onInitialReady?: () => void;
+  onInitialError?: (error: unknown) => void;
+  onSavedDataReady?: () => void;
+  loadTrace?: MapLoadTrace;
   polygons: DrawingExport[];
   labels: Label[];
   events?: EventPoint[];
@@ -108,7 +115,27 @@ const DEFAULT_BASEMAP = "arcgis/nova";
  * Component
  * ───────────────────────────────────── */
 
-export default function ArcGISMap(mapData: ArcGISMapProps) {
+export default function ArcGISMap({
+  polygons,
+  labels,
+  events,
+  categories,
+  eventSources,
+  settings,
+  onInitialReady,
+  onInitialError,
+  onSavedDataReady,
+  loadTrace,
+}: ArcGISMapProps) {
+  // Parent readiness/header renders must not destroy the current MapView.
+  const mapData = useMemo(
+    () => ({ polygons, labels, events, categories, eventSources, settings }),
+    [polygons, labels, events, categories, eventSources, settings],
+  );
+  const callbacks = useRef({ onInitialReady, onInitialError, onSavedDataReady, loadTrace });
+  useEffect(() => {
+    callbacks.current = { onInitialReady, onInitialError, onSavedDataReady, loadTrace };
+  }, [onInitialReady, onInitialError, onSavedDataReady, loadTrace]);
   const mapDiv = useRef<HTMLDivElement>(null);
 
   type ActiveOverlay = "calendar" | "turn" | null;
@@ -122,6 +149,14 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
     let destroyed = false;
     let viewRef: __esri.MapView | null = null;
     let pollId: number | null = null;
+    const controller = new AbortController();
+    const trace = callbacks.current.loadTrace;
+    trace?.mark("sdk-request");
+    const reportError = (error: unknown) => {
+      if (destroyed) return;
+      console.error("Failed to initialize map:", error);
+      callbacks.current.onInitialError?.(error);
+    };
 
     setViewReady(false);
 
@@ -171,6 +206,8 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           reactiveUtils: any,
         ) => {
           if (destroyed) return;
+          trace?.mark("sdk-ready");
+          try {
 
           const isLonLat = (x: number, y: number) =>
             Math.abs(x) <= 180 && Math.abs(y) <= 90;
@@ -702,6 +739,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
                   }),
                 )
               : new Point({ x: cx, y: cy, spatialReference: { wkid: 3857 } });
+          trace?.mark("view-create");
           const view: __esri.MapView = new MapView({
             container: mapDiv.current as HTMLDivElement,
             map,
@@ -852,31 +890,26 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           ].filter(Boolean);
 
           map.addMany(allLayers);
+          trace?.mark("layers-created");
           resortByZ(map);
           (map.layers as any).on("change", () => resortByZ(map));
 
-          const rebuildAllLabelsFromPolygons = (
-            savedLabelMap: globalThis.Map<string, Label>,
-          ) => {
-            labelsLayer.removeAll();
+          const createPolygonLabel = (polyG: any, savedLabelMap: globalThis.Map<string, Label>) => {
+            if (polyG.geometry?.type !== "polygon") return null;
+            const poly3857 = toViewSR(polyG.geometry) as __esri.Polygon;
+            const pt = computeLabelPoint(poly3857);
+            const saved = savedLabelMap.get(polyG.attributes?.id);
 
-            finalizedLayer.graphics.toArray().forEach((polyG: any) => {
-              if (polyG.geometry?.type !== "polygon") return;
-
-              const poly3857 = toViewSR(polyG.geometry) as __esri.Polygon;
-              const pt = computeLabelPoint(poly3857);
-              const saved = savedLabelMap.get(polyG.attributes?.id);
-
-              const attrs = {
-                parentId: polyG.attributes?.id,
-                text:
-                  saved?.attributes.text ?? polyG.attributes?.name ?? "Polygon",
-                showAtZoom: saved?.attributes.showAtZoom ?? null,
-                hideAtZoom: saved?.attributes.hideAtZoom ?? null,
-                fontSize: saved?.attributes.fontSize ?? 12,
-                color: saved?.attributes.color ?? [0, 0, 0, 1],
-                haloColor: saved?.attributes.haloColor ?? [255, 255, 255, 1],
-                haloSize: saved?.attributes.haloSize ?? 2,
+            const attrs = {
+              parentId: polyG.attributes?.id,
+              text:
+                saved?.attributes.text ?? polyG.attributes?.name ?? "Polygon",
+              showAtZoom: saved?.attributes.showAtZoom ?? null,
+              hideAtZoom: saved?.attributes.hideAtZoom ?? null,
+              fontSize: saved?.attributes.fontSize ?? 12,
+              color: saved?.attributes.color ?? [0, 0, 0, 1],
+              haloColor: saved?.attributes.haloColor ?? [255, 255, 255, 1],
+              haloSize: saved?.attributes.haloSize ?? 2,
               };
 
               const labelGraphic = new Graphic({
@@ -884,9 +917,20 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
                 symbol: createTextSymbol(attrs),
                 attributes: attrs,
               });
+              labelGraphic.visible = polyG.visible &&
+                view.zoom >= (attrs.showAtZoom ?? -Infinity) &&
+                view.zoom <= (attrs.hideAtZoom ?? Infinity);
+              return labelGraphic;
+          };
 
-              labelsLayer.add(labelGraphic);
-            });
+          const rebuildAllLabelsFromPolygons = (
+            savedLabelMap: globalThis.Map<string, Label>,
+          ) => {
+            labelsLayer.removeAll();
+            const labels = finalizedLayer.graphics.toArray()
+              .map((graphic: __esri.Graphic) => createPolygonLabel(graphic, savedLabelMap))
+              .filter(Boolean);
+            labelsLayer.addMany(labels);
 
             rebuildBuckets(labelsLayer);
             applyMapVisibility(view.zoom);
@@ -1012,107 +1056,123 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             labels: mapData.labels || [],
             events: mapData.events || [],
           };
-
-          (data.polygons || []).forEach((p) => {
-            try {
-              let rawGeom: __esri.Geometry;
-
-              if (p.geometry.type === "polyline") {
-                rawGeom = Polyline.fromJSON(p.geometry as any);
-              } else if (p.geometry.type === "polygon") {
-                rawGeom = Polygon.fromJSON(p.geometry as any);
-              } else {
-                rawGeom = new Point({
-                  x: p.geometry.x,
-                  y: p.geometry.y,
-                  spatialReference: p.geometry.spatialReference,
-                });
-              }
-
-              const projectedGeom = toViewSR(rawGeom) as __esri.Geometry;
-
-              const attributes =
-                p.geometry.type === "polyline"
-                  ? {
-                      ...p.attributes,
-                      animation:
-                        p.attributes?.animation != null
-                          ? normalizePolylineAnimation(p.attributes.animation)
-                          : p.attributes?.animation,
-                    }
-                  : p.attributes;
-
-              const graphic = new Graphic({
-                geometry: projectedGeom,
-                symbol: p.symbol,
-                attributes,
-                popupTemplate: {
-                  title: p.attributes.name,
-                  content: p.attributes.description,
-                },
-              });
-
-              finalizedLayer.add(graphic);
-            } catch (e) {
-              console.error("Failed to load drawing:", p, e);
-            }
-          });
-
           const savedLabelMap = new globalThis.Map<string, Label>();
-          (data.labels || []).forEach((l) => {
-            if (l?.attributes?.parentId) {
-              savedLabelMap.set(l.attributes.parentId, l);
-            }
-          });
+          for (const label of data.labels) {
+            if (label?.attributes?.parentId) savedLabelMap.set(label.attributes.parentId, label);
+          }
+          let savedGraphicsReady = false;
+          const hydrateDrawings = async () => {
+            await hydrateGraphics(data.polygons, (p) => {
+              try {
+                let rawGeom: __esri.Geometry;
 
-          rebuildAllLabelsFromPolygons(savedLabelMap);
+                if (p.geometry.type === "polyline") {
+                  rawGeom = Polyline.fromJSON(p.geometry as any);
+                } else if (p.geometry.type === "polygon") {
+                  rawGeom = Polygon.fromJSON(p.geometry as any);
+                } else {
+                  rawGeom = new Point({
+                    x: p.geometry.x,
+                    y: p.geometry.y,
+                    spatialReference: p.geometry.spatialReference,
+                  });
+                }
 
-          (data.events || []).forEach((ev) => {
-            try {
-              const srcPt = new Point({
-                x: ev.geometry.x,
-                y: ev.geometry.y,
-                spatialReference: {
-                  wkid: 4326,
-                },
-              });
+                const projectedGeom = toViewSR(rawGeom) as __esri.Geometry;
 
-              const pt3857 = toViewSR(srcPt) as __esri.Point;
+                const attributes =
+                  p.geometry.type === "polyline"
+                    ? {
+                        ...p.attributes,
+                        animation:
+                          p.attributes?.animation != null
+                            ? normalizePolylineAnimation(p.attributes.animation)
+                            : p.attributes?.animation,
+                      }
+                    : p.attributes;
 
-              const ce: CampusEvent = {
-                id: ev.attributes.id || `evt-${Date.now()}`,
-                event_name: ev.attributes.event_name || "Event",
-                description: ev.attributes.description ?? undefined,
-                date: ev.attributes.date ?? undefined,
-                startAt: ev.attributes.startAt ?? undefined,
-                endAt: ev.attributes.endAt ?? undefined,
-                locationTag:
-                  (ev.attributes.fullLocationTag ||
-                    ev.attributes.location_at) ??
-                  undefined,
-                location: ev.attributes.location ?? undefined,
-                location_at: ev.attributes.location_at ?? undefined,
-                names: ev.attributes.names ?? undefined,
-                original: ev.attributes.original ?? undefined,
-                geometry: { x: pt3857.x, y: pt3857.y, wkid: 3857 },
-                fromUser: ev.attributes.fromUser ?? false,
-                iconSize: ev.attributes.iconSize ?? 36,
-                iconUrl: ev.attributes.iconUrl ?? "/icons/event-pin.png",
-                poster_url: ev.attributes.poster_url ?? undefined,
+                const graphic = new Graphic({
+                  geometry: projectedGeom,
+                  symbol: p.symbol,
+                  attributes,
+                  popupTemplate: {
+                    title: p.attributes.name,
+                    content: p.attributes.description,
+                  },
+                });
+
+                graphic.visible = isGraphicEffectivelyVisible(graphic);
+                return graphic;
+              } catch (e) {
+                console.error("Failed to load drawing:", p, e);
+                return null;
+              }
+            }, (batch) => {
+              finalizedLayer.addMany(batch);
+              const labels = batch.map(graphic => createPolygonLabel(graphic, savedLabelMap)).filter(Boolean);
+              labelsLayer.addMany(labels);
+              // Sidebar items become available along with each graphic batch.
+              finalizedLayerRef.events.dispatchEvent(new Event("change"));
+            }, controller.signal);
+            trace?.mark("polygons-loaded");
+            // Diagnostic only: drawing never gates the basemap or save readiness.
+            void view.whenLayerView(finalizedLayer).then(async (layerView) => {
+              await reactiveUtils.whenOnce(() => !layerView.updating, { signal: controller.signal });
+              if (!destroyed) trace?.mark("polygons-rendered");
+            }).catch(() => {});
+            rebuildBuckets(labelsLayer);
+            trace?.mark("labels-loaded");
+          };
+
+          const savedEventIds = new Set<string>();
+          const hydrateEvents = async () => {
+            await hydrateGraphics(data.events, (ev) => {
+              try {
+                if (ev.attributes.id && savedEventIds.has(ev.attributes.id)) return null;
+                const srcPt = new Point({
+                  x: ev.geometry.x,
+                  y: ev.geometry.y,
+                  spatialReference: {
+                    wkid: 4326,
+                  },
+                });
+
+                const pt3857 = toViewSR(srcPt) as __esri.Point;
+
+                const ce: CampusEvent = {
+                  id: ev.attributes.id || `evt-${Date.now()}`,
+                  event_name: ev.attributes.event_name || "Event",
+                  description: ev.attributes.description ?? undefined,
+                  date: ev.attributes.date ?? undefined,
+                  startAt: ev.attributes.startAt ?? undefined,
+                  endAt: ev.attributes.endAt ?? undefined,
+                  locationTag:
+                    (ev.attributes.fullLocationTag ||
+                      ev.attributes.location_at) ??
+                    undefined,
+                  location: ev.attributes.location ?? undefined,
+                  location_at: ev.attributes.location_at ?? undefined,
+                  names: ev.attributes.names ?? undefined,
+                  original: ev.attributes.original ?? undefined,
+                  geometry: { x: pt3857.x, y: pt3857.y, wkid: 3857 },
+                  fromUser: ev.attributes.fromUser ?? false,
+                  iconSize: ev.attributes.iconSize ?? 36,
+                  iconUrl: ev.attributes.iconUrl ?? "/icons/event-pin.png",
+                  poster_url: ev.attributes.poster_url ?? undefined,
               };
 
-              eventsLayer.add(toEventGraphic(Graphic, ce));
+              savedEventIds.add(ce.id);
+              return toEventGraphic(Graphic, ce);
             } catch (e) {
               console.error("Failed to load event:", ev, e);
+              return null;
             }
-          });
-
-          view.when(() => {
-            applyMapVisibility(view.zoom);
-            setViewReady(true);
-            startDynamicSprites();
-          });
-
+          }, (batch) => {
+            eventsLayer.addMany(batch);
+            eventsLayerRef.events.dispatchEvent(new Event("change"));
+          }, controller.signal);
+          trace?.mark("events-loaded");
+          };
           finalizedLayerRef.events.dispatchEvent(new Event("change"));
 
           editingLayerRef.current = editingLayer;
@@ -1138,7 +1198,10 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
                 };
               }
 
-              eventsLayer.add(toEventGraphic(Graphic, finalEv));
+              if (!eventsLayer.graphics.some((g: __esri.Graphic) => g.attributes?.id === ev.id)) {
+                savedEventIds.add(ev.id);
+                eventsLayer.add(toEventGraphic(Graphic, finalEv));
+              }
             } catch (e) {
               console.error("Error loading store event", e);
             }
@@ -1148,6 +1211,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             const custom = e as CustomEvent<CampusEvent>;
             const ev = custom.detail;
             if (!ev) return;
+            if (savedEventIds.has(ev.id)) return;
 
             try {
               let finalEv = ev;
@@ -1167,6 +1231,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
               }
 
               eventsLayer.add(toEventGraphic(Graphic, finalEv));
+              savedEventIds.add(ev.id);
             } catch (err) {
               console.error("Error adding dynamic event to map:", err);
             }
@@ -1178,6 +1243,8 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
           view.watch("zoom", (z: number) => applyMapVisibility(z));
 
           finalizedLayer.graphics.on("change", () => {
+            // Initial batches create their own labels; full rebuilds are for edits.
+            if (!savedGraphicsReady) return;
             const savedLabelMap2 = new globalThis.Map<string, Label>();
 
             labelsLayer.graphics.toArray().forEach((lbl: any) => {
@@ -1199,7 +1266,35 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             startDynamicSprites();
             applyMapVisibility(view.zoom);
           });
+          // Reveal the configured basemap at SDK readiness. Operational layers,
+          // saved graphics and live feeds continue independently on this view.
+          view.when(() => {
+            if (destroyed) return;
+            trace?.mark("view-ready");
+            // Observe basemap drawing independently of operational layers.
+            Promise.allSettled(map.basemap.baseLayers.toArray().map((layer: __esri.Layer) => view.whenLayerView(layer)))
+              .then(async (results) => {
+                const layerViews = results.flatMap(result => result.status === "fulfilled" ? [result.value] : []);
+                await reactiveUtils.whenOnce(() => layerViews.every(layerView => !layerView.updating), { signal: controller.signal });
+                if (!destroyed) trace?.mark("first-basemap-render");
+              }).catch(() => {});
+            applyMapVisibility(view.zoom);
+            setViewReady(true);
+            callbacks.current.onInitialReady?.();
+            void Promise.all([hydrateDrawings(), hydrateEvents()]).then(() => {
+              if (destroyed) return;
+              savedGraphicsReady = true;
+              applyMapVisibility(view.zoom);
+              startDynamicSprites();
+              trace?.mark("saved-data-ready");
+              callbacks.current.onSavedDataReady?.();
+            }).catch(reportError);
+          }).catch(reportError);
+          } catch (error) {
+            reportError(error);
+          }
         },
+        reportError,
       );
     };
 
@@ -1228,13 +1323,14 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
             window.clearInterval(pollId);
             pollId = null;
           }
-          console.error("ArcGIS AMD loader not available after waiting.");
+          reportError(new Error("ArcGIS AMD loader not available after waiting."));
         }
       }, 100) as unknown as number;
     }
 
     return () => {
       destroyed = true;
+      controller.abort();
 
       if (pollId !== null) {
         window.clearInterval(pollId);
@@ -1261,6 +1357,9 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
         eventsLayerRef.current = null as any;
         spriteLayerRef.current = null as any;
         GraphicRef.current = null as any;
+        editingLayerRef.current = null;
+        setFinalizedLayer(null);
+        setLabelsLayer(null);
         setViewReady(false);
       }
     };
@@ -1287,7 +1386,7 @@ export default function ArcGISMap(mapData: ArcGISMapProps) {
       />
 
       {viewReady && (
-        <DynamicEventLoader eventSources={mapData.eventSources ?? []} />
+        <DynamicEventLoader eventSources={mapData.eventSources ?? []} loadTrace={loadTrace} />
       )}
 
       <div style={dockWrap}>

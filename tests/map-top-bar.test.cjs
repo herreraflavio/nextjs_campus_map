@@ -60,6 +60,11 @@ test('empty maps save, queued category saves retain the new bar, and failed save
   const saveModule = load('src/app/helper/saveMap.ts', {
     '@/app/components/map/arcgisRefs': refs,
     '@/app/components/map/categories/categoryStore': { getCategories: () => [] },
+    '@/app/components/map/mapHydration': {
+      getMapHydrationStatus: () => 'ready',
+      waitForMapHydration: async () => true,
+      captureMapHydrationGuard: () => () => true,
+    },
     '@/app/types/mapTopBar': barModule,
     '@/app/types/myTypes': {},
   });
