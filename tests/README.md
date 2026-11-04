@@ -115,6 +115,8 @@ In Map Settings, each API source has a **Tab name** input. Existing sources
 default to **Events**. Sources with the same name share a tab; **Home** is reserved
 for categories and drawings. Labels persist independently of source order and
 apply immediately without replacing the MapView.
+Additional tabs are created only from configured API sources. Maps without any
+API sources display Home only.
 
 Each tab has **Hide all** and **Show all** controls for its own content. Home
 controls all nested categories and drawings while honoring admin visibility

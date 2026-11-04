@@ -33,11 +33,8 @@ export default function MapSidebarTabs(props: MapSidebarProps) {
     tab.urls.push(source.url);
     tabs.set(id, tab);
   });
-  if (ready && (!sources.length || events.some(event => !event.attributes?.sourceUrl))) {
-    const tab = tabs.get("source:events") ?? { name: "Events", urls: [] };
-    tab.urls.push("");
-    tabs.set("source:events", tab);
-  }
+  // Saved events can share a configured Events tab, but never create one.
+  tabs.get("source:events")?.urls.push("");
   const tabSignature = JSON.stringify([...tabs]);
   useEffect(() => {
     tabListRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')
