@@ -4,6 +4,42 @@ import "./globals.css";
 import Script from "next/script";
 import { SessionProvider } from "next-auth/react";
 
+const description =
+  "Explore interactive maps, find places and events, and get directions with geooos.";
+const previewImage = {
+  url: "/banner/og-image.jpg",
+  width: 2569,
+  height: 998,
+  type: "image/jpeg",
+  alt: "A 3D campus map showing buildings, paths, and a lake.",
+};
+
+export const metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXTAUTH_URL ||
+      "https://mapbuilder.ucmercedhub.com",
+  ),
+  title: "geooos",
+  applicationName: "geooos",
+  description,
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "geooos",
+    title: "geooos",
+    description,
+    url: "./",
+    images: [previewImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "geooos",
+    description,
+    images: [previewImage],
+  },
+};
+
 export default function RootLayout({ children }) {
   /*
    * ArcGIS API key:
