@@ -1,7 +1,9 @@
 //src/app/components/map/sidebar/PublicMapSidebar.tsx
 "use client";
 
-import MapSidebar from "./MapSidebar";
+import { Suspense } from "react";
+import MapSidebarTabs from "./MapSidebarTabs";
+import MapLoadingSkeleton from "../MapLoadingSkeleton";
 import {
   goToDrawing,
   useFinalizedDrawings,
@@ -11,10 +13,10 @@ export default function PublicMapSidebar() {
   const drawings = useFinalizedDrawings();
 
   return (
-    <MapSidebar
+    <Suspense fallback={<MapLoadingSkeleton section="sidebar" />}><MapSidebarTabs
       drawings={drawings}
       onGoTo={goToDrawing}
       showItemType={false}
-    />
+    /></Suspense>
   );
 }

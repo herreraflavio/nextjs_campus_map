@@ -96,7 +96,7 @@ function dist(a: Node, b: Node) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function normalizeSearchText(value: string) {
+export function normalizeSearchText(value: string) {
   return value.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
@@ -141,7 +141,7 @@ function parseMetaEntry(entry: any): VertexMeta {
   return meta;
 }
 
-function buildSearchOptions(
+export function buildSearchOptions(
   publicNodes: Node[],
   metaById: Record<string, VertexMeta>,
 ): SearchOption[] {
@@ -236,13 +236,13 @@ export function findBestLocationMatchId(
 
     if (c === query || normalizeSearchText(id) === query) {
       score = 0;
-    } else if (c.startsWith(query) || query.startsWith(c)) {
+    } else if (c.startsWith(query) || query.startsWith(`${c} `)) {
       score = 1;
     } else {
       const idx = c.indexOf(query);
       if (idx >= 0) {
         score = 2 + idx;
-      } else if (query.includes(c)) {
+      } else if (` ${query} `.includes(` ${c} `)) {
         score = 3;
       }
     }
@@ -261,7 +261,10 @@ export function findBestLocationMatchId(
   };
 
   for (const option of options) {
-    best = consider(best, option.id, option.label, option.id);
+    // IDs are identifiers, not partial names (e.g. 462 must not match 46).
+    if (normalizeSearchText(option.id) === query) {
+      best = consider(best, option.id, option.label, option.id);
+    }
     best = consider(best, option.id, option.label, option.label);
 
     for (const alias of option.aliases) {
@@ -272,11 +275,26 @@ export function findBestLocationMatchId(
   return best ? best.id : null;
 }
 
-export async function loadLocationGraph(): Promise<{
+type LocationGraph = {
   nodes: Node[];
   edges: Edge[];
   metaById: Record<string, VertexMeta>;
-}> {
+};
+
+let graphPromise: Promise<LocationGraph> | null = null;
+
+// Navigation and URL targets share one graph, including its aliases and matching rules.
+export function loadLocationGraph(): Promise<LocationGraph> {
+  if (!graphPromise) {
+    graphPromise = fetchLocationGraph().catch(error => {
+      graphPromise = null;
+      throw error;
+    });
+  }
+  return graphPromise;
+}
+
+async function fetchLocationGraph(): Promise<LocationGraph> {
   const [vtxRes, edgRes, metaRes] = await Promise.all([
     fetch("/walking_vertices.json"),
     fetch("/walking_edges.json"),
@@ -416,7 +434,7 @@ export async function loadLocationGraph(): Promise<{
 }
 
 /** ========= Shared hook ========= */
-export function useLocationSearchGraph() {
+export function useLocationSearchGraph(enabled = true) {
   const [nodes, setNodes] = React.useState<Node[]>([]);
   const [edges, setEdges] = React.useState<Edge[]>([]);
   const [metaById, setMetaById] = React.useState<Record<string, VertexMeta>>(
@@ -426,6 +444,7 @@ export function useLocationSearchGraph() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!enabled) return;
     let mounted = true;
 
     setLoading(true);
@@ -452,7 +471,7 @@ export function useLocationSearchGraph() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [enabled]);
 
   const publicNodes = React.useMemo(
     () => nodes.filter((n) => !n.hidden),

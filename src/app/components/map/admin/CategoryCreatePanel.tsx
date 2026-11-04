@@ -21,6 +21,9 @@ import {
 import { settingsRef } from "../arcgisRefs";
 import { saveMapToServer } from "@/app/helper/saveMap";
 import { uploadImage } from "@/app/helper/uploadImage";
+import VisibilitySettings from "./VisibilitySettings";
+import { useMapCategories } from "../categories/useMapCategories";
+import { isCategoryAlwaysVisibleInList } from "@/app/types/mapVisibility";
 import type { FeatureLayerConfig } from "@/app/types/myTypes";
 
 type CategoryCreatePanelProps = {
@@ -43,6 +46,9 @@ export default function CategoryCreatePanel({
   onClose,
 }: CategoryCreatePanelProps) {
   const [name, setName] = useState("");
+  const categories = useMapCategories();
+  const [adminVisible, setAdminVisible] = useState(true);
+  const [alwaysVisible, setAlwaysVisible] = useState(false);
   const [iconUrl, setIconUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +90,8 @@ export default function CategoryCreatePanel({
 
     const parentId = normalizePersistedParentId(parentCategoryId);
     addCategory({
+      adminVisible,
+      alwaysVisible,
       id: createCategoryId(),
       name: trimmedName,
       parentId,
@@ -133,6 +141,14 @@ export default function CategoryCreatePanel({
         onChange={(event) => setName(event.target.value)}
         size="small"
         margin="dense"
+      />
+
+      <VisibilitySettings
+        adminVisible={adminVisible}
+        alwaysVisible={alwaysVisible}
+        inherited={isCategoryAlwaysVisibleInList(categories, parentCategoryId)}
+        onAdminVisibleChange={setAdminVisible}
+        onAlwaysVisibleChange={setAlwaysVisible}
       />
 
       {iconUrl && (

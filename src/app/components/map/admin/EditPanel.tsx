@@ -34,6 +34,8 @@ import {
 } from "../arcgisRefs";
 import { rebuildBuckets } from "../bucketManager";
 import { useMapCategories } from "../categories/useMapCategories";
+import VisibilitySettings from "./VisibilitySettings";
+import { isCategoryAlwaysVisibleInList } from "@/app/types/mapVisibility";
 import {
   getCategoryDepth,
   isCategoryAdminVisibleValue,
@@ -473,6 +475,7 @@ export default function EditPanel(props: EditPanelProps) {
   );
   const [editIconUrl, setEditIconUrl] = useState("");
   const [categoryAdminVisible, setCategoryAdminVisible] = useState(true);
+  const [alwaysVisible, setAlwaysVisible] = useState(false);
 
   const [minZoomEnabled, setMinZoomEnabled] = useState(false);
   const [maxZoomEnabled, setMaxZoomEnabled] = useState(false);
@@ -548,6 +551,8 @@ export default function EditPanel(props: EditPanelProps) {
     const geomType = graphic.geometry?.type as DrawableGeometryType;
     setEditingGeometryType(geomType);
     setEditName(graphic.attributes?.name ?? "");
+    setCategoryAdminVisible(graphic.attributes?.adminVisible !== false);
+    setAlwaysVisible(graphic.attributes?.alwaysVisible === true);
 
     const color = colorToHexAlpha(graphic.symbol?.color);
     setEditColor(color.hex);
@@ -623,6 +628,7 @@ export default function EditPanel(props: EditPanelProps) {
     setEditName(category.name);
     setEditIconUrl(category.iconUrl ?? "");
     setCategoryAdminVisible(isCategoryAdminVisibleValue(category));
+    setAlwaysVisible(category.alwaysVisible === true);
   }, [editingCategoryId, categories]);
 
   const handleImageUpload = async (key: string, file: File | null) => {
@@ -729,6 +735,8 @@ export default function EditPanel(props: EditPanelProps) {
         editCategoryId === ROOT_CATEGORY_ID ? null : editCategoryId,
       iconUrl: editIconUrl.trim() || null,
       geometryType: editingGeometryType,
+      adminVisible: categoryAdminVisible,
+      alwaysVisible,
     });
     props.onClose();
   };
@@ -743,6 +751,7 @@ export default function EditPanel(props: EditPanelProps) {
       name: trimmedName,
       iconUrl: editIconUrl.trim() || null,
       adminVisible: categoryAdminVisible,
+      alwaysVisible,
     });
 
     saveCurrentMap();
@@ -783,6 +792,8 @@ export default function EditPanel(props: EditPanelProps) {
     if (!graphic || !view) return;
 
     graphic.attributes.name = editName;
+    graphic.attributes.adminVisible = categoryAdminVisible;
+    graphic.attributes.alwaysVisible = alwaysVisible;
     graphic.attributes.categoryId =
       editCategoryId === ROOT_CATEGORY_ID ? null : editCategoryId;
     graphic.attributes.iconUrl = editIconUrl.trim() || null;
@@ -947,20 +958,15 @@ export default function EditPanel(props: EditPanelProps) {
         </TextField>
       )}
 
-      {props.mode === "category" && (
-        <FormControlLabel
-          sx={{ mt: 1 }}
-          control={
-            <Checkbox
-              checked={categoryAdminVisible}
-              onChange={(event) =>
-                setCategoryAdminVisible(event.target.checked)
-              }
-            />
-          }
-          label={categoryAdminVisible ? "Visible to users" : "Hidden from users"}
-        />
-      )}
+      <VisibilitySettings
+        adminVisible={categoryAdminVisible}
+        alwaysVisible={alwaysVisible}
+        inherited={isCategoryAlwaysVisibleInList(categories, props.mode === "category"
+          ? categories.find(category => category.id === props.categoryId)?.parentId
+          : editCategoryId)}
+        onAdminVisibleChange={setCategoryAdminVisible}
+        onAlwaysVisibleChange={setAlwaysVisible}
+      />
 
       <Box sx={{ mt: 1.5 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>

@@ -10,7 +10,8 @@ function load(file, mocks = {}) {
   }).outputText;
   const module = { exports: {} };
   new Function('require', 'module', 'exports', code)(
-    name => name in mocks ? mocks[name] : require(name), module, module.exports,
+    name => name in mocks ? mocks[name] : name === '@/app/types/apiSources'
+      ? load('src/app/types/apiSources.ts') : require(name), module, module.exports,
   );
   return module.exports;
 }

@@ -27,6 +27,7 @@ import {
 import type {
   FeatureLayerConfig as SharedFeatureLayerConfig,
 } from "@/app/types/myTypes";
+import { normalizeApiSourceTabs, type ApiSourceTab } from "@/app/types/apiSources";
 
 export interface FeatureLayerConfig extends SharedFeatureLayerConfig {
   id: string;
@@ -97,6 +98,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
   const [mapTile, setMapTile] = useState<string | null>(null);
   const [baseMap, setBaseMap] = useState<string | null>(null);
   const [apiSources, setApiSources] = useState<string[]>(DEFAULT_APISOURCES);
+  const [sourceTabs, setSourceTabs] = useState<ApiSourceTab[]>([]);
   const [fieldNameById, setFieldNameById] = useState<Record<string, string>>(
     {},
   );
@@ -155,7 +157,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
 
     if (!openSettings && view) {
       const c = settingsRef.current.center as { x: number; y: number };
-      const [lon, lat] = mercatorToLonLat(c.x, c.y);
+      const [lon, lat] = Math.abs(c.x) <= 180 && Math.abs(c.y) <= 90 ? [c.x, c.y] : mercatorToLonLat(c.x, c.y);
       setCenter({ x: String(lon), y: String(lat) });
       setZoom(settingsRef.current.zoom);
 
@@ -183,6 +185,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
 
       const fromRef = coerceStringArray((settingsRef.current as any).apiSources);
       setApiSources(fromRef.length > 0 ? fromRef : DEFAULT_APISOURCES);
+      setSourceTabs(normalizeApiSourceTabs(fromRef, settingsRef.current.apiSourceTabs));
     }
 
     setOpenSettings((isOpen) => !isOpen);
@@ -235,6 +238,9 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
     const withFallback = cleaned.length > 0 ? cleaned : DEFAULT_APISOURCES;
     const deduped = Array.from(new Set(withFallback));
     (settingsRef.current as any).apiSources = deduped;
+    const apiSourceTabs = normalizeApiSourceTabs(deduped, sourceTabs);
+    settingsRef.current.apiSourceTabs = apiSourceTabs;
+    settingsEvents.dispatchEvent(new Event("change"));
 
     if (userEmail) {
       const s = settingsRef.current as any;
@@ -246,6 +252,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
         mapTile,
         baseMap,
         apiSources: deduped,
+        apiSourceTabs,
       });
     }
 
@@ -256,7 +263,8 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
     const sync = () => {
       const s = settingsRef.current as any;
 
-      const [lon, lat] = mercatorToLonLat(s.center.x, s.center.y);
+      const [lon, lat] = Math.abs(s.center.x) <= 180 && Math.abs(s.center.y) <= 90
+        ? [s.center.x, s.center.y] : mercatorToLonLat(s.center.x, s.center.y);
       setCenter({ x: String(lon), y: String(lat) });
       setLayers(
         normalizeLayers((s.featureLayers ?? []) as Partial<FeatureLayerConfig>[]),
@@ -267,6 +275,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
 
       const fromRef = coerceStringArray(s.apiSources);
       setApiSources(fromRef.length > 0 ? fromRef : DEFAULT_APISOURCES);
+      setSourceTabs(normalizeApiSourceTabs(fromRef, s.apiSourceTabs));
 
       if (s.constraints) {
         const [minLon, minLat] = mercatorToLonLat(
@@ -295,6 +304,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
   return (
     <>
       <IconButton
+        aria-label="Map settings"
         onClick={toggleSettings}
         sx={{
           position: "absolute",
@@ -379,23 +389,40 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
             <Box sx={{ mt: 1 }}>
               {apiSources.map((url, idx) => (
                 <Box
-                  key={`${idx}-${url}`}
-                  sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}
+                  key={idx}
+                  sx={{ display: "flex", gap: 1, alignItems: "flex-start", mt: 2 }}
                 >
+                  <Box sx={{ flex: 1, minWidth: 0, display: "grid", gap: 1 }}>
                   <TextField
                     label={`API Source ${idx + 1}`}
                     value={url}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setSourceTabs(prev => prev.map(source => source.url === url ? { ...source, url: e.target.value } : source));
                       setApiSources((prev) =>
                         prev.map((value, i) =>
                           i === idx ? e.target.value : value,
                         ),
-                      )
-                    }
+                      );
+                    }}
                     size="small"
                     fullWidth
                   />
+                  <TextField
+                    label={`Tab name ${idx + 1}`}
+                    value={sourceTabs.find(source => source.url === url)?.tabName ?? "Events"}
+                    onChange={event => setSourceTabs(prev => [
+                      ...prev.filter(source => source.url !== url), { url, tabName: event.target.value },
+                    ])}
+                    error={sourceTabs.find(source => source.url === url)?.tabName.trim().toLowerCase() === "home"}
+                    helperText={sourceTabs.find(source => source.url === url)?.tabName.trim().toLowerCase() === "home"
+                      ? "Choose a name other than Home." : "Sources with the same name share a tab."}
+                    inputProps={{ maxLength: 80 }}
+                    size="small"
+                    fullWidth
+                  />
+                  </Box>
                   <IconButton
+                    aria-label={`Remove API source ${idx + 1}`}
                     onClick={() =>
                       setApiSources((prev) =>
                         prev.filter((_, i) => i !== idx),
@@ -419,7 +446,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
                 <Button
                   size="small"
                   variant="text"
-                  onClick={() => setApiSources(DEFAULT_APISOURCES)}
+                  onClick={() => { setApiSources(DEFAULT_APISOURCES); setSourceTabs([]); }}
                   startIcon={<RestartAltIcon />}
                 >
                   Reset defaults
@@ -430,7 +457,8 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button onClick={toggleSettings}>Cancel</Button>
-            <Button variant="contained" onClick={applySettings} sx={{ ml: 1 }}>
+            <Button variant="contained" onClick={applySettings} sx={{ ml: 1 }}
+              disabled={sourceTabs.some(source => apiSources.includes(source.url) && source.tabName.trim().toLowerCase() === "home")}>
               Apply All Edits
             </Button>
           </Box>

@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { getMongoClient } from "@/lib/mongodb";
 import { findUserByEmail, User } from "@/lib/userModel";
 import { isMapTopBarSettings, normalizeMapTopBar } from "@/app/types/mapTopBar";
+import { normalizeApiSourceTabs } from "@/app/types/apiSources";
 import type {
   DrawingExport,
   EventPoint,
@@ -217,7 +218,9 @@ function isPointDrawing(x: any): boolean {
 }
 
 function isDrawing(x: any): x is DrawingExport {
-  return isPolygonDrawing(x) || isPolylineDrawing(x) || isPointDrawing(x);
+  return (isPolygonDrawing(x) || isPolylineDrawing(x) || isPointDrawing(x)) &&
+    (x.attributes.adminVisible === undefined || typeof x.attributes.adminVisible === "boolean") &&
+    (x.attributes.alwaysVisible === undefined || typeof x.attributes.alwaysVisible === "boolean");
 }
 
 function isLabel(x: any): x is Label {
@@ -275,6 +278,8 @@ function isMapCategory(x: any): x is MapCategory {
       typeof x.iconUrl === "string") &&
     (typeof x.adminVisible === "undefined" ||
       typeof x.adminVisible === "boolean") &&
+    (typeof x.alwaysVisible === "undefined" ||
+      typeof x.alwaysVisible === "boolean") &&
     typeof x.order === "number" &&
     Number.isFinite(x.order)
   );
@@ -307,6 +312,9 @@ function normalizeMapCategoriesForStorage(categories: MapCategory[]): MapCategor
 
     if (typeof category.adminVisible === "boolean") {
       normalized.adminVisible = category.adminVisible;
+    }
+    if (typeof category.alwaysVisible === "boolean") {
+      normalized.alwaysVisible = category.alwaysVisible;
     }
 
     cleaned.push(normalized);
@@ -355,6 +363,9 @@ function isSaveSettings(x: any): x is SaveSettings {
     typeof x === "object" &&
     x !== null &&
     (typeof x.topBar === "undefined" || isMapTopBarSettings(x.topBar)) &&
+    (x.apiSourceTabs === undefined || (Array.isArray(x.apiSourceTabs) &&
+      x.apiSourceTabs.every((source: any) => typeof source?.url === "string" &&
+        typeof source?.tabName === "string" && source.tabName.length <= 80))) &&
     typeof x.zoom === "number" &&
     Array.isArray(x.center) &&
     x.center.length === 2 &&
@@ -676,6 +687,9 @@ export async function POST(
         settings: {
           ...settings,
           topBar: normalizeMapTopBar(settings.topBar ?? existing.settings?.topBar),
+          apiSources: settings.apiSources ?? existing.settings?.apiSources ?? [],
+          apiSourceTabs: normalizeApiSourceTabs(settings.apiSources ?? existing.settings?.apiSources,
+            settings.apiSourceTabs ?? existing.settings?.apiSourceTabs),
         },
         updatedAt: new Date(),
       },

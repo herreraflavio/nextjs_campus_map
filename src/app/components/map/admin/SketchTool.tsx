@@ -483,6 +483,8 @@ export default function ToggleSketchTool() {
               name,
               categoryId: pending?.categoryId ?? null,
               iconUrl: pending?.iconUrl ?? null,
+              adminVisible: pending?.adminVisible !== false,
+              alwaysVisible: pending?.alwaysVisible === true,
               description:
                 g.attributes?.description ??
                 `Drawn at ${new Date().toLocaleTimeString()}`,

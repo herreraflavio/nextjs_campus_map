@@ -11,7 +11,7 @@ export type MapTopBarLoadedEvent = {
 
 export const DEFAULT_MAP_TOP_BAR: MapTopBarSettings = {
   logoUrl: null,
-  backgroundColor: "#002856",
+  backgroundColor: "#ffffff",
 };
 
 export function isHexColor(value: unknown): value is string {

@@ -3,6 +3,7 @@
 
 import React from "react";
 import { eventsLayerRef, eventsStore } from "../arcgisRefs";
+import { applyEventVisibility } from "../categories/categoryVisibility";
 
 /* Exported types so you can import them elsewhere if/when you convert this to a controlled UI */
 export type Mode = "all" | "single" | "range" | "timeline";
@@ -210,50 +211,27 @@ export default function EventCalendarOverlay({
     const items: any[] = layer?.graphics?.toArray?.() ?? [];
     if (!items.length) return;
 
-    if (mode === "all") {
-      items.forEach((g) => (g.visible = true));
-      return;
-    }
-    if (mode === "single") {
-      if (!singleDate) return items.forEach((g) => (g.visible = false));
-      items.forEach((g) => {
-        const dt = eventDateFromGraphic(g);
-        if (!dt) return (g.visible = false);
-        const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
-          2,
-          "0",
-        )}-${String(dt.getDate()).padStart(2, "0")}`;
-        g.visible = iso === singleDate;
-      });
-      return;
-    }
-    if (mode === "range") {
-      if (!rangeStart && !rangeEnd)
-        return items.forEach((g) => (g.visible = false));
-      const s = rangeStart || rangeEnd;
-      const e = rangeEnd || rangeStart;
-      const sD = parseLocalDate(s!, null)!;
-      const eD = addInterval(parseLocalDate(e!, null)!, 1, "day");
-      items.forEach((g) => {
-        const dt = eventDateFromGraphic(g);
-        if (!dt) return (g.visible = false);
-        g.visible = dt >= sD && dt < eD;
-      });
-      return;
-    }
-    if (mode === "timeline") {
-      if (!minDate || !maxDate || steps.length === 0) {
-        items.forEach((g) => (g.visible = true));
-        return;
+    const matches = (g: any): boolean => {
+      if (mode === "all") return true;
+      const dt = eventDateFromGraphic(g);
+      if (!dt) return false;
+      if (mode === "single") {
+        if (!singleDate) return false;
+        const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+        return iso === singleDate;
       }
+      if (mode === "range") {
+        if (!rangeStart && !rangeEnd) return false;
+        const start = parseLocalDate((rangeStart || rangeEnd)!, null);
+        const end = parseLocalDate((rangeEnd || rangeStart)!, null);
+        return !!start && !!end && dt >= start && dt < addInterval(end, 1, "day");
+      }
+      if (!minDate || !maxDate || !steps.length) return true;
       const start = steps[Math.min(stepIndex, steps.length - 1)];
-      const end = addInterval(start, intervalValue, intervalUnit);
-      items.forEach((g) => {
-        const dt = eventDateFromGraphic(g);
-        if (!dt) return (g.visible = false);
-        g.visible = dt >= start && dt < end;
-      });
-    }
+      return dt >= start && dt < addInterval(start, intervalValue, intervalUnit);
+    };
+    items.forEach(g => { g.attributes.runtimeCalendarVisible = matches(g); });
+    applyEventVisibility();
   }, [
     mode,
     singleDate,

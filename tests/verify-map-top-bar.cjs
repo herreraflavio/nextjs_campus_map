@@ -92,8 +92,9 @@ async function save(page) {
     assert.ok((await response.text()).includes('aria-label="Map top bar"'));
     const bar = page.locator('header[aria-label="Map top bar"]');
     await bar.waitFor();
-    assert.equal(await bar.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(0, 40, 86)');
-    assert.equal(await page.getByRole('button', { name: 'Add map logo', exact: true }).count(), 1);
+    assert.equal(await bar.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 255, 255)');
+    assert.equal(await page.getByRole('button', { name: 'Add map logo', exact: true }).count(), 0);
+    await page.locator('[data-map-skeleton="header"]').waitFor();
     const navbarBefore = await page.locator('.MuiAppBar-root').boundingBox();
     const rect = await bar.boundingBox();
     const sidebarRect = await page.locator('[data-map-body] > aside').boundingBox();
@@ -116,13 +117,13 @@ async function save(page) {
     let dialog = page.getByRole('dialog', { name: 'Edit Map Top Bar' });
     await dialog.getByLabel('Hex color').fill('#123456');
     assert.equal(posts.length, 0);
-    assert.equal(await bar.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(0, 40, 86)');
+    assert.equal(await bar.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 255, 255)');
     await dialog.getByRole('button', { name: 'Cancel', exact: true }).focus();
     await page.keyboard.press('Enter');
     assert.equal(posts.length, 0);
     await openSettings(page);
     dialog = page.getByRole('dialog', { name: 'Edit Map Top Bar' });
-    assert.equal(await dialog.getByLabel('Hex color').inputValue(), '#002856');
+    assert.equal(await dialog.getByLabel('Hex color').inputValue(), '#ffffff');
     await dialog.getByLabel('Hex color').fill('#123456');
     await save(page);
     await bar.waitFor();

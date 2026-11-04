@@ -1,6 +1,8 @@
 "use client";
 
 import type { MapCategory } from "@/app/types/myTypes";
+import { isCategoryAdminVisibleInList } from "@/app/types/mapVisibility";
+export { isCategoryAdminVisibleInList } from "@/app/types/mapVisibility";
 
 export const ROOT_CATEGORY_ID = "home";
 
@@ -108,6 +110,9 @@ export function normalizeCategories(value: unknown): MapCategory[] {
     if (typeof candidate.adminVisible === "boolean") {
       normalized.adminVisible = candidate.adminVisible;
     }
+    if (typeof candidate.alwaysVisible === "boolean") {
+      normalized.alwaysVisible = candidate.alwaysVisible;
+    }
 
     cleaned.push(normalized);
   });
@@ -116,31 +121,7 @@ export function normalizeCategories(value: unknown): MapCategory[] {
 }
 
 export function isCategoryAdminVisibleValue(category: MapCategory): boolean {
-  return category.adminVisible !== false;
-}
-
-export function isCategoryAdminVisibleInList(
-  categories: MapCategory[],
-  categoryId: string | null | undefined,
-): boolean {
-  if (!categoryId || categoryId === ROOT_CATEGORY_ID) return true;
-
-  const byId = new Map(categories.map((category) => [category.id, category]));
-  let current = categoryId;
-  const seen = new Set<string>();
-
-  while (current && current !== ROOT_CATEGORY_ID) {
-    if (seen.has(current)) return true;
-    seen.add(current);
-
-    const category = byId.get(current);
-    if (!category) return true;
-    if (!isCategoryAdminVisibleValue(category)) return false;
-
-    current = category.parentId ?? ROOT_CATEGORY_ID;
-  }
-
-  return true;
+  return category.alwaysVisible === true || category.adminVisible !== false;
 }
 
 export function isCategoryAdminVisible(

@@ -27,6 +27,8 @@ export type Polygon = DrawingExport;
 export type { Label, FieldInfo, FeatureLayerConfig };
 
 export type CampusEvent = {
+  sourceUrl?: string;
+  sourceId?: string;
   id: string;
   event_name: string;
   description?: string;
@@ -177,6 +179,7 @@ export const settingsRef: { current: ExportBodySettingsForRef } = {
     mapTile: null,
     baseMap: "arcgis/light-gray",
     apiSources: [],
+    apiSourceTabs: [],
   },
 };
 

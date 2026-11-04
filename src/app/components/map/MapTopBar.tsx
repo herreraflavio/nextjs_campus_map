@@ -12,12 +12,16 @@ import { settingsEvents } from "./arcgisRefs";
 import { EditIconButton } from "./sidebar/MapSidebar";
 import MapTopBarEditor from "./admin/MapTopBarEditor";
 import styles from "./MapTopBar.module.css";
+import MapLoadingSkeleton from "./MapLoadingSkeleton";
+import { useApiSources } from "./apiSourceStore";
 
 export default function MapTopBar({ canEdit = false }: { canEdit?: boolean }) {
   const mapId = useMapId();
+  const { ready, configurationFailed } = useApiSources();
   const [saved, setSaved] = useState(() => ({ ...DEFAULT_MAP_TOP_BAR }));
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
+  const loading = !loaded || !ready;
   useEffect(() => {
     setSaved({ ...DEFAULT_MAP_TOP_BAR });
     setEditing(false);
@@ -42,31 +46,34 @@ export default function MapTopBar({ canEdit = false }: { canEdit?: boolean }) {
     <>
       <header
         className={styles.bar}
-        style={{ backgroundColor: saved.backgroundColor }}
+        style={{ backgroundColor: loading ? DEFAULT_MAP_TOP_BAR.backgroundColor : saved.backgroundColor }}
         aria-label="Map top bar"
+        aria-busy={loading && !configurationFailed}
       >
-        {saved.logoUrl && (
-          <img className={styles.logo} src={saved.logoUrl} alt="Map logo" />
-        )}
-        {!saved.logoUrl && canEdit && (
-          <button
-            type="button"
-            className={styles.placeholder}
-            disabled={!loaded}
-            onClick={() => setEditing(true)}
-          >
-            Add map logo
-          </button>
-        )}
-        {canEdit && (
-          <span className={styles.edit}>
-            <EditIconButton
-              label="Edit Map Top Bar"
+        {loading ? (!configurationFailed && <MapLoadingSkeleton section="header" />) : <>
+          {saved.logoUrl && (
+            <img className={styles.logo} src={saved.logoUrl} alt="Map logo" />
+          )}
+          {!saved.logoUrl && canEdit && (
+            <button
+              type="button"
+              className={styles.placeholder}
               disabled={!loaded}
               onClick={() => setEditing(true)}
-            />
-          </span>
-        )}
+            >
+              Add map logo
+            </button>
+          )}
+          {canEdit && (
+            <span className={styles.edit}>
+              <EditIconButton
+                label="Edit Map Top Bar"
+                disabled={!loaded}
+                onClick={() => setEditing(true)}
+              />
+            </span>
+          )}
+        </>}
       </header>
       {canEdit && editing && (
         <MapTopBarEditor

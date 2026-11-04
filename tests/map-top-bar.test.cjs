@@ -11,7 +11,8 @@ function load(file, mocks = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const module = { exports: {} };
-  const localRequire = (name) => name in mocks ? mocks[name] : require(name);
+  const localRequire = (name) => name in mocks ? mocks[name] :
+    name === '@/app/types/apiSources' ? load('src/app/types/apiSources.ts') : require(name);
   new Function('require', 'module', 'exports', code)(localRequire, module, module.exports);
   return module.exports;
 }
@@ -19,7 +20,7 @@ const barModule = load('src/app/types/mapTopBar.ts');
 const savedBar = { logoUrl: 'https://assets.example/logo.png', backgroundColor: '#002856' };
 
 test('missing settings get a visible default color and obsolete disabled flags cannot hide the header', () => {
-  assert.deepEqual(barModule.normalizeMapTopBar(undefined), { logoUrl: null, backgroundColor: '#002856' });
+  assert.deepEqual(barModule.normalizeMapTopBar(undefined), { logoUrl: null, backgroundColor: '#ffffff' });
   assert.deepEqual(barModule.normalizeMapTopBar({ ...savedBar, enabled: false }), savedBar);
   for (const bar of [null, {}, { ...savedBar, logoUrl: 'javascript:alert(1)' }, { ...savedBar, backgroundColor: 'red' }]) {
     assert.equal(barModule.isMapTopBarSettings(bar), false);
@@ -100,7 +101,9 @@ test('empty maps save, queued category saves retain the new bar, and failed save
 test('map API validates, authorizes, persists, reloads, and preserves settings for legacy saves', async () => {
   const ownerId = new ObjectId();
   const mapId = new ObjectId();
-  const map = { _id: mapId, ownerId, isPrivate: false, settings: { topBar: savedBar } };
+  const sourceTabs = [{ url: 'https://events.example/feed', tabName: 'Activities' }];
+  const map = { _id: mapId, ownerId, isPrivate: false, settings: { topBar: savedBar,
+    apiSources: [sourceTabs[0].url], apiSourceTabs: sourceTabs } };
   let session = { user: { email: 'owner@example.test' } };
   let user = { _id: ownerId };
   let writes = 0;
@@ -131,4 +134,10 @@ test('map API validates, authorizes, persists, reloads, and preserves settings f
   assert.equal((await post({ ...body, settings: { ...body.settings, topBar: cleared } })).status, 200);
   const reloaded = await (await route.GET(new Request('http://localhost/api/maps/map'), context)).json();
   assert.deepEqual(reloaded.settings.topBar, { ...cleared, backgroundColor: '#abcdef' });
+  assert.deepEqual(reloaded.settings.apiSources, [sourceTabs[0].url]);
+  assert.deepEqual(reloaded.settings.apiSourceTabs, sourceTabs);
+  const updatedTabs = [{ ...sourceTabs[0], tabName: 'Campus Events' }];
+  assert.equal((await post({ ...body, settings: { ...body.settings, apiSources: [sourceTabs[0].url], apiSourceTabs: updatedTabs } })).status, 200);
+  assert.deepEqual(map.settings.apiSourceTabs, updatedTabs);
+  assert.equal((await post({ ...body, settings: { ...body.settings, apiSourceTabs: [{ url: sourceTabs[0].url, tabName: 123 }] } })).status, 400);
 });

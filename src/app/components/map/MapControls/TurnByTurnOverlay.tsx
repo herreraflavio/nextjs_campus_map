@@ -129,9 +129,11 @@ function dijkstra(
 export default function TurnByTurnOverlay({
   viewReady,
   viewToken = 0,
+  defaultDestinationId = null,
 }: {
   viewReady: boolean;
   viewToken?: number;
+  defaultDestinationId?: string | null;
 }) {
   const {
     loading,
@@ -245,16 +247,17 @@ export default function TurnByTurnOverlay({
       return publicNodes[0].id;
     });
 
-    // setDest((prev) => {
-    //   if (prev && publicNodes.some((n) => n.id === prev)) return prev;
-    //   return publicNodes[Math.max(1, publicNodes.length - 1)].id;
-    // });
     setDest((prev) => {
       if (prev && publicNodes.some((n) => n.id === prev)) return prev;
-      console.log(publicNodes);
-      return publicNodes[70].id;
+      return publicNodes[Math.min(70, publicNodes.length - 1)].id;
     });
   }, [publicNodes]);
+
+  React.useEffect(() => {
+    if (defaultDestinationId && publicNodes.some(node => node.id === defaultDestinationId)) {
+      setDest(defaultDestinationId);
+    }
+  }, [defaultDestinationId, publicNodes]);
 
   /** Initialize/reuse directions layer whenever the view becomes ready */
   React.useEffect(() => {

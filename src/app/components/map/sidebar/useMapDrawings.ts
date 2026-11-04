@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import {
   finalizedLayerRef,
+  eventsLayerRef,
   MapViewRef,
 } from "../arcgisRefs";
 import type { MapSidebarGraphic } from "./MapSidebar";
@@ -26,6 +27,21 @@ function snapshotFinalizedDrawings(): MapSidebarGraphic[] {
   );
 }
 
+export function useMapEvents(): MapSidebarGraphic[] {
+  const [events, setEvents] = useState<MapSidebarGraphic[]>([]);
+  useEffect(() => {
+    const sync = () => {
+      const items = eventsLayerRef.current?.graphics?.toArray?.() ?? [];
+      setEvents(previous => previous.length === items.length && previous.every((graphic, i) => graphic === items[i])
+        ? previous : [...items]);
+    };
+    eventsLayerRef.events.addEventListener("change", sync);
+    sync();
+    return () => eventsLayerRef.events.removeEventListener("change", sync);
+  }, []);
+  return events;
+}
+
 export function useFinalizedDrawings(): MapSidebarGraphic[] {
   const [drawings, setDrawings] = useState<MapSidebarGraphic[]>([]);
 
@@ -45,23 +61,26 @@ export function useFinalizedDrawings(): MapSidebarGraphic[] {
   return drawings;
 }
 
-export function goToDrawing(graphic: MapSidebarGraphic): void {
+export async function goToDrawing(
+  graphic: MapSidebarGraphic,
+  options: { dock?: boolean; isCurrent?: () => boolean; targetGeometry?: __esri.Geometry } = {},
+): Promise<void> {
   const view = MapViewRef.current as __esri.MapView | null;
   const geometry = graphic?.geometry as __esri.Geometry | undefined;
 
   if (!view || !geometry) return;
 
   const location = popupLocationForGeometry(geometry);
-  const target = (geometry as any).extent?.center ?? geometry;
+  const targetGeometry = options.targetGeometry ?? geometry;
+  const target = (targetGeometry as any).extent?.center ?? targetGeometry;
 
-  void view
-    .goTo({ target, zoom: 18 })
-    .then(() => {
-      openDrawingPopup(view, graphic, location);
-    })
-    .catch((error) => {
-      console.error("Failed to navigate to drawing:", error);
-    });
+  try {
+    await view.goTo({ target, zoom: 18 });
+    if (MapViewRef.current !== view || (options.isCurrent && !options.isCurrent())) return;
+    openDrawingPopup(view, graphic, location, options);
+  } catch (error: any) {
+    if (error?.name !== "AbortError") console.error("Failed to navigate to drawing:", error);
+  }
 }
 
 function popupLocationForGeometry(geometry: __esri.Geometry): __esri.Geometry {
@@ -75,19 +94,35 @@ function openDrawingPopup(
   view: __esri.MapView,
   graphic: MapSidebarGraphic,
   location: __esri.Geometry,
+  options: { dock?: boolean; isCurrent?: () => boolean },
 ): void {
   const viewAny = view as any;
   const popupOptions = {
     features: [graphic as any],
     location: location as any,
+    collapsed: false,
   };
 
   viewAny.popupEnabled = true;
   viewAny.popup?.close?.();
 
   const open = () => {
+    if (MapViewRef.current !== view || (options.isCurrent && !options.isCurrent())) return;
+    if (options.dock && viewAny.popup) {
+      viewAny.popup.dockEnabled = true;
+      viewAny.popup.dockOptions = { position: "top-right", breakpoint: false };
+    }
     if (typeof viewAny.openPopup === "function") {
-      viewAny.openPopup(popupOptions);
+      void viewAny.openPopup(popupOptions).then(() => {
+        if (MapViewRef.current !== view || (options.isCurrent && !options.isCurrent())) {
+          if (viewAny.popup?.selectedFeature === graphic) viewAny.closePopup?.();
+          return;
+        }
+        if (options.dock && viewAny.popup) {
+          viewAny.popup.dockEnabled = true;
+          viewAny.popup.dockOptions = { position: "top-right", breakpoint: false };
+        }
+      }).catch((error: unknown) => console.error("Failed to open drawing popup:", error));
       return;
     }
 

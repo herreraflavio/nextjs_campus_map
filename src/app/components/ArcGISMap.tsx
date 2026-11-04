@@ -1,7 +1,10 @@
 //ArcGISMap.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import MapLocationTarget from "./map/MapLocationTarget";
+import PopupSharing from "./map/PopupSharing";
+import { useApiSources } from "./map/apiSourceStore";
 import { hydrateGraphics } from "./map/hydrateGraphics";
 import type { MapLoadTrace } from "./map/mapLoadTrace";
 import {
@@ -141,6 +144,9 @@ export default function ArcGISMap({
   type ActiveOverlay = "calendar" | "turn" | null;
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
   const [viewReady, setViewReady] = useState(false);
+  const [drawingsReady, setDrawingsReady] = useState(false);
+  const [defaultDestinationId, setDefaultDestinationId] = useState<string | null>(null);
+  const { sources: liveApiSources } = useApiSources();
 
   const storeListenerRef = useRef<EventListener | null>(null);
   const spriteAnimRef = useRef<number | null>(null);
@@ -159,6 +165,7 @@ export default function ArcGISMap({
     };
 
     setViewReady(false);
+    setDrawingsReady(false);
 
     const startArcGIS = () => {
       if (destroyed) return;
@@ -824,6 +831,11 @@ export default function ArcGISMap({
           });
 
           eventsLayerRef.current = eventsLayer;
+          eventsLayerRef.events.dispatchEvent(new Event("change"));
+          eventsLayer.graphics.on("change", () => {
+            applyMapVisibility(view.zoom);
+            eventsLayerRef.events.dispatchEvent(new Event("change"));
+          });
           spriteLayerRef.current = spriteLayer;
 
           const tileSrc = mapData.settings.mapTile;
@@ -1284,6 +1296,7 @@ export default function ArcGISMap({
             void Promise.all([hydrateDrawings(), hydrateEvents()]).then(() => {
               if (destroyed) return;
               savedGraphicsReady = true;
+              setDrawingsReady(true);
               applyMapVisibility(view.zoom);
               startDynamicSprites();
               trace?.mark("saved-data-ready");
@@ -1375,6 +1388,15 @@ export default function ArcGISMap({
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <PopupSharing viewReady={viewReady} />
+      <Suspense fallback={null}>
+        <MapLocationTarget
+          drawings={polygons}
+          viewReady={viewReady}
+          drawingsReady={drawingsReady}
+          onDestinationChange={setDefaultDestinationId}
+        />
+      </Suspense>
       <div
         ref={mapDiv}
         style={{
@@ -1386,7 +1408,7 @@ export default function ArcGISMap({
       />
 
       {viewReady && (
-        <DynamicEventLoader eventSources={mapData.eventSources ?? []} loadTrace={loadTrace} />
+        <DynamicEventLoader eventSources={liveApiSources.map(source => source.url)} loadTrace={loadTrace} />
       )}
 
       <div style={dockWrap}>
@@ -1432,7 +1454,7 @@ export default function ArcGISMap({
           pointerEvents: activeOverlay === "turn" ? "auto" : "none",
         }}
       >
-        <TurnByTurnOverlay viewReady={viewReady} />
+        <TurnByTurnOverlay viewReady={viewReady} defaultDestinationId={defaultDestinationId} />
         <div style={{ position: "absolute", top: 5, right: 5, zIndex: 9999 }}>
           <button
             onClick={() => setActiveOverlay(null)}

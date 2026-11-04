@@ -1,5 +1,6 @@
 //src/app/components/map/MapControls/eventsLayer.ts
 import { CampusEvent } from "../arcgisRefs";
+import { escapePopupText } from "../eventLocations";
 
 // Converts military time "14:00" to standard time "2:00 pm"
 // Leaves already-formatted times like "2:00 pm" unchanged
@@ -38,10 +39,7 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
   // tweak these per icon
   const size = ev.iconSize ?? 36; // px on screen (independent of map scale)
   const url = ev.iconUrl ?? "/icons/event-pin.png"; // marker icon
-  const poster_url =
-    ev.poster_url ??
-    ev.iconUrl ??
-    "https://cdn-icons-png.flaticon.com/512/2558/2558944.png"; // 👈 popup photo fallback
+  const poster_url = ev.poster_url ?? (ev.iconUrl !== "/icons/event-pin.png" ? ev.iconUrl : undefined);
 
   const attributes = {
     ...ev,
@@ -60,28 +58,20 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
     attributes,
     popupTemplate: {
       title: "{event_name}",
-      content: [
-        {
-          type: "text",
-          text:
-            "<div style='margin-bottom:8px;'>" +
-            "<img src='{poster_url}' alt='Event photo' " +
-            "style='max-width:300px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);' />" +
-            "</div>",
-        },
-        {
-          type: "fields",
-          fieldInfos: [
-            { fieldName: "date", label: "Date" },
-            { fieldName: "startAt", label: "Start" },
-            { fieldName: "endAt", label: "End" },
-            // { fieldName: "fullLocationTag", label: "Location" },
-            { fieldName: "location_at", label: "Location" },
-            { fieldName: "description", label: "Description" },
-            { fieldName: "names", label: "People" },
-          ],
-        },
-      ],
+      content: (context: any) => {
+        const current = context?.graphic?.attributes ?? attributes;
+        const details = [
+          ["Date", current.date], ["Start", formatTimeAMPM(current.startAt)], ["End", formatTimeAMPM(current.endAt)],
+          ["Building", current.location], ["Location details", current.location_at],
+          ["Description", current.description], ["People", current.names?.join(", ")],
+        ].filter(([, value]) => value);
+        const rows = details.map(([label, value]) =>
+          `<tr><th style="text-align:left;vertical-align:top;padding:5px 12px 5px 0">${label}</th><td style="padding:5px 0;white-space:pre-wrap">${escapePopupText(value)}</td></tr>`,
+        ).join("");
+        const photoUrl = current.poster_url ?? poster_url;
+        const photo = photoUrl ? `<img src="${escapePopupText(photoUrl)}" alt="Event photo" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:8px" />` : "";
+        return `${photo}<table style="width:100%;border-collapse:collapse">${rows}</table>`;
+      },
     },
     symbol: {
       type: "picture-marker",

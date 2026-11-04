@@ -34,6 +34,7 @@ export type MapCategory = {
   iconUrl?: string | null;
   order: number;
   adminVisible?: boolean;
+  alwaysVisible?: boolean;
 };
 
 export type MapDrawingAttributes = Record<string, any> & {
@@ -43,6 +44,8 @@ export type MapDrawingAttributes = Record<string, any> & {
   order?: number;
   categoryId?: string | null;
   iconUrl?: string | null;
+  adminVisible?: boolean;
+  alwaysVisible?: boolean;
 };
 
 export interface HiddenSegmentRange {
@@ -181,6 +184,7 @@ export interface EventPoint {
 }
 
 export interface ExportBodySettingsForRef {
+  apiSourceTabs?: import("./apiSources").ApiSourceTab[];
   topBar?: import("./mapTopBar").MapTopBarSettings;
   zoom: number;
   center: { spatialReference: SpatialReference; x: number; y: number };
@@ -197,6 +201,7 @@ export interface ExportBodySettingsForRef {
 }
 
 export interface SaveSettings {
+  apiSourceTabs?: import("./apiSources").ApiSourceTab[];
   topBar?: import("./mapTopBar").MapTopBarSettings;
   zoom: number;
   center: [number, number];

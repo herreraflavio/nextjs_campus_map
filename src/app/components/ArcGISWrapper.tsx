@@ -6,11 +6,11 @@ import { useMapId } from "@/app/context/MapContext";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { settingsEvents, settingsRef } from "../components/map/arcgisRefs";
 import {
-  isCategoryAdminVisibleInList,
   normalizeCategories,
   resetCategories,
   setCategories,
 } from "./map/categories/categoryStore";
+import { isDrawingAdminVisibleInList, publicMapCategories } from "@/app/types/mapVisibility";
 import { resetMapVisibility } from "./map/categories/categoryVisibility";
 import {
   MAP_TOP_BAR_LOADED,
@@ -27,6 +27,9 @@ import type {
 import { normalizePolylineAnimation } from "@/app/types/myTypes";
 import { createMapLoadTrace, type MapLoadTrace } from "./map/mapLoadTrace";
 import { beginMapHydration } from "./map/mapHydration";
+import { normalizeApiSourceTabs, type ApiSourceTab } from "@/app/types/apiSources";
+import { markApiSourcesLoaded, markMapConfigurationFailed, resetApiSourceStatuses } from "./map/apiSourceStore";
+import MapLoadingSkeleton from "./map/MapLoadingSkeleton";
 
 /* ─────────────────────────────────────────
  * Types
@@ -95,6 +98,7 @@ type ArcGISMapPayload = {
     mapTile: string | null;
     baseMap: string | null;
     apiSources: string[];
+    apiSourceTabs?: ApiSourceTab[];
   };
 };
 
@@ -346,10 +350,7 @@ function filterAdminVisibleMapData(
   categories: MapCategory[];
 } {
   const visiblePolygons = polygons.filter((drawing) =>
-    isCategoryAdminVisibleInList(
-      categories,
-      drawing.attributes?.categoryId ?? null,
-    ),
+    isDrawingAdminVisibleInList(categories, drawing.attributes),
   );
   const visibleIds = new Set(
     visiblePolygons
@@ -360,9 +361,7 @@ function filterAdminVisibleMapData(
   return {
     polygons: visiblePolygons,
     labels: labels.filter((label) => visibleIds.has(label.attributes.parentId)),
-    categories: categories.filter((category) =>
-      isCategoryAdminVisibleInList(categories, category.id),
-    ),
+    categories: publicMapCategories(categories, visiblePolygons),
   };
 }
 
@@ -413,6 +412,7 @@ export default function ArcGISWrapper({
   }, [mapData, readyData, trace]);
 
   useEffect(() => {
+    resetApiSourceStatuses();
     if (!mapId) {
       setLoaded(null);
       setFailure(null);
@@ -531,6 +531,7 @@ export default function ArcGISWrapper({
           mapTile,
           baseMap,
           apiSources,
+          apiSourceTabs: normalizeApiSourceTabs(apiSources, rawS.apiSourceTabs),
         };
 
         try {
@@ -545,6 +546,7 @@ export default function ArcGISWrapper({
           settingsRef.current.mapTile = settings.mapTile;
           settingsRef.current.baseMap = settings.baseMap;
           settingsRef.current.apiSources = settings.apiSources;
+          settingsRef.current.apiSourceTabs = settings.apiSourceTabs;
           settingsRef.current.topBar = settings.topBar;
         } catch {
           // ignore
@@ -553,6 +555,8 @@ export default function ArcGISWrapper({
         const visibleMapData = includeAdminHiddenCategories
           ? { polygons, labels, categories }
           : filterAdminVisibleMapData(polygons, labels, categories);
+
+        markApiSourcesLoaded(mapId);
 
         setLoaded({
           key: requestKey,
@@ -570,11 +574,13 @@ export default function ArcGISWrapper({
         settingsEvents.dispatchEvent(new CustomEvent(MAP_TOP_BAR_LOADED, {
           detail: { mapId, settings: settings.topBar },
         }));
+        settingsEvents.dispatchEvent(new Event("change"));
       })
       .catch((err) => {
         if (cancelled || err?.name === "AbortError") return;
 
         console.error(err);
+        markMapConfigurationFailed(mapId);
         hydration.cancel();
         setFailure({
           key: requestKey,
@@ -612,6 +618,8 @@ export default function ArcGISWrapper({
           />
         )}
       </div>
+
+      {loading && <MapLoadingSkeleton section="map" />}
 
       {error && (
         <div

@@ -39,6 +39,11 @@ written under `tools/top-bar-verification`.
 
 ## Map loading checks
 
+The top bar and sidebar use subtle gray skeletons while map configuration loads.
+The viewport keeps its own skeleton until the SDK is ready, independently of
+optional layers and event feeds. The pulse respects reduced-motion preferences;
+configuration errors clear the placeholders and retain the existing error UI.
+
 ```sh
 node --test tests/graphics-hydration.test.cjs tests/map-hydration.test.cjs tests/map-top-bar.test.cjs
 node tests/verify-map-loading.cjs
@@ -70,3 +75,67 @@ start. They are diagnostic only and never determine loading visibility. In
 particular, `first-basemap-render` observes basemap layer views without waiting
 for operational layers, while `map-visible` records the UI's committed SDK-ready
 state. Saves independently wait for `saved-data-ready` to prevent partial exports.
+
+## Location links and visibility locks
+
+Append `?location=Recreation%20Field` (or an alias such as `?location=RF`) to a
+map URL, including `/share/<map-id>`. Names, aliases, partial names and IDs use
+the navigation search. The target zooms to level 18, selects its polygon and
+opens a popup docked to the right; navigation starts with that destination.
+Other categories and drawings start hidden. Removing the parameter restores
+normal visibility; an unrecognized location leaves the normal map available.
+
+Each sidebar item has a **Copy link** button in both the editor and public map.
+It copies the public `/share/<map-id>?location=<location-name>` URL and confirms
+when copied. Existing links that use item IDs continue to work. Popups also have
+a **Share** action that copies the corresponding location or event link.
+
+Category and item editors offer **Always remain visible** alongside **Visible
+to users**. This setting overrides location filtering and user visibility
+switches. Categories apply the setting to their descendants. Independent item
+locks also survive hiding their category. Labels retain their zoom limits.
+These settings persist; URL filtering and user switches do not.
+
+```sh
+node --test tests/*.test.cjs
+node tests/verify-map-locations.cjs
+```
+
+The browser runner uses the real ArcGIS SDK against a running dev server, with
+fixture map/API responses. It covers aliases, destination defaults, nested
+sidebar switches, docked popup content, changing/removing/invalid query values,
+admin edits, save/reload, and a mobile shared iframe. It accepts
+`PLAYWRIGHT_MODULE`, `CHROME_PATH` and `VERIFY_BASE_URL` and removes its temporary
+fixture route when finished. Screenshots and results are written under
+`tools/location-verification`.
+
+## API records, event sharing and sidebar tabs
+
+In Map Settings, each API source has a **Tab name** input. Existing sources
+default to **Events**. Sources with the same name share a tab; **Home** is reserved
+for categories and drawings. Labels persist independently of source order and
+apply immediately without replacing the MapView.
+
+Each tab has **Hide all** and **Show all** controls for its own content. Home
+controls all nested categories and drawings while honoring admin visibility
+locks. Source-tab controls also apply to records that finish loading later.
+Calendar filters compose with these switches.
+
+Event links use `/share/<map-id>?event=<record-id>&source=<source-key>`. The source
+key distinguishes identical record IDs from different APIs. The map fetches its
+configured sources, finds the record, and uses its **location** field to resolve
+the building. **location_at** remains display detail. The event and its building
+stay visible, the building is highlighted, navigation defaults to that location,
+and a docked popup contains the event's details. Selecting the building opens
+its own popup content separately. Undated API records are also
+supported. Unavailable records and source failures produce a status message.
+
+```sh
+node --test tests/*.test.cjs
+node tests/verify-api-sharing.cjs
+```
+
+The browser runner checks readable and legacy links, popup sharing, API record
+mapping, duplicate source IDs, tabs and bulk visibility, calendar composition,
+live settings and persistence, and mobile iframe behavior using the real ArcGIS
+SDK. Screenshots and results are under `tools/api-sharing-verification`.

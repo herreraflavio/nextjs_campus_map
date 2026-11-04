@@ -12,7 +12,6 @@ import {
 import {
   getCategoryName,
   getCategoryParentId,
-  isCategoryAdminVisibleInList,
   isCategoryAdminVisibleValue,
   ROOT_CATEGORY_ID,
   resolveCategoryId,
@@ -22,13 +21,17 @@ import {
   getItemOwnVisibility,
   isCategoryEffectivelyVisible,
   isGraphicEffectivelyVisible,
+  isCategoryVisibilityLocked,
+  isGraphicVisibilityLocked,
   subscribeVisibility,
   toggleCategoryVisibility,
   toggleItemVisibility,
 } from "../categories/categoryVisibility";
 import { useMapCategories } from "../categories/useMapCategories";
 import type { MapCategory } from "@/app/types/myTypes";
+import { isDrawingAdminVisibleInList, publicMapCategories } from "@/app/types/mapVisibility";
 import styles from "./MapSidebar.module.css";
+import CopyLocationLinkButton from "./CopyLocationLinkButton";
 
 export type MapSidebarGraphic = {
   attributes?: {
@@ -51,7 +54,7 @@ type SidebarContext = {
   activeCategoryName: string;
 };
 
-type MapSidebarProps = {
+export type MapSidebarProps = {
   drawings: MapSidebarGraphic[];
   onGoTo: (graphic: MapSidebarGraphic) => void;
   headerActions?: (context: SidebarContext) => ReactNode;
@@ -168,10 +171,8 @@ export default function MapSidebar({
 
   const visibleCategories = useMemo(() => {
     if (includeAdminHiddenCategories) return categories;
-    return categories.filter((category) =>
-      isCategoryAdminVisibleInList(categories, category.id),
-    );
-  }, [categories, includeAdminHiddenCategories]);
+    return publicMapCategories(categories, drawings);
+  }, [categories, drawings, includeAdminHiddenCategories]);
 
   const categoryIds = useMemo(
     () => new Set(visibleCategories.map((category) => category.id)),
@@ -222,7 +223,7 @@ export default function MapSidebar({
         return (
           categoryId === activeCategoryId &&
           (includeAdminHiddenCategories ||
-            isCategoryAdminVisibleInList(categories, categoryId))
+            isDrawingAdminVisibleInList(categories, graphic.attributes))
         );
       })
       .sort(
@@ -240,7 +241,7 @@ export default function MapSidebar({
     event: KeyboardEvent<HTMLDivElement>,
     graphic: MapSidebarGraphic,
   ) => {
-    if (event.defaultPrevented) return;
+    if (event.defaultPrevented || event.target !== event.currentTarget) return;
 
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -272,6 +273,7 @@ export default function MapSidebar({
           const ownVisible = getCategoryOwnVisibility(category.id);
           const effectiveVisible = isCategoryEffectivelyVisible(category.id);
           const adminVisible = isCategoryAdminVisibleValue(category);
+          const locked = isCategoryVisibilityLocked(category.id);
 
           return (
             <div key={category.id} role="listitem">
@@ -310,9 +312,10 @@ export default function MapSidebar({
                   <button
                     type="button"
                     className={styles.visibilityButton}
+                    disabled={locked}
                     aria-pressed={ownVisible}
-                    aria-label={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
-                    title={`${ownVisible ? "Hide" : "Show"} ${category.name}`}
+                    aria-label={locked ? `${category.name} always remains visible` : `${ownVisible ? "Hide" : "Show"} ${category.name}`}
+                    title={locked ? "Always remain visible (set by admin)" : `${ownVisible ? "Hide" : "Show"} ${category.name}`}
                     onClick={(event) => {
                       event.stopPropagation();
                       toggleCategoryVisibility(category.id);
@@ -343,8 +346,9 @@ export default function MapSidebar({
           const id = itemId(graphic, index);
           const name = graphic.attributes?.name ?? "Unnamed drawing";
           const geometryType = graphic.geometry?.type ?? "unknown";
-          const ownVisible = getItemOwnVisibility(id);
+          const ownVisible = getItemOwnVisibility(id, graphic);
           const effectiveVisible = isGraphicEffectivelyVisible(graphic);
+          const locked = isGraphicVisibilityLocked(graphic);
 
           return (
             <div
@@ -366,6 +370,9 @@ export default function MapSidebar({
                 <div className={styles.itemLabel}>
                   <IconSlot src={graphic.attributes?.iconUrl} fallback="I" />
                   <span>{name}</span>
+                  {includeAdminHiddenCategories && graphic.attributes?.adminVisible === false && !locked && (
+                    <span className={styles.statusBadge}>Hidden</span>
+                  )}
                 </div>
 
                 <div className={styles.rowControls}>
@@ -376,12 +383,18 @@ export default function MapSidebar({
                     />
                   )}
 
+                  <CopyLocationLinkButton
+                    name={name}
+                    location={graphic.attributes?.name?.trim() || graphic.attributes?.id?.trim() || ""}
+                  />
+
                   <button
                     type="button"
                     className={styles.visibilityButton}
+                    disabled={locked}
                     aria-pressed={ownVisible}
-                    aria-label={`${ownVisible ? "Hide" : "Show"} ${name}`}
-                    title={`${ownVisible ? "Hide" : "Show"} ${name}`}
+                    aria-label={locked ? `${name} always remains visible` : `${ownVisible ? "Hide" : "Show"} ${name}`}
+                    title={locked ? "Always remain visible (set by admin)" : `${ownVisible ? "Hide" : "Show"} ${name}`}
                     onClick={(event) => {
                       event.stopPropagation();
                       toggleItemVisibility(id);

@@ -7,6 +7,8 @@ export type PendingDrawingCreation = {
   categoryId: string | null;
   iconUrl: string | null;
   geometryType: DrawableGeometryType;
+  adminVisible?: boolean;
+  alwaysVisible?: boolean;
 };
 
 let pendingCreation: PendingDrawingCreation | null = null;
@@ -26,6 +28,8 @@ export function requestDrawingCreation(
     categoryId: creation.categoryId,
     iconUrl: creation.iconUrl?.trim() || null,
     geometryType: normalizeGeometryType(creation.geometryType),
+    adminVisible: creation.adminVisible !== false,
+    alwaysVisible: creation.alwaysVisible === true,
   };
 
   drawingCreationEvents.dispatchEvent(

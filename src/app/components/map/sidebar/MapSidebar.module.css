@@ -4,6 +4,133 @@
   width: 100%;
 }
 
+.tabbedPanel {
+  --tab-border: #d1d5db;
+  --tab-background: #fff;
+  --tab-curve: 8px;
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0 12px;
+  background: linear-gradient(var(--tab-border), var(--tab-border)) left bottom / 100% 1px no-repeat;
+  overflow-x: auto;
+  scroll-padding-inline: 12px;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabButton {
+  appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  max-width: min(240px, 80vw);
+  border: 0;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #6b7280;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tabButton:hover {
+  color: #002856;
+}
+
+.tabButton:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: -4px;
+}
+
+.tabText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabButton[aria-selected="true"] {
+  z-index: 1;
+  background: var(--tab-background);
+  color: #002856;
+}
+
+/* The upper arch stops where the two concave shoulders join the panel edge. */
+.tabButton[aria-selected="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 var(--tab-curve);
+  border: 1px solid var(--tab-border);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  pointer-events: none;
+}
+
+/* Remove the panel's straight seam beneath the active tab and its shoulders. */
+.tabButton[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: calc(1px - var(--tab-curve));
+  bottom: 0;
+  height: 1px;
+  background: var(--tab-background);
+  pointer-events: none;
+}
+
+.tabButton[aria-selected="true"] .tabLabel::before,
+.tabButton[aria-selected="true"] .tabLabel::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  width: var(--tab-curve);
+  height: var(--tab-curve);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--tab-border);
+  pointer-events: none;
+}
+
+.tabButton[aria-selected="true"] .tabLabel::before {
+  left: calc(1px - var(--tab-curve));
+  border-right: 1px solid var(--tab-border);
+  border-bottom-right-radius: var(--tab-curve);
+}
+
+.tabButton[aria-selected="true"] .tabLabel::after {
+  right: calc(1px - var(--tab-curve));
+  border-left: 1px solid var(--tab-border);
+  border-bottom-left-radius: var(--tab-curve);
+}
+
+.tabContent {
+  border: 1px solid var(--tab-border);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: var(--tab-background);
+  padding: 0 10px 10px;
+}
+.bulkActions { display: flex; gap: 8px; padding: 10px 0; }
+.eventLabel {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.eventMeta { color: #6b7280; font-size: 0.75rem; margin-top: 4px; }
+
 .header {
   display: flex;
   align-items: center;
@@ -46,6 +173,7 @@
 .backButton,
 .drillButton,
 .editIconButton,
+.copyLinkButton,
 .visibilityButton {
   appearance: none;
   border: 0;
@@ -122,6 +250,7 @@
 }
 
 .editIconButton,
+.copyLinkButton,
 .visibilityButton {
   display: inline-flex;
   align-items: center;
@@ -135,7 +264,8 @@
   font-weight: 700;
 }
 
-.editIconButton {
+.editIconButton,
+.copyLinkButton {
   border-color: rgba(107, 114, 128, 0.45);
   color: #4b5563;
 }
@@ -148,6 +278,7 @@
 
 .visibilityButton:hover,
 .editIconButton:hover,
+.copyLinkButton:hover,
 .actionButton:hover {
   border-color: #1976d2;
   background: rgba(25, 118, 210, 0.06);
@@ -248,6 +379,16 @@
   opacity: 0.48;
 }
 
+.visibilityButton:disabled {
+  cursor: not-allowed;
+  background: rgba(25, 118, 210, 0.08);
+}
+
+.copyLinkButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .empty {
   color: #6b7280;
   font-size: 0.875rem;
@@ -257,6 +398,7 @@
 .backButton:focus-visible,
 .drillButton:focus-visible,
 .editIconButton:focus-visible,
+.copyLinkButton:focus-visible,
 .visibilityButton:focus-visible,
 .clickableItem:focus-visible,
 .actionButton:focus-visible {

@@ -32,17 +32,17 @@
   align-items: center;
   height: 36px;
   padding: 0 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.65);
+  border: 1px dashed rgba(107, 114, 128, 0.65);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  color: #fff;
+  background: #fff;
+  color: #4b5563;
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;
 }
 
 .placeholder:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid #1976d2;
   outline-offset: 2px;
 }
 

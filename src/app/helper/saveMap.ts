@@ -13,6 +13,7 @@ import {
   waitForMapHydration,
 } from "@/app/components/map/mapHydration";
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
+import { normalizeApiSourceTabs } from "@/app/types/apiSources";
 import type {
   DrawingExport,
   EventPoint,
@@ -106,6 +107,9 @@ function serializeDrawing(g: any, index: number): DrawingExport | null {
     name: g.attributes?.name,
     description: g.attributes?.description,
   };
+  for (const field of ["adminVisible", "alwaysVisible"] as const) {
+    if (typeof g.attributes?.[field] === "boolean") attrs[field] = g.attributes[field];
+  }
 
   if (g.attributes?.showAtZoom != null) {
     attrs.showAtZoom = g.attributes.showAtZoom;
@@ -423,6 +427,7 @@ export function saveMapToServer(
   const snapshot = () => ({
     ...generateExport(),
     topBar: normalizeMapTopBar(settingsRef.current.topBar),
+    apiSourceTabs: normalizeApiSourceTabs(settingsRef.current.apiSources, settingsRef.current.apiSourceTabs),
   });
   // Preserve action-time snapshots for ready maps. During initial hydration,
   // exporting partial layers would replace saved records with incomplete arrays.
@@ -454,6 +459,7 @@ export function saveMapToServer(
         // Resolve committed settings when the queued save runs. Popup drafts
         // only enter this path via an explicit Save override.
         topBar: normalizeMapTopBar(saveSettings.topBar ?? queue.topBar),
+        apiSourceTabs: saveSettings.apiSourceTabs ?? exported.apiSourceTabs,
       },
     };
     try {

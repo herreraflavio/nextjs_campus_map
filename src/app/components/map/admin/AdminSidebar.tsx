@@ -1,15 +1,17 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { Box } from "@mui/material";
 
 import EditPanel from "./EditPanel";
 import CategoryCreatePanel from "./CategoryCreatePanel";
 import MapSettingsPanel from "./MapSettingsPanel";
-import MapSidebar, {
+import {
   MapSidebarButton,
   type MapSidebarGraphic,
 } from "../sidebar/MapSidebar";
+import MapSidebarTabs from "../sidebar/MapSidebarTabs";
+import MapLoadingSkeleton from "../MapLoadingSkeleton";
 import {
   goToDrawing,
   useFinalizedDrawings,
@@ -37,7 +39,7 @@ export default function AdminSidebar({ canEdit = false }: { canEdit?: boolean })
     <Box sx={{ height: "100%", overflowY: "auto", p: 2 }}>
       <MapSettingsPanel canEdit={canEdit} />
 
-      <MapSidebar
+      <Suspense fallback={<MapLoadingSkeleton section="sidebar" />}><MapSidebarTabs
         drawings={drawings}
         onGoTo={goToDrawing}
         onActiveCategoryChange={setActiveCategoryId}
@@ -54,7 +56,7 @@ export default function AdminSidebar({ canEdit = false }: { canEdit?: boolean })
         )}
         onEditCategory={(category) => setEditingCategoryId(category.id)}
         onEditItem={startEditing}
-      />
+      /></Suspense>
 
       {editingId && (
         <EditPanel

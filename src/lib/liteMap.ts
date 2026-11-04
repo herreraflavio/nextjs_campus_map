@@ -1,4 +1,6 @@
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
+import { isDrawingAdminVisibleInList, publicMapCategories } from "@/app/types/mapVisibility";
+import { normalizeApiSourceTabs, type ApiSourceTab } from "@/app/types/apiSources";
 
 type SpatialReferenceLike = {
   wkid?: number;
@@ -28,6 +30,7 @@ type SavedCategory = {
   iconUrl?: unknown;
   order?: unknown;
   adminVisible?: unknown;
+  alwaysVisible?: unknown;
 };
 
 type NormalizedCategory = {
@@ -37,6 +40,7 @@ type NormalizedCategory = {
   iconUrl: string | null;
   order: number;
   adminVisible?: boolean;
+  alwaysVisible?: boolean;
 };
 
 type Feature = {
@@ -68,6 +72,7 @@ type LiteMapDoc = {
     mapTile?: string | null;
     baseMap?: string | null;
     apiSources?: string[];
+    apiSourceTabs?: ApiSourceTab[];
   } | null;
   createdAt?: Date | string | null;
   updatedAt?: Date | string | null;
@@ -396,40 +401,15 @@ function normalizeCategories(categories?: SavedCategory[]): NormalizedCategory[]
       if (typeof category.adminVisible === "boolean") {
         normalized.adminVisible = category.adminVisible;
       }
+      if (typeof category.alwaysVisible === "boolean") {
+        normalized.alwaysVisible = category.alwaysVisible;
+      }
 
       return normalized;
     })
     .filter((category): category is NonNullable<typeof category> => {
       return category !== null;
     });
-}
-
-function isCategoryAdminVisible(
-  categories: NormalizedCategory[],
-  categoryId: unknown,
-): boolean {
-  if (typeof categoryId !== "string" || !categoryId.trim()) return true;
-
-  const byId = new Map(categories.map((category) => [category.id, category]));
-  let current = categoryId.trim();
-  const seen = new Set<string>();
-
-  while (current && current !== "home") {
-    if (seen.has(current)) return true;
-    seen.add(current);
-
-    const category = byId.get(current);
-    if (!category) return true;
-    if (category.adminVisible === false) return false;
-
-    current = category.parentId ?? "home";
-  }
-
-  return true;
-}
-
-function drawingCategoryId(drawing: SavedDrawing): unknown {
-  return drawing.attributes?.categoryId;
 }
 
 function drawingSavedId(drawing: SavedDrawing): string | null {
@@ -453,7 +433,7 @@ function normalizeCenter(settings?: LiteMapDoc["settings"]): [number, number] {
 export function createLiteMapPayload(map: LiteMapDoc) {
   const categories = normalizeCategories(map.categories);
   const visibleDrawings = (map.polygons ?? []).filter((drawing) =>
-    isCategoryAdminVisible(categories, drawingCategoryId(drawing)),
+    isDrawingAdminVisibleInList(categories, drawing.attributes),
   );
   const visibleDrawingIds = new Set(
     visibleDrawings
@@ -495,6 +475,7 @@ export function createLiteMapPayload(map: LiteMapDoc) {
       apiSources: Array.isArray(map.settings?.apiSources)
         ? map.settings?.apiSources
         : [],
+      apiSourceTabs: normalizeApiSourceTabs(map.settings?.apiSources, map.settings?.apiSourceTabs),
     },
     counts: {
       drawings: drawingFeatures.length,
@@ -503,9 +484,7 @@ export function createLiteMapPayload(map: LiteMapDoc) {
       total:
         drawingFeatures.length + labelFeatures.length + eventFeatures.length,
     },
-    categories: categories.filter((category) =>
-      isCategoryAdminVisible(categories, category.id),
-    ),
+    categories: publicMapCategories(categories, visibleDrawings),
     drawings: collection(drawingFeatures),
     labels: collection(labelFeatures),
     events: collection(eventFeatures),
