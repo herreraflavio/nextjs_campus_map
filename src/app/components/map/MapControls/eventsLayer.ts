@@ -65,8 +65,8 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
           ["Building", current.location], ["Location details", current.location_at],
           ["Description", current.description], ["People", current.names?.join(", ")],
         ].filter(([, value]) => value);
-        const fields = details.map(([label, value], index) =>
-          `<div style="padding:8px 0;${index > 0 ? "border-top:1px solid rgba(0,0,0,0.12);" : ""}">
+        const fields = details.map(([label, value]) =>
+          `<div class="map-popup-field" style="padding:8px 0">
             <dt style="margin:0 0 4px;font-weight:700">${label}</dt>
             <dd style="margin:0;font-weight:400;white-space:pre-wrap">${escapePopupText(value)}</dd>
           </div>`,

@@ -20,16 +20,21 @@ const barModule = load('src/app/types/mapTopBar.ts');
 const savedBar = { logoUrl: 'https://assets.example/logo.png', backgroundColor: '#002856' };
 const sidebarModule = load('src/app/types/mapSidebar.ts');
 const savedSidebar = { backgroundColor: '#182436', borderColor: '#556677', textColor: '#f1f5f9' };
+const popupModule = load('src/app/types/mapPopup.ts');
+const savedPopup = { backgroundColor: '#203040', borderColor: '#778899', textColor: '#ffffff' };
 
-test('sidebar overrides validate all colors and missing settings preserve the legacy palette', () => {
+for (const [name, validate, normalize] of [
+  ['sidebar', sidebarModule.isMapSidebarSettings, sidebarModule.normalizeMapSidebar],
+  ['popup', popupModule.isMapPopupSettings, popupModule.normalizeMapPopup],
+]) test(`${name} overrides validate all colors and missing settings preserve the legacy palette`, () => {
   for (const value of [undefined, null, {}, { ...savedSidebar, textColor: 'white' },
     { ...savedSidebar, borderColor: '#fff' }, { ...savedSidebar, backgroundColor: 'url(example)' }]) {
-    assert.equal(sidebarModule.isMapSidebarSettings(value), false);
-    assert.equal(sidebarModule.normalizeMapSidebar(value), null);
+    assert.equal(validate(value), false);
+    assert.equal(normalize(value), null);
   }
-  assert.deepEqual(sidebarModule.normalizeMapSidebar({ ...savedSidebar, textColor: '#ABCDEF' }),
+  assert.deepEqual(normalize({ ...savedSidebar, textColor: '#ABCDEF' }),
     { ...savedSidebar, textColor: '#abcdef' });
-  assert.deepEqual(sidebarModule.normalizeMapSidebar(savedSidebar), savedSidebar);
+  assert.deepEqual(normalize(savedSidebar), savedSidebar);
 });
 
 test('missing settings get a visible default color and obsolete disabled flags cannot hide the header', () => {
@@ -91,33 +96,46 @@ test('empty maps save, queued category saves retain the new bar, and failed save
       if (bodies.length === 1) await new Promise(resolve => { release = resolve; });
       return Response.json({});
     };
-    const topBarSave = saveModule.saveMapToServer('map', 'owner@example.test', { ...settings, topBar: savedBar, sidebar: savedSidebar });
+    const topBarSave = saveModule.saveMapToServer('map', 'owner@example.test', {
+      ...settings, topBar: savedBar, sidebar: savedSidebar, popup: savedPopup,
+    });
     const categorySave = saveModule.saveMapToServer('map', 'owner@example.test', settings);
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(bodies.length, 1);
     const otherMapBar = { ...savedBar, backgroundColor: '#123456' };
     refs.settingsRef.current.topBar = otherMapBar;
     refs.settingsRef.current.sidebar = { ...savedSidebar, textColor: '#123456' };
+    refs.settingsRef.current.popup = { ...savedPopup, textColor: '#123456' };
     release();
     assert.equal(await topBarSave, true);
     assert.equal(await categorySave, true);
     assert.deepEqual(bodies[1].settings.topBar, savedBar);
     assert.deepEqual(bodies[1].settings.sidebar, savedSidebar);
+    assert.deepEqual(bodies[1].settings.popup, savedPopup);
     assert.deepEqual(bodies[0].polygons, []);
     // Finishing a save for an unmounted map must not change another map's refs.
     assert.deepEqual(refs.settingsRef.current.topBar, otherMapBar);
     refs.settingsRef.current.topBar = savedBar;
     refs.settingsRef.current.sidebar = savedSidebar;
+    refs.settingsRef.current.popup = savedPopup;
     global.fetch = async () => new Response('', { status: 403 });
     assert.equal(await saveModule.saveMapToServer('map', 'owner@example.test', { ...settings,
-      topBar: { ...savedBar, backgroundColor: '#ffffff' }, sidebar: { ...savedSidebar, textColor: '#ffffff' } }), false);
+      topBar: { ...savedBar, backgroundColor: '#ffffff' }, sidebar: { ...savedSidebar, textColor: '#ffffff' },
+      popup: { ...savedPopup, textColor: '#000000' } }), false);
     assert.deepEqual(refs.settingsRef.current.topBar, savedBar);
     assert.deepEqual(refs.settingsRef.current.sidebar, savedSidebar);
+    assert.deepEqual(refs.settingsRef.current.popup, savedPopup);
     global.fetch = async (_, options) => { bodies.push(JSON.parse(options.body)); return Response.json({}); };
     const reset = saveModule.saveMapToServer('map', 'owner@example.test', { ...settings, sidebar: null });
     const afterReset = saveModule.saveMapToServer('map', 'owner@example.test', settings);
     assert.deepEqual(await Promise.all([reset, afterReset]), [true, true]);
     assert.equal(bodies.at(-1).settings.sidebar, null, 'Queued saves preserve an explicit reset');
+    assert.deepEqual(bodies.at(-1).settings.popup, savedPopup, 'Sidebar reset preserves popup colors');
+    refs.settingsRef.current.sidebar = null;
+    const popupReset = saveModule.saveMapToServer('map', 'owner@example.test', { ...settings, popup: null });
+    const afterPopupReset = saveModule.saveMapToServer('map', 'owner@example.test', settings);
+    assert.deepEqual(await Promise.all([popupReset, afterPopupReset]), [true, true]);
+    assert.equal(bodies.at(-1).settings.popup, null, 'Queued saves preserve a popup reset');
   } finally { global.fetch = previous; }
 });
 
@@ -125,7 +143,7 @@ test('map API validates, authorizes, persists, reloads, and preserves settings f
   const ownerId = new ObjectId();
   const mapId = new ObjectId();
   const sourceTabs = [{ url: 'https://events.example/feed', tabName: 'Activities' }];
-  const map = { _id: mapId, ownerId, isPrivate: false, settings: { topBar: savedBar, sidebar: savedSidebar,
+  const map = { _id: mapId, ownerId, isPrivate: false, settings: { topBar: savedBar, sidebar: savedSidebar, popup: savedPopup,
     apiSources: [sourceTabs[0].url], apiSourceTabs: sourceTabs } };
   let session = { user: { email: 'owner@example.test' } };
   let user = { _id: ownerId };
@@ -145,6 +163,7 @@ test('map API validates, authorizes, persists, reloads, and preserves settings f
   const post = (value) => route.POST(new Request('http://localhost/api/maps/map', { method: 'POST', body: JSON.stringify(value) }), context);
   assert.equal((await post({ ...body, settings: { ...body.settings, topBar: { ...savedBar, backgroundColor: 'invalid' } } })).status, 400);
   assert.equal((await post({ ...body, settings: { ...body.settings, sidebar: { ...savedSidebar, borderColor: 'invalid' } } })).status, 400);
+  assert.equal((await post({ ...body, settings: { ...body.settings, popup: { ...savedPopup, textColor: 'invalid' } } })).status, 400);
   session = null;
   assert.equal((await post(body)).status, 401);
   session = { user: { email: 'other@example.test' } };
@@ -155,11 +174,20 @@ test('map API validates, authorizes, persists, reloads, and preserves settings f
   assert.equal((await post(body)).status, 200);
   assert.deepEqual(map.settings.topBar, savedBar);
   assert.deepEqual(map.settings.sidebar, savedSidebar);
+  assert.deepEqual(map.settings.popup, savedPopup);
   const cleared = { ...savedBar, logoUrl: null, backgroundColor: '#ABCDEF' };
   assert.equal((await post({ ...body, settings: { ...body.settings, topBar: cleared } })).status, 200);
   const reloaded = await (await route.GET(new Request('http://localhost/api/maps/map'), context)).json();
   assert.deepEqual(reloaded.settings.topBar, { ...cleared, backgroundColor: '#abcdef' });
   assert.deepEqual(reloaded.settings.sidebar, savedSidebar);
+  assert.deepEqual(reloaded.settings.popup, savedPopup);
+  assert.equal((await post({ ...body, settings: { ...body.settings, popup: { ...savedPopup, textColor: '#ABCDEF' } } })).status, 200);
+  assert.equal(map.settings.popup.textColor, '#abcdef');
+  const lite = load('src/lib/liteMap.ts').createLiteMapPayload(map);
+  assert.deepEqual(lite.settings.popup, map.settings.popup);
+  assert.equal((await post({ ...body, settings: { ...body.settings, popup: null } })).status, 200);
+  assert.equal(map.settings.popup, null);
+  assert.deepEqual(map.settings.sidebar, savedSidebar, 'Popup reset preserves sidebar colors');
   assert.equal((await post({ ...body, settings: { ...body.settings, sidebar: { ...savedSidebar, textColor: '#ABCDEF' } } })).status, 200);
   assert.equal(map.settings.sidebar.textColor, '#abcdef');
   assert.equal((await post({ ...body, settings: { ...body.settings, sidebar: null } })).status, 200);

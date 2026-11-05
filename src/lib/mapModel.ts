@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 export type MapSettings = {
   topBar?: import("@/app/types/mapTopBar").MapTopBarSettings;
   sidebar?: import("@/app/types/mapSidebar").MapSidebarSettings | null;
+  popup?: import("@/app/types/mapPopup").MapPopupSettings | null;
   zoom: number;
   center: [number, number]; // [x, y] in Web Mercator
   constraints?: {

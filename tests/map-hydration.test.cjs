@@ -256,8 +256,8 @@ test('failed deferred header writes do not leak draft settings into the next que
   } finally { global.fetch = previous; console.error = previousError; }
 });
 
-for (const succeeds of [true, false]) {
-  test(`deferred sidebar edits ${succeeds ? 'survive later saves' : 'keep failed drafts out of later saves'}`, async () => {
+for (const target of ['sidebar', 'popup']) for (const succeeds of [true, false]) {
+  test(`deferred ${target} edits ${succeeds ? 'survive later saves' : 'keep failed drafts out of later saves'}`, async () => {
     const { hydration, refs, save } = harness();
     const loadMap = hydration.beginMapHydration('map');
     const edited = { backgroundColor: '#112233', borderColor: '#445566', textColor: '#ffffff' };
@@ -271,14 +271,14 @@ for (const succeeds of [true, false]) {
       return !succeeds && bodies.length === 1 ? new Response('', { status: 500 }) : Response.json({});
     };
     try {
-      const colorSave = save('map', 'owner@example.test', { ...settings(), sidebar: edited });
+      const colorSave = save('map', 'owner@example.test', { ...settings(), [target]: edited });
       const unrelatedSave = save('map', 'owner@example.test', settings());
-      refs.settingsRef.current.sidebar = restored;
+      refs.settingsRef.current[target] = restored;
       loadMap.complete();
       assert.equal(await colorSave, succeeds);
       assert.equal(await unrelatedSave, true);
-      assert.deepEqual(bodies[1].settings.sidebar, succeeds ? edited : restored);
-      assert.deepEqual(refs.settingsRef.current.sidebar, restored);
+      assert.deepEqual(bodies[1].settings[target], succeeds ? edited : restored);
+      assert.deepEqual(refs.settingsRef.current[target], restored);
     } finally { global.fetch = previous; console.error = previousError; }
   });
 }

@@ -1,10 +1,7 @@
-import { isHexColor } from "@/app/types/mapTopBar";
+import type { MapColorSettings } from "@/app/types/mapColors";
+export { isMapColorSettings as isMapSidebarSettings, normalizeMapColors as normalizeMapSidebar } from "@/app/types/mapColors";
 
-export type MapSidebarSettings = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
+export type MapSidebarSettings = MapColorSettings;
 
 export const DEFAULT_MAP_SIDEBAR: MapSidebarSettings = {
   backgroundColor: "#ffffff",
@@ -17,20 +14,3 @@ export type MapSidebarLoadedEvent = {
   mapId: string;
   settings: MapSidebarSettings | null;
 };
-
-export function isMapSidebarSettings(value: unknown): value is MapSidebarSettings {
-  if (!value || typeof value !== "object") return false;
-  const sidebar = value as Record<string, unknown>;
-  return isHexColor(sidebar.backgroundColor) && isHexColor(sidebar.borderColor) &&
-    isHexColor(sidebar.textColor);
-}
-
-export function normalizeMapSidebar(value: unknown): MapSidebarSettings | null {
-  // Missing overrides retain the existing sidebar palette, including its accents.
-  if (!isMapSidebarSettings(value)) return null;
-  return {
-    backgroundColor: value.backgroundColor.toLowerCase(),
-    borderColor: value.borderColor.toLowerCase(),
-    textColor: value.textColor.toLowerCase(),
-  };
-}

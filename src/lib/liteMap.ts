@@ -1,5 +1,6 @@
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
 import { normalizeMapSidebar, type MapSidebarSettings } from "@/app/types/mapSidebar";
+import { normalizeMapPopup, type MapPopupSettings } from "@/app/types/mapPopup";
 import { isDrawingAdminVisibleInList, publicMapCategories } from "@/app/types/mapVisibility";
 import { normalizeApiSourceTabs, type ApiSourceTab } from "@/app/types/apiSources";
 
@@ -67,6 +68,7 @@ type LiteMapDoc = {
   settings?: {
     topBar?: MapTopBarSettings;
     sidebar?: MapSidebarSettings | null;
+    popup?: MapPopupSettings | null;
     zoom?: number;
     center?: [number, number];
     constraints?: any;
@@ -469,6 +471,7 @@ export function createLiteMapPayload(map: LiteMapDoc) {
     settings: {
       topBar: normalizeMapTopBar(map.settings?.topBar),
       sidebar: normalizeMapSidebar(map.settings?.sidebar),
+      popup: normalizeMapPopup(map.settings?.popup),
       center: normalizeCenter(map.settings),
       zoom: isFiniteNumber(map.settings?.zoom)
         ? map.settings.zoom

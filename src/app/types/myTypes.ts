@@ -187,6 +187,7 @@ export interface ExportBodySettingsForRef {
   apiSourceTabs?: import("./apiSources").ApiSourceTab[];
   topBar?: import("./mapTopBar").MapTopBarSettings;
   sidebar?: import("./mapSidebar").MapSidebarSettings | null;
+  popup?: import("./mapPopup").MapPopupSettings | null;
   zoom: number;
   center: { spatialReference: SpatialReference; x: number; y: number };
   constraints: {
@@ -205,6 +206,7 @@ export interface SaveSettings {
   apiSourceTabs?: import("./apiSources").ApiSourceTab[];
   topBar?: import("./mapTopBar").MapTopBarSettings;
   sidebar?: import("./mapSidebar").MapSidebarSettings | null;
+  popup?: import("./mapPopup").MapPopupSettings | null;
   zoom: number;
   center: [number, number];
   constraints: {

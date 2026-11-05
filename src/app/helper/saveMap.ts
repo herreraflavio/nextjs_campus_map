@@ -14,6 +14,7 @@ import {
 } from "@/app/components/map/mapHydration";
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
 import { normalizeMapSidebar, type MapSidebarSettings } from "@/app/types/mapSidebar";
+import { normalizeMapPopup, type MapPopupSettings } from "@/app/types/mapPopup";
 import { normalizeApiSourceTabs } from "@/app/types/apiSources";
 import type {
   DrawingExport,
@@ -417,6 +418,7 @@ type SaveQueue = {
   tail: Promise<boolean>;
   topBar: MapTopBarSettings | null;
   sidebar: MapSidebarSettings | null | undefined;
+  popup: MapPopupSettings | null | undefined;
 };
 const pendingSaves = new Map<string, SaveQueue>();
 
@@ -433,6 +435,7 @@ export function saveMapToServer(
     ...generateExport(),
     topBar: normalizeMapTopBar(settingsRef.current.topBar),
     sidebar: normalizeMapSidebar(settingsRef.current.sidebar),
+    popup: normalizeMapPopup(settingsRef.current.popup),
     apiSourceTabs: normalizeApiSourceTabs(settingsRef.current.apiSources, settingsRef.current.apiSourceTabs),
   });
   // Preserve action-time snapshots for ready maps. During initial hydration,
@@ -453,6 +456,7 @@ export function saveMapToServer(
     tail: Promise.resolve(true),
     topBar: hydrationStatus === "ready" ? normalizeMapTopBar(settingsRef.current.topBar) : null,
     sidebar: hydrationStatus === "ready" ? normalizeMapSidebar(settingsRef.current.sidebar) : undefined,
+    popup: hydrationStatus === "ready" ? normalizeMapPopup(settingsRef.current.popup) : undefined,
   };
   const save = queue.tail.then(async () => {
     const exported = await graphics;
@@ -460,6 +464,7 @@ export function saveMapToServer(
     const { polygons, labels, events, categories } = exported;
     queue.topBar ??= exported.topBar;
     if (queue.sidebar === undefined) queue.sidebar = exported.sidebar;
+    if (queue.popup === undefined) queue.popup = exported.popup;
     const payload: MapSaveBody = {
       userEmail, polygons, labels, events, categories,
       settings: {
@@ -468,6 +473,7 @@ export function saveMapToServer(
         // only enter this path via an explicit Save override.
         topBar: normalizeMapTopBar(saveSettings.topBar ?? queue.topBar),
         sidebar: normalizeMapSidebar(saveSettings.sidebar === undefined ? queue.sidebar : saveSettings.sidebar),
+        popup: normalizeMapPopup(saveSettings.popup === undefined ? queue.popup : saveSettings.popup),
         apiSourceTabs: saveSettings.apiSourceTabs ?? exported.apiSourceTabs,
       },
     };
@@ -481,6 +487,7 @@ export function saveMapToServer(
       // Commit before releasing queued saves that need the latest appearance.
       queue.topBar = payload.settings.topBar!;
       queue.sidebar = payload.settings.sidebar ?? null;
+      queue.popup = payload.settings.popup ?? null;
       return true;
     } catch (err) {
       console.error("❌ Error saving map:", err);

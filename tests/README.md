@@ -37,13 +37,14 @@ center/zoom preservation, and editor visibility in the builder, share document,
 and desktop/mobile iframe. Screenshots and results are
 written under `tools/top-bar-verification`.
 
-## Sidebar colors
+## Sidebar and popup colors
 
-Map Settings → **Edit Sidebar Colors** provides background, border, and text
-colors with a preview. Save persists them for the builder and shared maps;
+Map Settings → Appearance provides **Edit Sidebar Colors** and **Edit Popup Colors**
+for background, border, and text colors with a preview. Save persists them for the builder and shared maps;
 Cancel discards drafts, and Reset defaults restores the original palette.
 Appearance saves retain the same MapView and preserve colors during unrelated
-map edits. The map-top-bar and map-hydration tests also cover sidebar validation,
+map edits. Popup colors also apply to native headers/actions and event field dividers.
+The map-top-bar and map-hydration tests also cover appearance validation,
 save failures, queued saves, reloads, and explicit resets.
 
 ## Map loading checks

@@ -7,21 +7,17 @@ import { useMapId } from "@/app/context/MapContext";
 import { saveMapToServer } from "@/app/helper/saveMap";
 import { isHexColor } from "@/app/types/mapTopBar";
 import {
-  DEFAULT_MAP_SIDEBAR, isMapSidebarSettings, normalizeMapSidebar,
-  type MapSidebarSettings,
-} from "@/app/types/mapSidebar";
+  isMapColorSettings, normalizeMapColors, type MapColorSettings,
+} from "@/app/types/mapColors";
+import { DEFAULT_MAP_SIDEBAR } from "@/app/types/mapSidebar";
+import { DEFAULT_MAP_POPUP } from "@/app/types/mapPopup";
 import { finalizedLayerRef, MapViewRef, settingsRef } from "../arcgisRefs";
 import EditorPanel from "./EditorPanel";
 
-const colorFields: { key: keyof MapSidebarSettings; label: string }[] = [
-  { key: "backgroundColor", label: "Sidebar background" },
-  { key: "borderColor", label: "Border color" },
-  { key: "textColor", label: "Text color" },
-];
-
-export default function MapSidebarEditor({ settings, onSaved, onClose }: {
-  settings: MapSidebarSettings | null;
-  onSaved: (settings: MapSidebarSettings | null) => void;
+export default function MapColorsEditor({ target, settings, onSaved, onClose }: {
+  target: "sidebar" | "popup";
+  settings: MapColorSettings | null;
+  onSaved: (settings: MapColorSettings | null) => void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(settings);
@@ -32,8 +28,15 @@ export default function MapSidebarEditor({ settings, onSaved, onClose }: {
   const savingRef = useRef(false);
   const { data: session } = useSession();
   const mapId = useMapId();
-  const colors = draft ?? DEFAULT_MAP_SIDEBAR;
-  const valid = draft === null || isMapSidebarSettings(draft);
+  const name = target === "sidebar" ? "Sidebar" : "Popup";
+  const defaults = target === "sidebar" ? DEFAULT_MAP_SIDEBAR : DEFAULT_MAP_POPUP;
+  const colors = draft ?? defaults;
+  const valid = draft === null || isMapColorSettings(draft);
+  const colorFields: { key: keyof MapColorSettings; label: string }[] = [
+    { key: "backgroundColor", label: `${name} background` },
+    { key: "borderColor", label: "Border color" },
+    { key: "textColor", label: "Text color" },
+  ];
 
   useEffect(() => {
     mounted.current = true;
@@ -54,49 +57,49 @@ export default function MapSidebarEditor({ settings, onSaved, onClose }: {
     savingRef.current = true;
     setSaving(true);
     setError(null);
-    const sidebar = normalizeMapSidebar(draft);
+    const appearance = normalizeMapColors(draft);
     const s = settingsRef.current;
     const saved = await saveMapToServer(mapId, email, {
       zoom: s.zoom, center: [s.center.x, s.center.y], constraints: s.constraints,
       featureLayers: s.featureLayers, mapTile: s.mapTile, baseMap: s.baseMap,
-      apiSources: s.apiSources, sidebar,
+      apiSources: s.apiSources, [target]: appearance,
     });
     if (!mounted.current) return;
     if (saved) {
-      settingsRef.current.sidebar = sidebar;
-      onSaved(sidebar);
+      settingsRef.current[target] = appearance;
+      onSaved(appearance);
       onClose();
     } else {
-      setError("Could not save the sidebar colors. Please try again.");
+      setError(`Could not save the ${target} colors. Please try again.`);
       setSaving(false);
       savingRef.current = false;
     }
   };
 
   return (
-    <EditorPanel title="Edit Sidebar Colors" contained>
+    <EditorPanel title={`Edit ${name} Colors`} contained>
       {colorFields.map(({ key, label }) => (
         <Box key={key} sx={{ display: "flex", gap: 1, alignItems: "flex-start", mt: 2 }}>
           <input type="color" aria-label={`${label} picker`}
-            value={isHexColor(colors[key]) ? colors[key] : DEFAULT_MAP_SIDEBAR[key]}
+            value={isHexColor(colors[key]) ? colors[key] : defaults[key]}
             disabled={saving}
-            onChange={event => setDraft(current => ({ ...(current ?? DEFAULT_MAP_SIDEBAR), [key]: event.target.value }))}
+            onChange={event => setDraft(current => ({ ...(current ?? defaults), [key]: event.target.value }))}
             style={{ width: 44, height: 40, padding: 2, flexShrink: 0, border: "1px solid #ddd", borderRadius: 4 }} />
           <TextField label={label} size="small" fullWidth value={colors[key]} disabled={saving}
             error={!isHexColor(colors[key])}
             helperText={!isHexColor(colors[key]) ? "Use a six-digit hex color, such as #002856." : undefined}
-            onChange={event => setDraft(current => ({ ...(current ?? DEFAULT_MAP_SIDEBAR), [key]: event.target.value }))} />
+            onChange={event => setDraft(current => ({ ...(current ?? defaults), [key]: event.target.value }))} />
         </Box>
       ))}
       <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Preview</Typography>
-      <Box aria-label="Sidebar color preview" sx={{ p: 1.5, border: "1px solid", borderRadius: 1,
-        backgroundColor: isHexColor(colors.backgroundColor) ? colors.backgroundColor : DEFAULT_MAP_SIDEBAR.backgroundColor,
-        borderColor: isHexColor(colors.borderColor) ? colors.borderColor : DEFAULT_MAP_SIDEBAR.borderColor,
-        color: isHexColor(colors.textColor) ? colors.textColor : DEFAULT_MAP_SIDEBAR.textColor,
+      <Box aria-label={`${name} color preview`} sx={{ p: 1.5, border: "1px solid", borderRadius: 1,
+        backgroundColor: isHexColor(colors.backgroundColor) ? colors.backgroundColor : defaults.backgroundColor,
+        borderColor: isHexColor(colors.borderColor) ? colors.borderColor : defaults.borderColor,
+        color: isHexColor(colors.textColor) ? colors.textColor : defaults.textColor,
       }}>
-        <strong>Home</strong>
+        <strong>{target === "sidebar" ? "Home" : "Event details"}</strong>
         <Box sx={{ borderTop: "1px solid", borderColor: "inherit", mt: 1, pt: 1 }}>
-          Places and events
+          {target === "sidebar" ? "Places and events" : <><strong>Date</strong><div>2026-11-12</div></>}
         </Box>
       </Box>
       <Button size="small" disabled={saving} onClick={() => setDraft(null)} sx={{ mt: 1 }}>Reset defaults</Button>

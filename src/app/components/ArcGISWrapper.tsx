@@ -18,6 +18,7 @@ import {
   type MapTopBarSettings,
 } from "@/app/types/mapTopBar";
 import { MAP_SIDEBAR_LOADED, normalizeMapSidebar, type MapSidebarSettings } from "@/app/types/mapSidebar";
+import { MAP_POPUP_LOADED, normalizeMapPopup, type MapPopupSettings } from "@/app/types/mapPopup";
 import type {
   DrawingExport,
   EventPoint,
@@ -88,6 +89,7 @@ type ArcGISMapPayload = {
   settings: {
     topBar?: MapTopBarSettings;
     sidebar?: MapSidebarSettings | null;
+    popup?: MapPopupSettings | null;
     zoom: number;
     center: [number, number];
     constraints: {
@@ -527,6 +529,7 @@ export default function ArcGISWrapper({
         const settings: ArcGISMapPayload["settings"] = {
           topBar: normalizeMapTopBar(rawS.topBar),
           sidebar: normalizeMapSidebar(rawS.sidebar),
+          popup: normalizeMapPopup(rawS.popup),
           zoom,
           center,
           constraints,
@@ -552,6 +555,7 @@ export default function ArcGISWrapper({
           settingsRef.current.apiSourceTabs = settings.apiSourceTabs;
           settingsRef.current.topBar = settings.topBar;
           settingsRef.current.sidebar = settings.sidebar;
+          settingsRef.current.popup = settings.popup;
         } catch {
           // ignore
         }
@@ -580,6 +584,9 @@ export default function ArcGISWrapper({
         }));
         settingsEvents.dispatchEvent(new CustomEvent(MAP_SIDEBAR_LOADED, {
           detail: { mapId, settings: settings.sidebar },
+        }));
+        settingsEvents.dispatchEvent(new CustomEvent(MAP_POPUP_LOADED, {
+          detail: { mapId, settings: settings.popup },
         }));
         settingsEvents.dispatchEvent(new Event("change"));
       })

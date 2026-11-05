@@ -363,6 +363,12 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
                 }}>
                   Edit Sidebar Colors
                 </Button>
+                <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => {
+                  settingsEvents.dispatchEvent(new Event("edit-popup-colors"));
+                  setOpenSettings(false);
+                }}>
+                  Edit Popup Colors
+                </Button>
                 <Divider sx={{ my: 2 }} />
               </>
             )}
