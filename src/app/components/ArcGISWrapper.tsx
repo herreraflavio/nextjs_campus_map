@@ -17,6 +17,7 @@ import {
   normalizeMapTopBar,
   type MapTopBarSettings,
 } from "@/app/types/mapTopBar";
+import { MAP_SIDEBAR_LOADED, normalizeMapSidebar, type MapSidebarSettings } from "@/app/types/mapSidebar";
 import type {
   DrawingExport,
   EventPoint,
@@ -86,6 +87,7 @@ type ArcGISMapPayload = {
   eventSources: string[];
   settings: {
     topBar?: MapTopBarSettings;
+    sidebar?: MapSidebarSettings | null;
     zoom: number;
     center: [number, number];
     constraints: {
@@ -524,6 +526,7 @@ export default function ArcGISWrapper({
 
         const settings: ArcGISMapPayload["settings"] = {
           topBar: normalizeMapTopBar(rawS.topBar),
+          sidebar: normalizeMapSidebar(rawS.sidebar),
           zoom,
           center,
           constraints,
@@ -548,6 +551,7 @@ export default function ArcGISWrapper({
           settingsRef.current.apiSources = settings.apiSources;
           settingsRef.current.apiSourceTabs = settings.apiSourceTabs;
           settingsRef.current.topBar = settings.topBar;
+          settingsRef.current.sidebar = settings.sidebar;
         } catch {
           // ignore
         }
@@ -573,6 +577,9 @@ export default function ArcGISWrapper({
         });
         settingsEvents.dispatchEvent(new CustomEvent(MAP_TOP_BAR_LOADED, {
           detail: { mapId, settings: settings.topBar },
+        }));
+        settingsEvents.dispatchEvent(new CustomEvent(MAP_SIDEBAR_LOADED, {
+          detail: { mapId, settings: settings.sidebar },
         }));
         settingsEvents.dispatchEvent(new Event("change"));
       })

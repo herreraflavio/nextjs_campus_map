@@ -10,8 +10,8 @@ function load(file, mocks = {}) {
   }).outputText;
   const module = { exports: {} };
   new Function('require', 'module', 'exports', code)(
-    name => name in mocks ? mocks[name] : name === '@/app/types/apiSources'
-      ? load('src/app/types/apiSources.ts') : require(name), module, module.exports,
+    name => name in mocks ? mocks[name] : name.startsWith('@/app/types/')
+      ? load('src/app/types/' + name.slice('@/app/types/'.length) + '.ts') : require(name), module, module.exports,
   );
   return module.exports;
 }
@@ -255,3 +255,30 @@ test('failed deferred header writes do not leak draft settings into the next que
     assert.deepEqual(bodies[1].settings.topBar, bar('#abcdef'));
   } finally { global.fetch = previous; console.error = previousError; }
 });
+
+for (const succeeds of [true, false]) {
+  test(`deferred sidebar edits ${succeeds ? 'survive later saves' : 'keep failed drafts out of later saves'}`, async () => {
+    const { hydration, refs, save } = harness();
+    const loadMap = hydration.beginMapHydration('map');
+    const edited = { backgroundColor: '#112233', borderColor: '#445566', textColor: '#ffffff' };
+    const restored = { backgroundColor: '#ffffff', borderColor: '#d1d5db', textColor: '#000000' };
+    const bodies = [];
+    const previous = global.fetch;
+    const previousError = console.error;
+    console.error = () => {};
+    global.fetch = async (_, options) => {
+      bodies.push(JSON.parse(options.body));
+      return !succeeds && bodies.length === 1 ? new Response('', { status: 500 }) : Response.json({});
+    };
+    try {
+      const colorSave = save('map', 'owner@example.test', { ...settings(), sidebar: edited });
+      const unrelatedSave = save('map', 'owner@example.test', settings());
+      refs.settingsRef.current.sidebar = restored;
+      loadMap.complete();
+      assert.equal(await colorSave, succeeds);
+      assert.equal(await unrelatedSave, true);
+      assert.deepEqual(bodies[1].settings.sidebar, succeeds ? edited : restored);
+      assert.deepEqual(refs.settingsRef.current.sidebar, restored);
+    } finally { global.fetch = previous; console.error = previousError; }
+  });
+}

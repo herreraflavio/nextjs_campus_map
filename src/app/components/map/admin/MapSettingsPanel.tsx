@@ -328,6 +328,7 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
             left: { xs: 16, md: 420 },
             zIndex: 99,
             bgcolor: "background.paper",
+            color: "text.primary",
             border: 1,
             p: 1,
             width: { xs: "calc(100vw - 32px)", md: 300 },
@@ -349,12 +350,18 @@ export default function MapSettingsPanel({ canEdit = false }: { canEdit?: boolea
           <Box mt={1}>
             {canEdit && (
               <>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Map Top Bar</Typography>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Appearance</Typography>
                 <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => {
                   settingsEvents.dispatchEvent(new Event("edit-top-bar"));
                   setOpenSettings(false);
                 }}>
                   Edit Map Top Bar
+                </Button>
+                <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => {
+                  settingsEvents.dispatchEvent(new Event("edit-sidebar-colors"));
+                  setOpenSettings(false);
+                }}>
+                  Edit Sidebar Colors
                 </Button>
                 <Divider sx={{ my: 2 }} />
               </>

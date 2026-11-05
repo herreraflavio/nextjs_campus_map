@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { getMongoClient } from "@/lib/mongodb";
 import { findUserByEmail, User } from "@/lib/userModel";
 import { isMapTopBarSettings, normalizeMapTopBar } from "@/app/types/mapTopBar";
+import { isMapSidebarSettings, normalizeMapSidebar } from "@/app/types/mapSidebar";
 import { normalizeApiSourceTabs } from "@/app/types/apiSources";
 import type {
   DrawingExport,
@@ -363,6 +364,7 @@ function isSaveSettings(x: any): x is SaveSettings {
     typeof x === "object" &&
     x !== null &&
     (typeof x.topBar === "undefined" || isMapTopBarSettings(x.topBar)) &&
+    (x.sidebar === undefined || x.sidebar === null || isMapSidebarSettings(x.sidebar)) &&
     (x.apiSourceTabs === undefined || (Array.isArray(x.apiSourceTabs) &&
       x.apiSourceTabs.every((source: any) => typeof source?.url === "string" &&
         typeof source?.tabName === "string" && source.tabName.length <= 80))) &&
@@ -687,6 +689,7 @@ export async function POST(
         settings: {
           ...settings,
           topBar: normalizeMapTopBar(settings.topBar ?? existing.settings?.topBar),
+          sidebar: normalizeMapSidebar(settings.sidebar === undefined ? existing.settings?.sidebar : settings.sidebar),
           apiSources: settings.apiSources ?? existing.settings?.apiSources ?? [],
           apiSourceTabs: normalizeApiSourceTabs(settings.apiSources ?? existing.settings?.apiSources,
             settings.apiSourceTabs ?? existing.settings?.apiSourceTabs),

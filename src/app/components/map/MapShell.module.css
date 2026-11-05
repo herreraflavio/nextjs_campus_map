@@ -9,3 +9,12 @@
   min-height: 0;
   overflow: hidden;
 }
+
+.root > [data-map-body] > aside {
+  --sidebar-background: var(--map-sidebar-background);
+  --sidebar-border: var(--map-sidebar-border);
+  --sidebar-text: var(--map-sidebar-text);
+  background-color: var(--sidebar-background, #fff);
+  color: var(--sidebar-text, inherit);
+  border-top-color: var(--sidebar-border, rgba(0, 0, 0, 0.12));
+}

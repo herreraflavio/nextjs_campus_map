@@ -17,6 +17,7 @@ export default function EditorPanel({
         right: contained ? { xs: 8, md: 25 } : 25,
         zIndex: contained ? 10000 : 999,
         bgcolor: "background.paper",
+        color: "text.primary",
         p: 2,
         boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
         borderRadius: 1,

@@ -5,8 +5,8 @@
 }
 
 .tabbedPanel {
-  --tab-border: #d1d5db;
-  --tab-background: #fff;
+  --tab-border: var(--sidebar-border, #d1d5db);
+  --tab-background: var(--sidebar-background, #fff);
   --tab-curve: 8px;
   min-width: 0;
 }
@@ -34,14 +34,14 @@
   border: 0;
   border-radius: 10px 10px 0 0;
   background: transparent;
-  color: #6b7280;
+  color: var(--sidebar-text, #6b7280);
   padding: 10px 14px;
   font: inherit;
   cursor: pointer;
 }
 
 .tabButton:hover {
-  color: #002856;
+  color: var(--sidebar-text, #002856);
 }
 
 .tabButton:focus-visible {
@@ -59,7 +59,7 @@
 .tabButton[aria-selected="true"] {
   z-index: 1;
   background: var(--tab-background);
-  color: #002856;
+  color: var(--sidebar-text, #002856);
 }
 
 /* The upper arch stops where the two concave shoulders join the panel edge. */
@@ -129,7 +129,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.eventMeta { color: #6b7280; font-size: 0.75rem; margin-top: 4px; }
+.eventMeta { color: var(--sidebar-text, #6b7280); font-size: 0.75rem; margin-top: 4px; }
 
 .header {
   display: flex;
@@ -147,7 +147,7 @@
 .divider {
   height: 1px;
   margin: 6px 0 10px;
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--sidebar-border, rgba(0, 0, 0, 0.12));
 }
 
 .list {
@@ -210,8 +210,8 @@
 .statusBadge {
   flex: 0 0 auto;
   border-radius: 4px;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--sidebar-background, #f3f4f6);
+  color: var(--sidebar-text, #6b7280);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -236,9 +236,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 0, 0.16);
-  background: #f5f7fa;
-  color: #4b5563;
+  border: 1px solid var(--sidebar-border, rgba(0, 0, 0, 0.16));
+  background: var(--sidebar-background, #f5f7fa);
+  color: var(--sidebar-text, #4b5563);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -257,17 +257,17 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(25, 118, 210, 0.45);
+  border: 1px solid var(--sidebar-border, rgba(25, 118, 210, 0.45));
   border-radius: 4px;
-  color: #1976d2;
+  color: var(--sidebar-text, #1976d2);
   font-size: 0.875rem;
   font-weight: 700;
 }
 
 .editIconButton,
 .copyLinkButton {
-  border-color: rgba(107, 114, 128, 0.45);
-  color: #4b5563;
+  border-color: var(--sidebar-border, rgba(107, 114, 128, 0.45));
+  color: var(--sidebar-text, #4b5563);
 }
 
 .editIcon {
@@ -280,7 +280,7 @@
 .editIconButton:hover,
 .copyLinkButton:hover,
 .actionButton:hover {
-  border-color: #1976d2;
+  border-color: var(--sidebar-border, #1976d2);
   background: rgba(25, 118, 210, 0.06);
 }
 
@@ -297,6 +297,8 @@
   display: block;
   width: 14px;
   height: 14px;
+  background-color: var(--sidebar-text, #000);
+  mask: url("/assets/icons/right-chevron.svg") center / contain no-repeat;
 }
 
 .backButton {
@@ -305,7 +307,7 @@
   gap: 6px;
   margin: 0 0 8px;
   padding: 2px 0;
-  color: #1976d2;
+  color: var(--sidebar-text, #1976d2);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -361,10 +363,10 @@
 
 .actionButton {
   appearance: none;
-  border: 1px solid rgba(25, 118, 210, 0.5);
+  border: 1px solid var(--sidebar-border, rgba(25, 118, 210, 0.5));
   border-radius: 4px;
   background: transparent;
-  color: #1976d2;
+  color: var(--sidebar-text, #1976d2);
   cursor: pointer;
   font: inherit;
   font-size: 0.8125rem;
@@ -390,7 +392,7 @@
 }
 
 .empty {
-  color: #6b7280;
+  color: var(--sidebar-text, #6b7280);
   font-size: 0.875rem;
 }
 

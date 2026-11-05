@@ -13,6 +13,7 @@ import {
   waitForMapHydration,
 } from "@/app/components/map/mapHydration";
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
+import { normalizeMapSidebar, type MapSidebarSettings } from "@/app/types/mapSidebar";
 import { normalizeApiSourceTabs } from "@/app/types/apiSources";
 import type {
   DrawingExport,
@@ -412,7 +413,11 @@ export function generateExport(): {
 }
 
 // Serialize saves per map so slower earlier writes cannot overwrite newer edits.
-type SaveQueue = { tail: Promise<boolean>; topBar: MapTopBarSettings | null };
+type SaveQueue = {
+  tail: Promise<boolean>;
+  topBar: MapTopBarSettings | null;
+  sidebar: MapSidebarSettings | null | undefined;
+};
 const pendingSaves = new Map<string, SaveQueue>();
 
 export function saveMapToServer(
@@ -427,6 +432,7 @@ export function saveMapToServer(
   const snapshot = () => ({
     ...generateExport(),
     topBar: normalizeMapTopBar(settingsRef.current.topBar),
+    sidebar: normalizeMapSidebar(settingsRef.current.sidebar),
     apiSourceTabs: normalizeApiSourceTabs(settingsRef.current.apiSources, settingsRef.current.apiSourceTabs),
   });
   // Preserve action-time snapshots for ready maps. During initial hydration,
@@ -443,15 +449,17 @@ export function saveMapToServer(
   // A deferred save must keep the settings from its own editing action, even
   // when shared settings refs subsequently hydrate or switch to another map.
   const saveSettings = hydrationStatus === "pending" ? cloneJsonValue(settings) : settings;
-  const queue = pendingSaves.get(mapId) ?? {
+  const queue: SaveQueue = pendingSaves.get(mapId) ?? {
     tail: Promise.resolve(true),
     topBar: hydrationStatus === "ready" ? normalizeMapTopBar(settingsRef.current.topBar) : null,
+    sidebar: hydrationStatus === "ready" ? normalizeMapSidebar(settingsRef.current.sidebar) : undefined,
   };
   const save = queue.tail.then(async () => {
     const exported = await graphics;
     if (!exported) return false;
     const { polygons, labels, events, categories } = exported;
     queue.topBar ??= exported.topBar;
+    if (queue.sidebar === undefined) queue.sidebar = exported.sidebar;
     const payload: MapSaveBody = {
       userEmail, polygons, labels, events, categories,
       settings: {
@@ -459,6 +467,7 @@ export function saveMapToServer(
         // Resolve committed settings when the queued save runs. Popup drafts
         // only enter this path via an explicit Save override.
         topBar: normalizeMapTopBar(saveSettings.topBar ?? queue.topBar),
+        sidebar: normalizeMapSidebar(saveSettings.sidebar === undefined ? queue.sidebar : saveSettings.sidebar),
         apiSourceTabs: saveSettings.apiSourceTabs ?? exported.apiSourceTabs,
       },
     };
@@ -469,8 +478,9 @@ export function saveMapToServer(
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`Save failed (${res.status})`);
-      // Commit before releasing queued saves that need the latest bar.
+      // Commit before releasing queued saves that need the latest appearance.
       queue.topBar = payload.settings.topBar!;
+      queue.sidebar = payload.settings.sidebar ?? null;
       return true;
     } catch (err) {
       console.error("❌ Error saving map:", err);

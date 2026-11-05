@@ -124,6 +124,7 @@ export default function CategoryCreatePanel({
         right: 25,
         zIndex: 999,
         bgcolor: "background.paper",
+        color: "text.primary",
         p: 2,
         boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
         borderRadius: 1,

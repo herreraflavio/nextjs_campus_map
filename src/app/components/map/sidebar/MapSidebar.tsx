@@ -253,11 +253,7 @@ export default function MapSidebar({
     <section className={styles.sidebarSection}>
       {activeCategoryId !== ROOT_CATEGORY_ID && (
         <button type="button" className={styles.backButton} onClick={goBack}>
-          <img
-            src="/assets/icons/right-chevron.svg"
-            alt=""
-            className={styles.backChevron}
-          />
+          <span className={styles.backChevron} aria-hidden="true" />
           Back
         </button>
       )}
@@ -331,11 +327,7 @@ export default function MapSidebar({
                   aria-label={`Open ${category.name}`}
                   onClick={() => setActiveCategoryId(category.id)}
                 >
-                  <img
-                    src="/assets/icons/right-chevron.svg"
-                    alt=""
-                    className={styles.chevron}
-                  />
+                  <span className={styles.chevron} aria-hidden="true" />
                 </button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { normalizeMapTopBar, type MapTopBarSettings } from "@/app/types/mapTopBar";
+import { normalizeMapSidebar, type MapSidebarSettings } from "@/app/types/mapSidebar";
 import { isDrawingAdminVisibleInList, publicMapCategories } from "@/app/types/mapVisibility";
 import { normalizeApiSourceTabs, type ApiSourceTab } from "@/app/types/apiSources";
 
@@ -65,6 +66,7 @@ type LiteMapDoc = {
   categories?: SavedCategory[];
   settings?: {
     topBar?: MapTopBarSettings;
+    sidebar?: MapSidebarSettings | null;
     zoom?: number;
     center?: [number, number];
     constraints?: any;
@@ -466,6 +468,7 @@ export function createLiteMapPayload(map: LiteMapDoc) {
     updatedAt: toDateString(map.updatedAt),
     settings: {
       topBar: normalizeMapTopBar(map.settings?.topBar),
+      sidebar: normalizeMapSidebar(map.settings?.sidebar),
       center: normalizeCenter(map.settings),
       zoom: isFiniteNumber(map.settings?.zoom)
         ? map.settings.zoom
