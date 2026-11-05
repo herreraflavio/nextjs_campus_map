@@ -65,12 +65,15 @@ export function toGraphic(Graphic: any, ev: CampusEvent) {
           ["Building", current.location], ["Location details", current.location_at],
           ["Description", current.description], ["People", current.names?.join(", ")],
         ].filter(([, value]) => value);
-        const rows = details.map(([label, value]) =>
-          `<tr><th style="text-align:left;vertical-align:top;padding:5px 12px 5px 0">${label}</th><td style="padding:5px 0;white-space:pre-wrap">${escapePopupText(value)}</td></tr>`,
+        const fields = details.map(([label, value], index) =>
+          `<div style="padding:8px 0;${index > 0 ? "border-top:1px solid rgba(0,0,0,0.12);" : ""}">
+            <dt style="margin:0 0 4px;font-weight:700">${label}</dt>
+            <dd style="margin:0;font-weight:400;white-space:pre-wrap">${escapePopupText(value)}</dd>
+          </div>`,
         ).join("");
         const photoUrl = current.poster_url ?? poster_url;
         const photo = photoUrl ? `<img src="${escapePopupText(photoUrl)}" alt="Event photo" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:8px" />` : "";
-        return `${photo}<table style="width:100%;border-collapse:collapse">${rows}</table>`;
+        return `${photo}<dl style="margin:0;text-align:left;word-wrap:break-word;word-break:break-word">${fields}</dl>`;
       },
     },
     symbol: {

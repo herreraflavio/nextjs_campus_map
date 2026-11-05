@@ -20,7 +20,7 @@ import {
   type CampusEvent,
   resortByZ,
 } from "./map/arcgisRefs";
-import "./ArcGISMap.module.css";
+import styles from "./ArcGISMap.module.css";
 import EventCalendarOverlay from "./map/MapControls/EventCalendarOverlay";
 import DynamicEventLoader from "./map/MapControls/DynamicEventLoader";
 import TurnByTurnOverlay from "./map/MapControls/TurnByTurnOverlay";
@@ -797,7 +797,7 @@ export default function ArcGISMap({
             options.target.scale = 1500;
             return view.goTo(options.target);
           };
-          view.ui.add(locateWidget, "top-right");
+          view.ui.add(locateWidget, "bottom-left");
 
           const trackWidget = new Track({
             view,
@@ -814,7 +814,7 @@ export default function ArcGISMap({
             }),
             useHeadingEnabled: true,
           });
-          view.ui.add(trackWidget, "top-right");
+          view.ui.add(trackWidget, "bottom-left");
 
           const editingLayer = new GraphicsLayer({ id: "editing" });
           const finalizedLayer = new GraphicsLayer({ id: "finalized" });
@@ -1399,6 +1399,7 @@ export default function ArcGISMap({
       </Suspense>
       <div
         ref={mapDiv}
+        className={styles.mapView}
         style={{
           position: "absolute",
           inset: 0,

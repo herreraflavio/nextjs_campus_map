@@ -5,3 +5,15 @@
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+/* Keep the native UI margins above attribution while stacking navigation. */
+.mapView :global(.esri-ui-bottom-left) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mapView :global(.esri-ui-bottom-left > .esri-locate),
+.mapView :global(.esri-ui-bottom-left > .esri-track) {
+  margin: 0;
+}
